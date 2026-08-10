@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+.yarn/build-state.yml
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Build, test, and coverage output
+dist/
+out/
+build/
+coverage/
+*.tsbuildinfo
+
+# Electron packaging output
+release/
+artifacts/
+*.asar
+*.AppImage
+*.deb
+*.dmg
+*.exe
+*.msi
+*.rpm
+*.snap
+
+# Local application data and exports
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.tokenstats
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+tmp/
+temp/
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
