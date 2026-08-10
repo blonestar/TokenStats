@@ -1,6 +1,14 @@
-# TokenStats — brainstorming
+# TokenStats — brainstorming and proposals
 
-Status: ideation only. The repository is initialized locally, but there is no implementation, release workflow, or external-service connection yet.
+Status: ideation and proposal only. The repository is initialized locally, but
+there is no application implementation, release workflow, or external-service
+connection yet.
+
+The official project documentation is in [`../docs/`](../docs/README.md).
+This folder is intentionally different: it contains brainstorming, unresolved
+questions, exploratory UX, and early architecture notes. An idea becomes
+official project documentation only after it is resolved and recorded in the
+appropriate `/docs` document or an accepted decision record.
 
 ## Working definition
 
@@ -23,10 +31,12 @@ The primary goal is not to analyze prompt content. It is to answer:
 - Portability: versioned `.tokenstats` archive plus CSV/JSON export.
 - Repository/release: GitHub, GitHub Actions, tag-driven builds, draft releases, checksums, and later signing/notarization.
 
-This is the working MVP decision, not an irreversible commitment before a short packaging spike.
+This is a working proposal, not an irreversible commitment before the
+relevant decisions and validation spikes are complete.
 
 ## Documents
 
+- [00 — open questions](./00-open-questions.md)
 - [01 — product and scope](./01-product-and-scope.md)
 - [02 — stack options and decision](./02-stack-options-and-decision.md)
 - [03 — database, data model, and export/import](./03-data-model-and-export.md)
@@ -41,3 +51,12 @@ This is the working MVP decision, not an irreversible commitment before a short 
 ## Most important principle
 
 Usage data is the primary product data. Cost is a derived value with an explicit `observed`, `estimated`, or `unknown` label; it must never look like an exact bill when it is only calculated from API pricing.
+
+## Status and source-of-truth rules
+
+- Open questions and unresolved alternatives are maintained here.
+- Accepted project requirements and architecture are maintained in `/docs`.
+- A proposal is not implemented or verified until repository, runtime, CI, or
+  platform evidence exists and the relevant `/docs` status is updated.
+- Avoid copying an entire official document into this folder; link to it and
+  keep only the exploratory material needed to resolve the question.

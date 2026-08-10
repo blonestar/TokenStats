@@ -46,18 +46,22 @@
 
 ## MVP acceptance criteria
 
-- the user does not need to enter a path manually for at least two adapters;
+- the user does not need to enter a path manually for the three priority adapters;
 - every imported event has provenance and a deduplication identity;
 - refresh never duplicates history;
 - the dashboard clearly separates observed tokens from estimated cost;
 - alert thresholds fire once per period/threshold and show the last scan time;
 - the application can run in the background without opening the main window;
 - updates can be checked, downloaded, and installed after an explicit restart;
-- stable, beta/preview, nightly, and manual update modes are clearly separated;
+- stable and nightly update modes are clearly separated;
 - a `.tokenstats` export from one machine imports on another without losing events;
 - the application works offline;
 - packaged artifacts start on the targeted Fedora, Ubuntu, and macOS versions;
 - CI tests parsers, schema migrations, and export/import on every pull request.
+
+These are exploratory acceptance notes. `v0.1.x` is currently an
+internal/private line, and the official requirements are maintained in
+[`../docs/product-requirements.md`](../docs/product-requirements.md).
 
 ## Largest risks
 
@@ -72,13 +76,17 @@
 ## Decisions to confirm before implementation
 
 - whether Electron overhead is acceptable for a desktop monitor;
-- which two harnesses come first based on real fixture availability;
+- whether the three priority adapters can be validated from real fixture
+  availability;
 - whether AppImage or a distro package is the Linux default;
 - whether exports include full paths or only redacted source labels;
 - whether the application starts automatically in the tray;
-- whether v1 includes a pricing table or token counts only.
+- whether v0.1 includes a pricing table or token counts only.
 - whether v1 alerts are global only or can be scoped per harness/project;
 - whether weekly periods start on Monday or follow the operating system locale;
 - whether estimated-cost alerts are enabled in v1 or token alerts come first.
-- whether nightly builds use a separate application-data profile from stable builds;
 - whether RPM/DEB auto-update is enabled or only AppImage auto-update is supported on Linux.
+
+The first adapter priorities and separate Nightly data profile are no longer
+open in this project direction; see
+[`00-open-questions.md`](00-open-questions.md) and the official `/docs` files.

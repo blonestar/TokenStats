@@ -1,10 +1,19 @@
 # 09 — Versioning and update channels
 
+> **Current direction:** the official policy in
+> [`../docs/versioning-and-update-channels.md`](../docs/versioning-and-update-channels.md)
+> supersedes exploratory alternatives in this note. `v0.1.x` is internal/private,
+> the project moves to `v0.2.0` only after an explicit visible-product
+> readiness decision, and Stable/Nightly are the required channels.
+
 ## Starting version
 
 Start with **`v0.1.0`**.
 
-This is the first installable public preview: useful enough for real testing, but not yet a production-readiness promise. The UI can label it `Preview` even when it is distributed through the default Stable channel.
+This is the first installable internal/private build: useful for controlled
+development and review, but not a public release or production-readiness
+promise. The project can remain on `0.1.x` until the maintainer decides there is
+enough visible product value for `v0.2.0`.
 
 ## Version format
 
@@ -82,7 +91,11 @@ Formal SemVer treats `0.x` as initial development, where compatibility is not gu
 
 The project follows the standard SemVer meaning of patch/minor/major after `v1.0.0`. See the [Semantic Versioning specification](https://semver.org/).
 
-## Recommended channels
+## Exploratory channel alternatives
+
+The following alternatives are retained for exploration only. The current
+required channels are Stable and Nightly; Beta/Preview and Manual are deferred
+and are documented in the official versioning document.
 
 ### Stable — default
 

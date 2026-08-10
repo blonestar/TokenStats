@@ -4,13 +4,18 @@
 
 - The workspace is currently planning-only, but it is now initialized as a Git
   repository on the `main` branch.
-- The baseline project material is `README.md`, `.gitignore`, `AGENTS.md`, and
-  the planning documents in `ideas/`.
+- The baseline project material is `README.md`, `.gitignore`, `AGENTS.md`, the
+  official documentation in `docs/`, and the planning documents in `ideas/`.
+- `docs/` is the canonical project documentation folder. `ideas/` is reserved
+  for brainstorming, unresolved questions, and exploratory proposals.
 - There is no application implementation, package manifest, build script, test
   suite, CI workflow, or release workflow yet. Do not infer any of these from
   the architecture proposals or from the existence of a GitHub remote.
-- Treat `ideas/README.md` and the numbered documents in `ideas/` as product and
-  architecture proposals, not as evidence that those features already exist.
+- Treat `docs/` documents as the source of accepted project documentation only
+  when their status and evidence support that claim. Treat `ideas/README.md`,
+  `ideas/00-open-questions.md`, and the numbered documents in `ideas/` as
+  product and architecture proposals, not as evidence that those features
+  already exist.
 - Keep descriptions of planned behavior explicitly labeled as planned,
   proposed, or still to be validated.
 - Treat the root `README.md` as the public project homepage and keep its status
@@ -49,8 +54,8 @@ codebase.
 
 ## Working architecture proposal
 
-The current MVP direction, subject to the spikes and decisions described in
-`ideas/`, is:
+The current MVP direction, subject to the unresolved questions in `ideas/` and
+the validation spikes described in `docs/`, is:
 
 - Electron + TypeScript + React/Vite;
 - filesystem discovery, adapters, parsers, SQLite, import/export, IPC, and
@@ -60,7 +65,7 @@ The current MVP direction, subject to the spikes and decisions described in
 - one adapter per harness, with anonymized fixtures and incremental cursors;
 - a versioned `.tokenstats` archive plus CSV/JSON exports;
 - GitHub/GitHub Actions with CI, tag-driven builds, checksums, and draft
-  releases once the repository is initialized.
+  releases once implementation and release work are authorized.
 
 These are proposals, not implementation constraints, until the repository
 contains the corresponding code and verified tooling.

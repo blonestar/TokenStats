@@ -7,42 +7,56 @@ It is intended to discover local usage records, normalize token consumption,
 and show trends by harness, model, project, and session—without presenting an
 estimated cost as an exact bill.
 
-> **Status:** early planning. This repository currently contains product and
-> architecture notes; a runnable application has not been implemented yet.
+> **Status:** documentation-first planning. This repository contains product
+> and architecture proposals; the application is not implemented yet.
 
-## Direction
+## Proposed direction
 
-The current MVP direction is a working proposal:
+The current MVP direction is still proposed and must be validated before
+implementation:
 
 - Electron + TypeScript + React/Vite;
 - SQLite in the application-data directory, with explicit migrations;
 - one adapter per harness, with incremental scanning and fixture coverage;
+- first adapter priorities of Codex, Copilot, and Claude Code, with OpenCode
+  as a follow-on candidate;
 - a privileged Electron main process for filesystem access and ingestion;
 - a versioned `.tokenstats` archive plus CSV/JSON export;
 - GitHub Actions for CI and platform packaging once implementation begins.
 
-## Principles
+The starting `v0.1.x` line is intended for internal/private development and
+review, not public distribution. Stable and Nightly are the required update
+channels; public readiness and `v0.2.0` remain explicit maintainer decisions.
+
+## Privacy principles
 
 - Usage data is the primary product fact.
 - Cost is always labeled `observed`, `estimated`, or `unknown`.
 - The app is local-first and does not ingest prompt or response content by
   default.
 - Imports should be incremental, idempotent, and traceable to their source.
+- Source code, API keys, credentials, and complete raw logs must stay out of
+  the database by default.
 
-## Project notes
+## Documentation
 
-The planning documents in [`ideas/`](ideas/) are the source of truth for the
-current product direction. Start with [`ideas/README.md`](ideas/README.md),
-then review the relevant topic before making architectural or implementation
-decisions.
+The official project documentation is in [`docs/`](docs/README.md). It records
+the proposed product requirements, architecture, data/privacy rules,
+platform/release plan, versioning, and UI behavior.
 
-- [Product and scope](ideas/01-product-and-scope.md)
-- [Stack options and working decision](ideas/02-stack-options-and-decision.md)
-- [Data model and export/import](ideas/03-data-model-and-export.md)
-- [Autodetection and adapters](ideas/04-autodetection-and-adapters.md)
-- [Roadmap, risks, and acceptance criteria](ideas/05-roadmap-and-risks.md)
-- [UI direction](ideas/06-ui-direction.md)
-- [GitHub repository and automated release](ideas/07-github-and-release.md)
-- [Alerts and background monitoring](ideas/08-alerts-and-background-monitoring.md)
-- [Versioning and update channels](ideas/09-versioning-and-update-channels.md)
-- [Window shell and tray behavior](ideas/10-window-shell-and-tray.md)
+[`ideas/`](ideas/README.md) remains the workspace for brainstorming,
+exploration, unresolved questions, and early proposals. It is not evidence
+that a feature exists.
+
+- [Documentation index](docs/README.md)
+- [Product requirements](docs/product-requirements.md)
+- [Architecture overview](docs/architecture-overview.md)
+- [Data, privacy, and portability](docs/data-privacy-and-portability.md)
+- [Platform, packaging, and release](docs/platform-packaging-and-release.md)
+- [Versioning and update channels](docs/versioning-and-update-channels.md)
+- [UI, window, tray, and alerts](docs/ui-window-tray-alerts.md)
+- [Open questions](ideas/00-open-questions.md)
+
+The application is not implemented until the repository contains the relevant
+code and verification evidence. Planned behavior in the documentation must
+not be read as implemented, released, or verified behavior.

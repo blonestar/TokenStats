@@ -2,6 +2,10 @@
 
 ## Repository shape
 
+This remains a release-workflow proposal. No workflow exists yet. The current
+official release policy is in
+[`../docs/platform-packaging-and-release.md`](../docs/platform-packaging-and-release.md).
+
 Working structure:
 
 ```text
@@ -112,12 +116,16 @@ The user should not need to click a second time after the download completes. If
 
 ## Release-channel artifacts
 
-- `stable`: published non-prerelease releases such as `v0.1.0` and `v0.1.1`.
-- `beta/preview`: prereleases such as `v0.2.0-beta.1` and `v1.0.0-rc.1`.
+- `stable`: internal/private non-prerelease builds such as `v0.1.0` and
+  `v0.1.1` until a public-release decision is made.
 - `nightly`: automated builds from `main`, with a date/build identifier and a separate risk warning.
-- `manual`: no automatic checking or downloading; the user installs releases manually.
 
-The updater must never treat a nightly build as a stable update. A channel switch requires confirmation, and nightly should use a separate application-data profile by default to avoid moving the stable database forward with an unrecoverable schema migration.
+The starting `v0.1.x` line is internal/private, not a public release promise.
+The updater must never treat a nightly build as a stable update. A channel
+switch requires confirmation, and nightly should use a separate application-
+data profile by default to avoid moving the stable database forward with an
+unrecoverable schema migration. `Check now` remains an action, not a separate
+channel.
 
 ## Release acceptance checklist
 

@@ -37,11 +37,15 @@ Electron does not solve every release issue automatically: Linux auto-updates ar
 
 ## Platform targets
 
-### First public version
+### First internal/private build
 
 - Fedora/Ubuntu x64: AppImage as the easiest download, plus RPM/DEB once packaging tests pass.
 - macOS: arm64 and x64 DMG; use a universal build only if it does not complicate the native SQLite module.
 - Windows: prepare shared adapter/path abstractions from day one, but enable the installer target in the second phase.
+
+This is an exploratory packaging target, not a public-release promise. The
+official current release policy is in
+[`../docs/platform-packaging-and-release.md`](../docs/platform-packaging-and-release.md).
 
 ### Build rule
 

@@ -45,7 +45,12 @@ Alerts are informational and best-effort. They do not stop a harness or provider
 
 ## Candidate sources
 
-Initial adapters can target Codex CLI, Claude Code, Gemini CLI, and OpenCode. Cursor, Cline/Roo, and other tools are candidates only after their local formats prove stable enough to support.
+The current first-priority proposal is Codex, Copilot, and Claude Code, with
+OpenCode as a follow-on candidate. Cursor, Cline/Roo, and other tools are
+candidates only after their local formats prove stable enough to support. The
+official requirement and decision status live in
+[`../docs/product-requirements.md`](../docs/product-requirements.md) and
+[`00-open-questions.md`](00-open-questions.md).
 
 Path names and log formats must not be hardcoded into the UI. Every adapter needs fixtures covering real variations: file rotation, an incomplete final JSONL line, model changes, missing cache fields, and duplicate events.
 

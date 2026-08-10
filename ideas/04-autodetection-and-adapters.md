@@ -48,11 +48,14 @@ An adapter must not write directly to SQLite. It produces canonical events; the 
 ## Candidate v1 adapters
 
 1. Codex local session/usage records.
-2. Claude Code local session/usage records.
-3. Gemini CLI local usage/session records.
-4. OpenCode local usage/session records.
+2. Copilot local usage/session records.
+3. Claude Code local session/usage records.
+4. OpenCode local usage/session records as a follow-on candidate.
 
-These are adapter priorities, not confirmed paths. Each requires an anonymized fixture pack and a live read-only probe on Linux/macOS before implementation is committed.
+These are adapter priorities, not confirmed paths. Each requires an anonymized
+fixture pack and a live read-only probe on the supported platforms before
+implementation is committed. The official current scope is in
+[`../docs/product-requirements.md`](../docs/product-requirements.md).
 
 ## Unavoidable edge cases
 
@@ -65,6 +68,9 @@ These are adapter priorities, not confirmed paths. Each requires an anonymized f
 - the user moves the home directory or imports an archive from another machine;
 - the same event appears in multiple mirror/source files.
 
-## Manual fallback
+## Manual fallback for later consideration
 
-The Source screen should allow `Add folder/file` for a known adapter. This lets the user work when autodetection is limited, while the parser still has to say what it recognized and what it ignored.
+The Source screen may later allow `Add folder/file` for a known adapter. This
+is not a v0.1 requirement: autodetection and explicit source-health states come
+first. If the option is added, the parser still has to say what it recognized
+and what it ignored.
