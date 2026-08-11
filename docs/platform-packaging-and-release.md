@@ -4,31 +4,36 @@ Audience: maintainers, release engineers, platform testers, security reviewers, 
 
 Source of truth: this document for target platforms, packaging, release, signing, and update policy; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-11
 
 # TokenStats platform, packaging, and release
 
-This is a release-engineering proposal. The repository currently has no
-package manifest, build script, CI workflow, release workflow, packaged
-artifact, signing configuration, or updater implementation.
+This is a release-engineering proposal. The repository now has a package
+manifest, build script, unpacked Linux packaging command, and a local manual
+macOS arm64 validation workflow, but no CI, release workflow, released
+artifact, signing configuration, or updater implementation. The unpacked build
+starts and scans on the current Fedora/KDE host, which is not yet clean-machine
+or release verification. The macOS workflow has not been pushed or run.
 
 ## Platform targets
 
 ### Initial targets
 
-The current target proposal for the first installable internal/private build
+The implemented Fedora slice targets the current OS user's Codex, Claude Code,
+and experimental GitHub Copilot data. The current follow-on platform direction
 is:
 
 - Fedora x64, with the exact supported Fedora versions to be named before a
   production-readiness claim;
-- Ubuntu x64, with the exact supported Ubuntu versions to be named before a
-  production-readiness claim;
-- macOS arm64;
-- macOS x64.
+- macOS arm64 as the first macOS target after the Fedora slice;
+- macOS x64 later unless evidence requires it.
+
+Ubuntu timing and exact OS versions remain open; they are not first-slice
+support claims.
 
 Windows is a later target. Shared path, filesystem, adapter, and update
 abstractions should avoid making Windows impossible, but Windows support is not
-part of the first platform promise unless [Q-022](../ideas/00-open-questions.md)
+part of the first platform promise unless [Q-026](../ideas/00-open-questions.md)
 changes.
 
 Platform support means more than an artifact that launches. It requires clean
@@ -55,11 +60,11 @@ The proposed artifact set is:
 
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
-| Fedora/Ubuntu x64 | `.AppImage` | Primary Linux download and self-update candidate. |
+| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate. |
 | Fedora x64 | `.rpm` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
-| Ubuntu x64 | `.deb` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
+| macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Internal-only validation; workflow exists locally but has not been pushed or run. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
-| macOS x64 | `.dmg` | Requires signed/notarized production-ready distribution. |
+| macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
 | Windows later | `.exe` installer and/or `.msix` | Add only after the Windows installer, identity, notifications, signing, and update path are tested. |
 
 Every artifact should include version, platform, and architecture in its name.
@@ -88,12 +93,13 @@ with imports and migrations, and retain a recoverable previous state.
 
 The current release policy proposal is:
 
-- a private or pipeline-validation preview may use unsigned artifacts only when
-  the release notes clearly say so;
+- a private Fedora implementation may use unsigned artifacts only when the
+  release notes clearly say so; the macOS arm64 validation artifact is instead
+  ad-hoc-signed and unnotarized, for internal-only validation;
 - a public Stable release should be signed for each platform where signing is
   expected by the OS and updater;
 - macOS production-ready distribution requires Developer ID signing and
-  notarization, with evidence from a packaged build rather than an unsigned
+  notarization and stapling, with evidence from a packaged build rather than a
   development run;
 - Windows production-ready distribution requires appropriate code signing and
   stable application identity before claiming reliable installer notifications
@@ -108,10 +114,33 @@ until the maintainer decides there is enough visible product value to move to
 `v0.2.0`. The exact signing threshold for a later public or production-ready
 release remains open in [Q-023](../ideas/00-open-questions.md).
 
+## Current macOS arm64 validation path
+
+`pnpm package:mac:arm64` is a macOS-only command that generates
+`assets/icons/TokenStats.icns` from committed PNG icon sources, builds the app,
+and creates the ad-hoc-signed, unnotarized
+`dist/TokenStats-<version>-mac-arm64.zip` artifact with publishing disabled.
+`.github/workflows/macos-arm64-validation.yml` is manual-only, uses the native
+Apple Silicon `macos-15` runner, and uploads that ZIP with a `SHA256SUMS.txt`
+manifest. The workflow exists locally but has not been pushed or run.
+
+Before upload, the workflow asserts an arm64 host; checks the arm64 main
+executable and every packaged `.node` module (including `better_sqlite3.node`);
+verifies the strict, deep ad-hoc code signature; and launches the app with a
+temporary isolated user-data directory until the TokenStats renderer appears
+through a local DevTools endpoint. It does not scan source data or use a real
+application-data directory. The checksum manifest is generated and checked
+inside `dist/`, so its entries are bare artifact filenames.
+
+This ad-hoc-signed, unnotarized artifact is internal-only. Fedora cannot
+validate it; a real Apple Silicon workflow run remains required. Public macOS
+distribution remains unready and requires Developer ID signing, hardened
+runtime, notarization, stapling, and a clean-machine Gatekeeper gate.
+
 ## GitHub Actions proposal
 
-No workflows exist yet. Once implementation begins, the proposed workflow
-shape is:
+Only the manual macOS arm64 validation workflow exists, and it has not yet run.
+CI and release workflows remain proposals with this intended shape:
 
 ### `ci.yml`
 
@@ -140,7 +169,8 @@ Proposed tag-driven flow:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
 2. The workflow verifies that the tag matches application and schema metadata.
-3. Linux and macOS artifacts build in parallel on appropriate runners.
+3. Fedora artifacts build first; macOS arm64 artifacts join once the follow-on
+   spike is authorized and validated.
 4. Packaged smoke tests run before publication.
 5. The workflow creates checksums, SBOM/provenance, and release notes.
 6. A draft GitHub Release is created with versioned artifacts.
@@ -248,7 +278,8 @@ documentation phase: `v0.1.x` is internal/private (Q-003), and Stable/Nightly
 are the required channels with explicit user-controlled installation (Q-021).
 The remaining platform and release questions are:
 
-- exact Fedora/Ubuntu support versions and Windows timing (Q-022);
+- exact Fedora/macOS support versions, macOS x64 timing, Ubuntu timing, and
+  Windows timing (Q-026);
 - Linux AppImage versus RPM/DEB defaults and update fallback;
 - the exact check cadence and restart details during implementation;
 - whether automatic updates may ever be enabled by default after the private

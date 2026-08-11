@@ -1,16 +1,19 @@
-Status: Proposed
+Status: Implemented Fedora slice; remaining architecture proposed
 
 Audience: contributors, architecture reviewers, security reviewers, and maintainers
 
 Source of truth: this document for the proposed system boundaries; unresolved alternatives are tracked in ../ideas/00-open-questions.md and the numbered idea notes
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-11
 
 # TokenStats architecture overview
 
 This document describes the proposed architecture for a local-first Electron
-application. No application code, package manifest, IPC contract, database, or
-adapter exists in the repository yet.
+application. The implemented Fedora slice has application code, package
+manifest, typed two-operation IPC, SQLite migrations, and current-user Codex,
+Claude Code, and experimental GitHub Copilot adapters. It has model-aware
+schema/parser support, allowlisted period queries, and a Chart.js model trend
+renderer; the broader architecture below remains proposed.
 
 ## Architectural goals
 
@@ -52,10 +55,17 @@ and [Electron context isolation guidance](https://www.electronjs.org/docs/latest
 
 ## React/Vite frontend
 
-React/Vite is the proposed renderer stack because the product needs a dense,
+React/Vite is the implemented renderer stack for the Fedora slice because the product needs a dense,
 desktop-first dashboard with charts, tables, filtering, source diagnostics,
 settings, and custom window controls. The renderer should receive view models
 and command results through preload rather than reconstructing database queries.
+
+The current dashboard implements `Today`, `Yesterday`, `This week`, `Last week`,
+`This month`, `Last month`, and `Last 6 months` queries. It uses hourly buckets
+for `Today`, daily buckets for the shorter day/week/month periods, and monthly
+buckets for `Last 6 months`, with source-and-model-separated totals and Chart.js
+Line/Bar views. Other navigation and settings surfaces listed below remain
+proposed.
 
 The initial UI information model is proposed as:
 
@@ -65,7 +75,7 @@ The initial UI information model is proposed as:
   last scan, warnings, and manual source selection;
 - Sessions — drilldown when a source exposes stable session identity;
 - Models — token mix and breakdown by harness/provider/model;
-- Alerts — quotas, thresholds, current period, notification history, and
+- Alerts — personal budgets, thresholds, current period, notification history, and
   quiet hours;
 - Settings — privacy, refresh, export/import, startup, window/tray, pricing,
   and updates.
@@ -90,7 +100,7 @@ The database should contain at least these logical areas:
   identity;
 - `pricing_snapshots` — versioned rates with effective date, source, and
   checksum;
-- `alert_rules` and `alert_deliveries` — quota configuration and idempotent
+- `alert_rules` and `alert_deliveries` — personal-budget configuration and idempotent
   notification records;
 - `imports`, `schema_migrations`, and audit records — operation history;
 - `daily_rollups` or equivalent derived caches — rebuildable aggregates, never
@@ -163,17 +173,24 @@ Discovery must be fast, predictable, and explainable. The proposed order is:
 An advanced user-selected folder or file may be added later for a known
 adapter, but it is not required or promised in v0.1.
 
-TokenStats must not scan the entire home directory by default. The UI should
+TokenStats must not scan the entire home directory or other OS users' profiles
+by default. Discovery and application data are isolated to the current OS user.
+The UI should
 show distinct states for `found and parseable`, `found but unsupported format`,
 `found but permission denied`, `not found`, `disabled by user`, and
 `stale/no new data`. Manual source selection is a later/advanced recovery
 option, not a v0.1 requirement; each candidate still requires adapter
 validation and diagnostics.
 
-The first priority adapters are currently Codex, Copilot, and Claude Code.
-Their paths and formats are not confirmed. Each candidate needs anonymized
-fixtures and live read-only probes on the target operating systems before it can
-be called supported. OpenCode remains a follow-on candidate.
+The implemented Fedora slice scans current-user Codex `~/.codex/sessions`,
+Claude Code `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and experimental GitHub
+Copilot `${COPILOT_HOME:-~/.copilot}/session-state`. Claude accepts only
+assistant-message usage and persists opaque file IDs rather than content or
+project/file paths. Copilot uses the latest persisted `session.shutdown`
+cumulative snapshot for each session/model and replaces the previous snapshot.
+Missing roots are normal. Fixtures cover the adapter formats; platform support
+and macOS validation still require their own runtime evidence. OpenCode remains
+a later candidate.
 
 ## IPC boundary
 
@@ -198,7 +215,7 @@ commands, and channels are rejected.
 
 The main process owns the tray and the refresh scheduler. A hidden window does
 not mean the app is stopped. The tray is a compact status surface with observed
-daily usage, quota state, last scan time, refresh, settings, pause, update, and
+daily usage, personal-budget state, last scan time, refresh, settings, pause, update, and
 explicit exit actions.
 
 Electron documents that Linux tray activation can differ by desktop
@@ -236,22 +253,27 @@ implementation.
 
 ## Pricing input boundary
 
-The v0.1 proposal is to ship a maintainer-reviewed, versioned pricing manifest
-with the application or release data. It should contain provider/model keys,
-unit rates, currency, effective and retrieval dates, official source URLs, and a
-checksum. Runtime AI search is not part of the proposed architecture because
-pricing must be deterministic, reviewable, and usable offline. A future
-explicit non-AI refresh can propose a new snapshot; it must never rewrite the
-snapshot used by historical estimates silently.
+The accepted version 1 catalog and schema live in `../pricing/`. The initial
+2026-08-11 snapshot contains reviewed OpenAI/Codex Standard API list prices and
+is bundled into the privileged main process. The current dashboard calculates
+query-time Codex estimates from it and returns immutable snapshot metadata and
+coverage; no cost is stored in the usage-event table. Provider expansion,
+historical persisted estimates, and an explicit non-AI catalog refresh remain
+follow-on work. Runtime AI search is outside the architecture because pricing
+must be deterministic, reviewable, and usable offline. A future explicit
+non-AI refresh can add a new snapshot; it must never rewrite the snapshot used
+by historical estimates silently.
 
 ## Platform-specific behavior
 
 The initial platform proposal is:
 
-- Fedora and Ubuntu x64: AppImage as the primary download/update candidate;
-  RPM and DEB only after clean-machine packaging tests;
-- macOS: arm64 and x64 DMG, with a universal build only if the native SQLite
-  binding does not add unacceptable risk;
+- Fedora x64: first implementation and packaging target; exact supported
+  versions remain open;
+- macOS arm64: early follow-on support spike; public signing/notarization is a
+  later distribution gate, not a prerequisite for the Fedora slice or private
+  spike;
+- macOS x64 and Ubuntu x64: later unless validation evidence changes priority;
 - Windows: shared path/adapter abstractions from the start, with installer
   support later unless the platform decision changes.
 
@@ -280,8 +302,8 @@ notarization, and native SQLite module compatibility with packaged Electron.
 The following spikes are required before the relevant behavior is treated as
 accepted or implemented:
 
-1. Start a minimal Electron package on target Fedora, Ubuntu, and macOS
-   environments.
+1. Start a minimal Electron package on Fedora x64, then on macOS arm64 for the
+   early follow-on spike.
 2. Prove the selected native SQLite binding works from the packaged app.
 3. Install or start AppImage/RPM/DEB/DMG artifacts on clean test machines.
 4. Probe source paths containing spaces, Unicode, symlinks, permissions, and
@@ -290,9 +312,9 @@ accepted or implemented:
    shell commands.
 6. Run a seeded database through the supported migration chain without losing
    usage events.
-7. Test the three priority anonymized adapter fixture packs against incomplete
-   lines, duplicates, model changes, missing cache fields, and malformed
-   records.
+7. Run the Codex, Claude Code, and Copilot anonymized fixture packs against
+   incomplete lines, duplicates, model changes, missing cache fields, and
+   malformed records; expand runtime evidence before claiming another platform.
 8. Test tray, notification, login startup, close-to-tray, custom controls, and
    opaque visual fallback separately on each supported desktop target.
 9. Test update verification, migration backup, interrupted install, restart,

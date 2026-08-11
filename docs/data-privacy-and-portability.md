@@ -1,10 +1,10 @@
-Status: Proposed
+Status: Implemented storage/privacy slice; remaining portability proposed
 
 Audience: users, privacy reviewers, contributors implementing storage, and maintainers responsible for migrations
 
 Source of truth: this document for data collection, storage, privacy, export/import, and migration rules; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-11
 
 # TokenStats data, privacy, and portability
 
@@ -13,14 +13,24 @@ primary product data; cost is derived data and must carry an explicit confidence
 and provenance trail. The application should work offline for local scanning,
 dashboard use, and logical import/export.
 
-No application database or storage implementation exists yet. The model below
-is a proposal that must be validated with real anonymized fixtures and
-migration tests.
+The implemented Fedora slice has a local SQLite database for sources, cursors,
+scan runs, and usage events, but no portability/export implementation yet.
+Schema version 2 stores bounded model identifiers alongside token metadata, and
+schema version 3 converts Claude file references to opaque IDs. Claude imports
+assistant-message usage only and stores no content or project/file path. The
+`codex-jsonl-v2` migration path resets only Codex cursors, rescans read-only
+source records, and fills missing model metadata without changing event IDs or
+counting duplicate rows as new imports. Copilot reconciles each persisted
+session/model to its latest shutdown snapshot rather than summing snapshots.
+Application data lives under Electron `userData`; together with current-user
+source roots, this isolates data per OS user. The broader model below still
+requires migration and portability tests.
 
 ## Data collected from local sources
 
 The default ingestion boundary is limited to information needed to count and
-group usage:
+group usage. Each OS user has isolated application data and source discovery;
+TokenStats must not scan other OS users' profiles by default:
 
 | Category | Proposed data | Default handling |
 | --- | --- | --- |
@@ -105,6 +115,14 @@ An append-oriented canonical fact with:
 - `confidence`: `exact`, `partial`, `inferred`, or `unknown`;
 - adapter/parser version and bounded provenance metadata.
 
+Canonical usage facts are append-oriented. The first scan imports all safely
+available supported history, and retained history remains cumulative until the
+user explicitly deletes it. Disabling or forgetting a source must not silently
+delete its retained history. Exact deletion UX remains open. Statistics and
+rollups are derived and rebuildable from this history. Whether a harness emits
+raw deltas or cumulative snapshots remains an adapter-normalization question
+to validate from fixtures.
+
 ### `pricing_snapshots`
 
 A versioned table containing effective date, input/output/cache rates,
@@ -114,7 +132,7 @@ historical estimates.
 
 ### Alerts, imports, migrations, and rollups
 
-`alert_rules` stores period, metric, quota, thresholds, scope, timezone, and
+`alert_rules` stores period, metric, personal-budget amount, thresholds, scope, timezone, and
 enabled state. `alert_deliveries` stores the period key, threshold, delivery
 time, observed usage snapshot, and status; a unique rule/period/threshold key
 prevents repeated notifications.
@@ -160,17 +178,18 @@ must not be converted into a pseudo-bill merely because a model price exists.
 
 ## Pricing snapshots
 
-Pricing is proposed as a versioned, explicit input rather than an untracked
-live lookup. For v0.1, the recommended policy is a maintainer-reviewed pricing
-manifest/data file shipped with the release or bundled data. A snapshot should
-include:
+Pricing is a versioned, explicit input rather than an untracked live lookup.
+The accepted version 1 catalog and schema live in `../pricing/`; the current
+runtime bundles that catalog and calculates a query-time Codex estimate without
+adding derived cost columns to `usage_events`. Dashboard responses include the
+matching snapshot metadata and event coverage. A snapshot includes:
 
 - provider and model identifiers;
 - input, output, cached-input, cache-write, or other supported rates;
 - currency and unit basis;
 - effective date and retrieval date;
 - public source reference;
-- checksum or immutable snapshot ID.
+- an immutable snapshot ID.
 
 The runtime should not use an AI connector to search pricing pages. That would
 introduce network dependence, nondeterministic interpretation, and a risk of
@@ -179,13 +198,14 @@ future explicit, non-AI refresh may prepare a new snapshot from official
 provider sources, but a user or maintainer must review it before use and
 historical events retain the snapshot that explains their derived estimate.
 
-Keep this pricing manifest as a versioned data file rather than hard-coding
-rates in application code. A file can be reviewed, checksummed, updated before
-a release, and carried forward as an auditable historical input without
-requiring a code change for every price revision.
+Keep this pricing catalog as versioned data rather than hard-coding rates in
+application code. It can be reviewed, checksummed, updated before a release,
+and carried forward as an auditable input without requiring a code change for
+every price revision. Provider-specific semantics for Claude Code, Copilot,
+Grok, and other sources remain unknown until reviewed snapshots are added.
 
-Initial snapshot maintenance can link to the official pricing sources for the
-supported providers, for example [OpenAI API pricing](https://openai.com/api/pricing/),
+Snapshot maintenance links to the official pricing sources for the supported
+providers, for example [OpenAI API pricing](https://developers.openai.com/api/docs/pricing),
 [Anthropic pricing](https://www.anthropic.com/pricing), and [GitHub Copilot
 plans](https://github.com/features/copilot/plans). These links are source
 references, not a promise that every plan or Copilot surface exposes a directly
@@ -307,7 +327,8 @@ The following remain proposed until answered and recorded:
 - required token categories and cost policy (Q-005–Q-007);
 - accepted metadata, paths, and project labels (Q-011–Q-012);
 - whether `.tokenstats` is the sole or shared canonical backup format (Q-013);
-- import alert backfill behavior (Q-014);
+- import alert backfill behavior and exact retained-history deletion UX (Q-014
+  and Q-025);
 
 The current migration safety decisions are already recorded: verified backup
 before every migration, blocking on backup failure, retention of the latest

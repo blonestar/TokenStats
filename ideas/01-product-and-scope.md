@@ -1,5 +1,13 @@
 # 01 — Product and scope
 
+> **Superseded direction:** the implemented Fedora slice has current-user
+> Codex, Claude Code, and experimental GitHub Copilot adapters. An early macOS
+> arm64 validation remains a later manual, unsigned internal step. The reviewed
+> Codex pricing snapshot and query-time estimate are implemented; provider
+> expansion and persisted historical estimates remain follow-on work. Alerts are personal budgets, not provider
+> quotas. See `/docs` and
+> [`00-open-questions.md`](00-open-questions.md).
+
 ## Product idea
 
 One offline desktop application that gives the user a reliable view of AI coding-tool consumption without manually adding up local logs from multiple tools.
@@ -33,7 +41,7 @@ The value is concentrated in three areas:
 
 The application should also act as a lightweight usage monitor, not only as a historical dashboard:
 
-- daily, weekly, and monthly token quotas;
+- daily, weekly, and monthly personal token budgets;
 - configurable warning thresholds such as 80%, 100%, and 120%;
 - native desktop notifications when a threshold is crossed;
 - a tray/background mode so monitoring can continue while the main window is closed;
@@ -45,8 +53,10 @@ Alerts are informational and best-effort. They do not stop a harness or provider
 
 ## Candidate sources
 
-The current first-priority proposal is Codex, Copilot, and Claude Code, with
-OpenCode as a follow-on candidate. Cursor, Cline/Roo, and other tools are
+The earlier proposal that Codex, Copilot, and Claude Code were merely future
+priorities is superseded: the Fedora slice implements all three current-user
+adapters, with Copilot explicitly experimental. OpenCode, Cursor, Cline/Roo,
+and other tools are
 candidates only after their local formats prove stable enough to support. The
 official requirement and decision status live in
 [`../docs/product-requirements.md`](../docs/product-requirements.md) and

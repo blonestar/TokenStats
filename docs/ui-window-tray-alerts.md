@@ -4,13 +4,16 @@ Audience: users, UX reviewers, accessibility reviewers, and contributors impleme
 
 Source of truth: this document for dashboard, window, tray, alert, and update interaction requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-11
 
 # TokenStats UI, window, tray, and alerts
 
-This document describes the proposed desktop experience. It is not a claim
-that any screen, window shell, tray item, notification, or update button exists
-today.
+This document describes both the implemented Codex dashboard slice and the
+broader proposed desktop experience. The current screen has selected-period
+token totals, model-separated Chart.js Line/Bar trends, exact model totals,
+token-category totals, source health, and a manual scan action. Custom window
+chrome, navigation, tray items, alerts, notifications, settings, and update UI
+remain proposed.
 
 ## Dashboard information architecture
 
@@ -25,7 +28,7 @@ navigation is:
 - **Sessions** — concrete session drilldown when the source supplies a stable
   session identity;
 - **Models** — harness/provider/model breakdown, token mix, and confidence;
-- **Alerts** — quotas, thresholds, current periods, notification history, and
+- **Alerts** — personal budgets, thresholds, current periods, notification history, and
   quiet hours;
 - **Settings** — privacy, refresh, export/import, startup, window/tray, pricing
   snapshot information, and updates.
@@ -41,10 +44,15 @@ The first KPI is **Observed tokens**, not a large dollar amount. The overview
 should show the total for the selected date range and, when available, separate
 input, output, cached input, cache write, reasoning, and total values.
 
-The default chart is proposed as daily observed tokens, stacked by available
-token categories. It should offer `Tokens`, `Estimated cost`, and `Sessions`
-views, with data gaps explained rather than drawn as zero. A breakdown table
-should expose:
+The implemented chart shows observed tokens separated by model. It offers Line
+and Bar modes, hourly buckets for `Today`, daily buckets for `Yesterday`, the
+weekly periods, and the month periods, plus monthly buckets for `Last 6 months`.
+It retains exact hover values and a visible per-model total/share list.
+Missing buckets inside the selected calendar range are shown as zero only after
+the full retained source history has been queried. The summary and model list
+show Codex estimated API-equivalent cost with coverage and pricing date;
+estimated-cost and session chart modes remain follow-on proposals. A later
+detailed breakdown should expose:
 
 ```text
 Harness | Model | Sessions | Input | Output | Cached | Reasoning | Est. cost | Confidence
@@ -71,7 +79,8 @@ not imply that an estimate is an invoice.
 
 ## Custom frameless window
 
-The current window proposal is a custom shell rather than the standard OS
+Visual polish and an effective dashboard matter from the start. The current
+window proposal is a custom shell rather than the standard OS
 frame or an in-window File/Edit/View menu:
 
 ```text
@@ -138,7 +147,7 @@ TokenStats · Today 42.1M / 100M tokens · 42% · OK · scanned 14:32
 It should show:
 
 - current daily observed tokens;
-- the daily quota and percentage when a daily quota is enabled;
+- the daily personal budget and percentage when enabled;
 - current alert state;
 - last successful scan time.
 
@@ -155,7 +164,7 @@ behavior:
 - alternate/double activation: follow the platform convention where required;
 - right click: open the context menu;
 - hover: show the fixed tooltip;
-- icon state: neutral, warning, reached, or over-quota, with text equivalents
+- icon state: neutral, warning, reached, or over-budget, with text equivalents
   in the menu so color is not the only signal.
 
 The proposed right-click menu is:
@@ -221,13 +230,16 @@ accuracy.
 
 ## Alerts
 
-Alerts are informational, best-effort monitoring, not quota enforcement. The
+Alerts represent a user-defined personal usage budget or threshold. They are
+informational, best-effort monitoring, not provider quota or billing-plan
+enforcement. The
 current proposal is:
 
 - global daily, weekly, and monthly rules in the first usable release;
 - observed tokens as the default metric;
-- estimated cost only with a stored pricing snapshot and explicit labeling;
-- 80% warning, 100% reached, and 120% over-quota thresholds;
+- estimated cost only where a stored pricing snapshot and defensible token
+  semantics exist, with explicit labeling; cost alerts remain follow-on work;
+- 80% warning, 100% reached, and 120% over-budget thresholds;
 - configurable threshold enable/disable;
 - one delivery per rule, period, and threshold;
 - a jump across multiple thresholds summarized without noisy duplicates;
@@ -235,7 +247,7 @@ current proposal is:
 - Monday as the proposed first day of the week, pending the locale decision;
 - historical imports silent by default, with an explicit current-period option.
 
-An alert must include the period, current amount, quota, threshold, last
+An alert must include the period, current amount, personal budget, threshold, last
 successful scan, and data-delay caveat. It should provide `View details` and
 open the relevant dashboard period rather than only opening the home screen.
 
@@ -245,7 +257,7 @@ Use OS-native notifications rather than a custom popup next to the clock. A
 proposed notification is:
 
 ```text
-TokenStats — daily quota reached
+TokenStats — daily personal budget reached
 Observed usage: 104M / 100M tokens (104%)
 Last successful scan: 14:32
 Data may lag by up to the refresh interval.

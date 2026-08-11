@@ -1,14 +1,22 @@
 # 08 — Alerts and background monitoring
 
+> **Superseded terminology:** alerts represent a user-defined personal usage
+> budget or threshold, never a provider quota or billing-plan limit. Exact
+> periods, refresh behavior, and threshold configuration remain open in
+> [`00-open-questions.md`](00-open-questions.md).
+
 ## Product decision
 
 Yes, usage alerts are worth adding. They turn TokenStats from a report that the user opens occasionally into a quiet monitor that can warn before consumption becomes surprising.
 
-The feature must be described as **best-effort monitoring**, not quota enforcement. TokenStats cannot stop a harness or provider from consuming more tokens; it can only report what has been observed in local source records.
+The feature must be described as **best-effort personal-budget monitoring**,
+not provider-quota enforcement. TokenStats cannot stop a harness or provider
+from consuming more tokens; it can only report what has been observed in local
+source records.
 
 ## Recommended MVP
 
-### Quota periods
+### Budget periods
 
 - daily;
 - weekly;
@@ -31,17 +39,17 @@ Cost alerts must say `estimated` and include the pricing snapshot/date. Subscrip
 Default thresholds:
 
 - 80% — warning;
-- 100% — quota reached;
-- 120% — over quota.
+- 100% — budget reached;
+- 120% — over budget.
 
-Let the user enable/disable each threshold. Fire each threshold at most once per rule and period. If one scan jumps from 70% to 125%, send one concise notification that says the quota was exceeded and records which thresholds were crossed; do not create three noisy notifications at once.
+Let the user enable/disable each threshold. Fire each threshold at most once per rule and period. If one scan jumps from 70% to 125%, send one concise notification that says the personal budget was exceeded and records which thresholds were crossed; do not create three noisy notifications at once.
 
 ### Notification content
 
 Example:
 
 ```text
-TokenStats — daily quota reached
+TokenStats — daily personal budget reached
 Observed usage: 104M / 100M tokens (104%)
 Last successful scan: 14:32
 Data may lag by up to the refresh interval.
@@ -60,8 +68,8 @@ The app should create a tray/status item when background monitoring is enabled. 
 - `Open dashboard`;
 - dynamic `Restore` or `Maximize` depending on the window state;
 - `Minimize`;
-- current daily usage and quota;
-- alert state (`OK`, `warning`, `reached`, `over quota`);
+- current daily usage and personal budget;
+- alert state (`OK`, `warning`, `reached`, `over budget`);
 - last scan time;
 - `Refresh now`;
 - `Settings`;

@@ -1,5 +1,11 @@
 # 06 — UI direction after the screenshot example
 
+> **Current direction:** visual polish and an effective dashboard matter from
+> the first slice, but the frameless/translucent shell remains open and must
+> not block data correctness. The summary/model Codex estimate is implemented;
+> full cost chart views remain follow-on. Alerts are personal budgets rather
+> than provider quotas.
+
 The screenshot is a useful signal that the product should have a dark, dense, analytical dashboard, but it should not be the final information model. The current example puts estimated cost too far in front and does not show whether sources are healthy or data is complete.
 
 ## Keep
@@ -34,7 +40,7 @@ Suggested navigation:
 - `Sources` — detection, paths, permissions, and parser diagnostics;
 - `Sessions` — drill down to a concrete session;
 - `Models` — compare models and token mix;
-- `Alerts` — quotas, thresholds, notification history, and quiet hours;
+- `Alerts` — personal budgets, thresholds, notification history, and quiet hours;
 - `Settings` — refresh, privacy, pricing, export/import, startup behavior, and updates.
 
 ### 4. A chart that explains rather than decorates
@@ -66,9 +72,9 @@ The Settings/Alerts screen should make the monitoring contract explicit:
 Alerts
 [x] Enable usage alerts
 
-Daily quota       [ 100M ] [tokens v]   [x] Enabled
-Weekly quota      [ 500M ] [tokens v]   [x] Enabled
-Monthly quota     [ 2.0B ] [tokens v]   [x] Enabled
+Daily budget      [ 100M ] [tokens v]   [x] Enabled
+Weekly budget     [ 500M ] [tokens v]   [x] Enabled
+Monthly budget    [ 2.0B ] [tokens v]   [x] Enabled
 
 Notify at         [80%] [100%] [120%]
 [x] Use native desktop notifications
@@ -84,9 +90,9 @@ Automatic refresh            [Every 1 minute v]
 [ Refresh now ]              Last scan: 12:34:05
 ```
 
-V1 should use one global quota across all enabled sources. Per-harness and per-project scopes are useful later, but they can make the first settings screen noisy and make alert behavior harder to explain.
+V1 should use one global personal budget across all enabled sources. Per-harness and per-project scopes are useful later, but they can make the first settings screen noisy and make alert behavior harder to explain.
 
-Every notification should include the period, current amount, quota, threshold, last scan time, and a `View details` action. Clicking it opens the relevant dashboard period rather than only opening the application home screen.
+Every notification should include the period, current amount, personal budget, threshold, last scan time, and a `View details` action. Clicking it opens the relevant dashboard period rather than only opening the application home screen.
 
 ## Update settings
 

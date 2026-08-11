@@ -45,16 +45,18 @@ An adapter must not write directly to SQLite. It produces canonical events; the 
 - Scans must be cancellable and pauseable for large logs.
 - Sleep/resume and application restart trigger a reconciliation scan.
 
-## Candidate v1 adapters
+## Implemented and candidate adapters
 
-1. Codex local session/usage records.
-2. Copilot local usage/session records.
-3. Claude Code local session/usage records.
+1. Current-user Codex local session/usage records.
+2. Current-user Claude Code assistant-message usage records; stored file IDs
+   are opaque and neither content nor project/file paths are persisted.
+3. Experimental current-user GitHub Copilot `session.shutdown` cumulative
+   snapshots, replacing rather than summing the prior snapshot per session/model.
 4. OpenCode local usage/session records as a follow-on candidate.
 
-These are adapter priorities, not confirmed paths. Each requires an anonymized
-fixture pack and a live read-only probe on the supported platforms before
-implementation is committed. The official current scope is in
+The first three have implementation and fixture evidence, but not all-platform
+runtime validation. Each requires a live read-only probe on a claimed supported
+platform before it is described as platform-validated. The official scope is in
 [`../docs/product-requirements.md`](../docs/product-requirements.md).
 
 ## Unavoidable edge cases

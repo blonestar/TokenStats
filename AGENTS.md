@@ -2,15 +2,47 @@
 
 ## Current repository state
 
-- The workspace is currently planning-only, but it is now initialized as a Git
-  repository on the `main` branch.
-- The baseline project material is `README.md`, `.gitignore`, `AGENTS.md`, the
-  official documentation in `docs/`, and the planning documents in `ideas/`.
+- The workspace is initialized as a Git repository on the `main` branch.
+- The implemented Fedora/Electron slice uses `src/main/`, `src/preload/`,
+  `src/renderer/`, `src/shared/`, and `tests/`; official documentation remains
+  in `docs/`, while `ideas/` remains exploratory.
 - `docs/` is the canonical project documentation folder. `ideas/` is reserved
   for brainstorming, unresolved questions, and exploratory proposals.
-- There is no application implementation, package manifest, build script, test
-  suite, CI workflow, or release workflow yet. Do not infer any of these from
-  the architecture proposals or from the existence of a GitHub remote.
+- `package.json` provides `pnpm dev`, `pnpm test`, `pnpm typecheck`, `pnpm build`,
+  `pnpm package:unpacked`, `pnpm package:linux`, and the macOS-only
+  `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
+  `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
+  arm64 runner validates the host, binaries/native module, ad-hoc signature, and
+  isolated launch before uploading an internal ZIP plus SHA-256 manifest; it has
+  not been pushed or run. There is no CI, release workflow, updater,
+  published release, or cross-platform validation yet.
+- The Codex parser is `codex-jsonl-v2`: it ingests only per-event
+  `last_token_usage`, tracks bounded `turn_context.payload.model` metadata,
+  preserves stable event IDs, and resets only Codex cursors when a parser
+  version change requires metadata backfill. SQLite schema version 2 adds the
+  non-content `usage_events.model` field; schema version 3 replaces any stored
+  Claude file references with opaque identifiers.
+- Current-user scanning covers Codex `~/.codex/sessions`, Claude Code
+  `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and experimental GitHub Copilot
+  `${COPILOT_HOME:-~/.copilot}/session-state`. Claude accepts assistant-message
+  usage only and uses opaque file IDs, not content or paths. Copilot keeps the
+  latest persisted `session.shutdown` cumulative snapshot per session/model and
+  replaces, rather than sums, a prior snapshot; a missing root is normal.
+- The SQLite database is under Electron `userData`, so both source discovery
+  and retained application data are isolated per OS user. Rescans are
+  idempotent; history is cumulative until an explicit future deletion feature.
+- The renderer uses `chart.js` and `react-chartjs-2` for source-and-model-
+  separated Line/Bar trends. Dashboard IPC accepts `today`, `yesterday`,
+  `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, or `last6Months`; the last
+  period groups trends by month, and all boundaries use the current OS user's
+  local timezone.
+- `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
+  provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
+  Standard API list prices for Codex-relevant OpenAI models. The dashboard
+  calculates and labels a query-time Codex API-equivalent estimate with
+  snapshot/date and coverage metadata; Claude Code, Copilot, and other
+  providers remain unknown until their own pricing semantics are reviewed.
+  Subscription usage must not be presented as an observed bill.
 - Treat `docs/` documents as the source of accepted project documentation only
   when their status and evidence support that claim. Treat `ideas/README.md`,
   `ideas/00-open-questions.md`, and the numbered documents in `ideas/` as
@@ -67,8 +99,8 @@ the validation spikes described in `docs/`, is:
 - GitHub/GitHub Actions with CI, tag-driven builds, checksums, and draft
   releases once implementation and release work are authorized.
 
-These are proposals, not implementation constraints, until the repository
-contains the corresponding code and verified tooling.
+Except for the current Fedora multi-source slice, these are proposals rather than evidence
+that the corresponding feature exists.
 
 ## Before making changes
 
@@ -82,10 +114,22 @@ contains the corresponding code and verified tooling.
 
 ## Verification and handoff
 
-- There are currently no executable project checks. Do not claim that builds,
-  tests, linting, packaging, or releases passed until those checks exist and
-  have actually been run.
-- When implementation begins, add the real install, development, test, lint,
-  build, packaging, and release commands here as soon as they become stable.
+- The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
+  and `pnpm package:linux`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
+  `assets/icons/TokenStats.icns` from committed PNG sources with
+  `scripts/create-macos-icon.sh`. Do not claim any command passed until
+  actually run. The packaged AppImage has been started and its multi-source
+  scan exercised on the current Fedora/KDE host: Codex usage was imported, the
+  current Claude root was discovered but yielded no usage events, and Copilot
+  was not found. That is not clean-machine,
+  cross-platform, published-release, or CI evidence. Fedora cannot validate
+  the ad-hoc-signed, unnotarized macOS artifact; a real Apple Silicon workflow
+  run remains required. This internal validation is not public distribution:
+  Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
+  gate remain required.
+- The current suite covers Codex, Claude Code, Copilot, database, and
+  orchestration behavior: per-event usage, model grouping/fallback,
+  parser-version backfill, period grouping, incremental cursors,
+  idempotency/snapshot replacement, malformed records, and privacy columns.
 - Keep the distinction clear between a local change, a committed/pushed
   change, a merged change, a released artifact, and verified live behavior.

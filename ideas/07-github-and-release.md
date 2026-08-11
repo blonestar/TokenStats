@@ -2,8 +2,11 @@
 
 ## Repository shape
 
-This remains a release-workflow proposal. No workflow exists yet. The current
-official release policy is in
+This remains a release-workflow proposal. A manual macOS arm64 validation
+workflow now exists locally but has not been pushed or run on a real Apple
+Silicon runner; CI,
+preview matrices, and release workflows do not exist. The current official
+release policy is in
 [`../docs/platform-packaging-and-release.md`](../docs/platform-packaging-and-release.md).
 
 Working structure:
@@ -68,10 +71,12 @@ The first release can be unsigned while the pipeline is being validated, but sta
 
 ## Artifacts by platform
 
-Initial targets:
+Current platform sequence:
 
-- Linux x64: `.AppImage`, optionally `.rpm` and `.deb`;
-- macOS: arm64 and x64 `.dmg`;
+- Fedora x64: `.AppImage`, optionally `.rpm` after clean-install evidence;
+- macOS arm64: unsigned `.zip` only for the first internal validation, then a
+  signed/notarized `.dmg` for production-ready direct distribution;
+- macOS x64 and Ubuntu timing remain open;
 - later Windows x64: `.exe` installer and/or `.msix`.
 
 Every artifact has a name containing version/platform/architecture and a matching checksum. Do not upload only an unversioned “latest” file.

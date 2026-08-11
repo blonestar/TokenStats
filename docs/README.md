@@ -1,16 +1,29 @@
-Status: Proposed
+Status: Implemented Fedora slice; remaining direction proposed
 
 Audience: contributors, product reviewers, architecture reviewers, and users evaluating project direction
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-11
 
 # TokenStats documentation
 
-This folder is the canonical home for official TokenStats documentation. The
-current documents describe a proposed product and architecture; they do not
-describe an implemented application.
+This folder is the canonical home for official TokenStats documentation. A
+narrow Fedora/Electron slice is implemented, including current-user Codex,
+Claude Code, and experimental GitHub Copilot scanning, model-aware retained
+usage, period views, a real Line/Bar dashboard, and a Codex estimated
+API-equivalent USD cost with pricing date/coverage metadata. The packaged Fedora
+AppImage and multi-source scan have local runtime evidence: Codex usage was
+imported, the current Claude root was found but yielded no usage events, and
+Copilot was not found. Claude/Copilot usage parsing therefore still has fixture
+evidence rather than live usage evidence. Most
+behavior described by these documents remains proposed rather than implemented.
+
+The implemented current-user source set is Codex, Claude Code, and experimental
+GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
+tracked in the open-question matrix. The local-only macOS arm64 workflow has
+not been pushed or run; its ad-hoc-signed, unnotarized package validation is
+internal-only and not public-distribution evidence.
 
 ## Documentation structure
 
@@ -76,6 +89,7 @@ and verification evidence exists.
 - [Product requirements](product-requirements.md)
 - [Architecture overview](architecture-overview.md)
 - [Data, privacy, and portability](data-privacy-and-portability.md)
+- [API pricing catalog](api-pricing.md)
 - [Platform, packaging, and release](platform-packaging-and-release.md)
 - [Versioning and update channels](versioning-and-update-channels.md)
 - [UI, window, tray, and alerts](ui-window-tray-alerts.md)

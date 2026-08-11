@@ -1,8 +1,16 @@
 # 05 — Roadmap, risks, and acceptance criteria
 
+> **Current direction:** the Fedora x64 slice includes current-user Codex,
+> Claude Code, and experimental GitHub Copilot adapters. An early macOS arm64
+> validation remains a later manual step.
+> The reviewed Codex pricing snapshot and query-time estimate are implemented;
+> provider expansion, persistence, and alerts remain follow-on work. This note
+> retains older alternatives for rationale only.
+
 ## Phase 0 — prove the formats
 
-- collect redacted fixtures for the first 2–4 harnesses;
+- keep redacted fixtures for all implemented adapters and add fixtures for
+  follow-on adapters;
 - confirm which usage fields actually exist and what “token cost” means for each harness;
 - run the Electron vs Tauri packaging spike;
 - define the canonical event and event fingerprint.
@@ -10,18 +18,19 @@
 ## Phase 1 — vertical slice
 
 - packaged desktop shell;
-- one adapter;
+- current-user Codex, Claude Code, and experimental GitHub Copilot adapters;
 - SQLite schema and migrations;
 - first scan, deduplication, and token dashboard;
 - export/import round trip.
 
 ## Phase 2 — useful daily application
 
-- remaining priority adapters;
+- early macOS arm64 support spike;
 - watcher plus periodic reconciliation;
 - source health and diagnostics;
 - daily/model/harness breakdown;
-- observed vs estimated cost and pricing snapshots.
+- observed tokens; the implemented Codex estimate; provider expansion and
+  persisted pricing snapshots remain follow-on work.
 - daily/weekly/monthly alert rules;
 - native notifications, tray mode, 60-second refresh, and `Refresh now`;
 - `Start automatically` and `Start minimized` settings.
@@ -29,7 +38,7 @@
 ## Phase 3 — distribution
 
 - Linux AppImage, RPM, and DEB;
-- macOS arm64/x64 DMG;
+- macOS arm64 DMG; macOS x64 later unless evidence changes priority;
 - release notes, checksums, SBOM/provenance;
 - automated update checks, channel feeds, background downloads, and restart-to-install;
 - signing/notarization once the release channel is stable;
@@ -46,7 +55,8 @@
 
 ## MVP acceptance criteria
 
-- the user does not need to enter a path manually for the three priority adapters;
+- the user does not need to enter a path manually for the implemented
+  current-user adapter roots;
 - every imported event has provenance and a deduplication identity;
 - refresh never duplicates history;
 - the dashboard clearly separates observed tokens from estimated cost;
@@ -76,8 +86,7 @@ internal/private line, and the official requirements are maintained in
 ## Decisions to confirm before implementation
 
 - whether Electron overhead is acceptable for a desktop monitor;
-- whether the three priority adapters can be validated from real fixture
-  availability;
+- whether the implemented adapters can be validated from live runtime probes;
 - whether AppImage or a distro package is the Linux default;
 - whether exports include full paths or only redacted source labels;
 - whether the application starts automatically in the tray;

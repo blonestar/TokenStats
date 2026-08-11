@@ -1,8 +1,9 @@
 # TokenStats — brainstorming and proposals
 
-Status: ideation and proposal only. The repository is initialized locally, but
-there is no application implementation, release workflow, or external-service
-connection yet.
+Status: ideation and proposal material. A Fedora slice with current-user Codex,
+Claude Code, and experimental GitHub Copilot scanning now exists, but there is
+no release workflow or external-service connection; ideas remain
+non-authoritative until recorded in `/docs`.
 
 The official project documentation is in [`../docs/`](../docs/README.md).
 This folder is intentionally different: it contains brainstorming, unresolved

@@ -1,8 +1,15 @@
 # 10 — Custom window shell and tray behavior
 
-## Product decision
+> **Superseded decision:** the custom frameless/translucent shell is no longer
+> decided. Visual polish matters from the first slice, but this shell remains
+> an open option and must not block data correctness. See
+> [`00-open-questions.md`](00-open-questions.md) Q-017.
 
-TokenStats should use a custom desktop shell rather than the standard OS window frame and in-window menu bar.
+## Earlier product proposal
+
+This note previously proposed a custom desktop shell rather than the standard
+OS window frame and in-window menu bar. It is retained as a design option, not
+an accepted requirement.
 
 The shell should feel like a focused utility:
 

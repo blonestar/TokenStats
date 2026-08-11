@@ -8,8 +8,9 @@ Last reviewed: 2026-08-10
 
 # TokenStats versioning and update channels
 
-This document defines the proposed version and update policy. No application
-version metadata, update feed, updater, or release artifact exists yet.
+This document defines the proposed version and update policy. Local application
+version metadata and an unpacked Fedora build now exist, but no update feed,
+updater, or released artifact exists yet.
 
 ## Starting version and readiness meaning
 
@@ -230,5 +231,6 @@ platform evidence and a corresponding documentation status update.
 The active channel decision is recorded in
 [Q-021](../ideas/00-open-questions.md): Stable and Nightly are sufficient, with
 `Check now` as an action rather than a channel. Remaining questions include
-exact target OS versions, signing timing, and when the private `0.1.x` build is
+exact target OS versions ([Q-026](../ideas/00-open-questions.md)), signing timing
+([Q-023](../ideas/00-open-questions.md)), and when the private `0.1.x` build is
 ready for the explicit `v0.2.0` milestone.
