@@ -15,13 +15,23 @@ dashboard use, and logical import/export.
 
 The implemented Fedora slice has a local SQLite database for sources, cursors,
 scan runs, and usage events, but no portability/export implementation yet.
-Schema version 2 stores bounded model identifiers alongside token metadata, and
-schema version 3 converts Claude file references to opaque IDs. Claude imports
+Schema version 2 stores bounded model identifiers alongside token metadata,
+schema version 3 converts Claude file references to opaque IDs, schema version
+4 adds a non-content inclusion flag, and schema version 5 stores non-content
+OTel file metadata. Claude imports
 assistant-message usage only and stores no content or project/file path. The
 `codex-jsonl-v2` migration path resets only Codex cursors, rescans read-only
 source records, and fills missing model metadata without changing event IDs or
 counting duplicate rows as new imports. Copilot reconciles each persisted
-session/model to its latest shutdown snapshot rather than summing snapshots.
+session/model to its latest shutdown snapshot rather than summing snapshots;
+while a CLI session is active, it can use the persisted assistant-message
+output-token total with input/cache fields unknown. When the user opts into the
+Copilot CLI OTel file exporter, TokenStats reads only complete `chat` span
+metadata and token attributes, then suppresses the matching session-state
+fallback only after aggregate token equality. Missing or rotated OTel files
+retain their historical rows while resetting file tracking and re-evaluating
+the fallback. OTel prompt/response/tool/path attributes are ignored even if
+the exporter is configured to capture content.
 Application data lives under Electron `userData`; together with current-user
 source roots, this isolates data per OS user. The broader model below still
 requires migration and portability tests.
@@ -180,9 +190,10 @@ must not be converted into a pseudo-bill merely because a model price exists.
 
 Pricing is a versioned, explicit input rather than an untracked live lookup.
 The accepted version 1 catalog and schema live in `../pricing/`; the current
-runtime bundles that catalog and calculates a query-time Codex estimate without
-adding derived cost columns to `usage_events`. Dashboard responses include the
-matching snapshot metadata and event coverage. A snapshot includes:
+runtime bundles that catalog and calculates query-time Codex and complete
+Copilot estimates without adding derived cost columns to `usage_events`.
+Dashboard responses include the matching snapshot metadata and event coverage.
+A snapshot includes:
 
 - provider and model identifiers;
 - input, output, cached-input, cache-write, or other supported rates;
@@ -201,8 +212,10 @@ historical events retain the snapshot that explains their derived estimate.
 Keep this pricing catalog as versioned data rather than hard-coding rates in
 application code. It can be reviewed, checksummed, updated before a release,
 and carried forward as an auditable input without requiring a code change for
-every price revision. Provider-specific semantics for Claude Code, Copilot,
-Grok, and other sources remain unknown until reviewed snapshots are added.
+every price revision. Provider-specific semantics for Claude Code, Grok, and
+other sources remain unknown until reviewed snapshots are added; GitHub Copilot
+has a reviewed provider-reference snapshot, while unsupported Copilot surfaces
+remain unknown.
 
 Snapshot maintenance links to the official pricing sources for the supported
 providers, for example [OpenAI API pricing](https://developers.openai.com/api/docs/pricing),

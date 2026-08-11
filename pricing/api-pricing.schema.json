@@ -119,7 +119,9 @@
             "quantity": { "type": "integer", "minimum": 1 }
           }
         },
-        "pricingBasis": { "const": "api_list_price" },
+        "pricingBasis": {
+          "enum": ["api_list_price", "provider_reference_price"]
+        },
         "billingMode": {
           "enum": ["standard", "batch", "flex", "fast", "other"]
         },

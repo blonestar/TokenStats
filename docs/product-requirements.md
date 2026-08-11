@@ -32,19 +32,20 @@ The product is intended to answer:
 A narrow Fedora slice with current-user Codex, Claude Code, and experimental
 GitHub Copilot adapters is implemented. The packaged Fedora AppImage and
 multi-source scan have local runtime evidence: Codex usage was imported, the
-current Claude root was found but yielded no usage events, and Copilot was not
-found. Claude/Copilot usage parsing still has fixture rather than live usage
-evidence. Requirements
+current Claude root was found but yielded no usage events, and the current
+Copilot CLI session-state root yielded active output-token records. Complete
+Copilot shutdown reconciliation and pricing are implemented locally; clean
+packaged-artifact and cross-platform runtime evidence remains open. Requirements
 outside that evidenced slice remain planned until repository and runtime
 evidence supports a different status.
 
 The implemented dashboard currently answers token totals by source and model for
 `Today`, `Yesterday`, `This week`, `Last week`, `This month`, `Last month`, and
 `Last 6 months`, with hourly, daily, or monthly Line/Bar trends, exact model
-totals, session/event/day counts, category totals, source scan health, and a
-Codex estimated API-equivalent USD cost with snapshot/date and coverage. It
-does not yet implement project drilldown, budgets, tray behavior, export/import,
-or updates; non-Codex cost integrations remain planned.
+totals, session/event/day counts, category totals, source scan health, and
+estimated API-equivalent USD cost for Codex and complete Copilot snapshots with
+snapshot/date and coverage. It does not yet implement project drilldown,
+budgets, tray behavior, export/import, or updates.
 
 ## Target users
 
@@ -93,9 +94,9 @@ matrix:
 - an overview dashboard with observed tokens as the primary KPI;
 - input, output, cached-input, cache-write, reasoning, and total token fields
   whenever the source distinguishes them;
-- Codex estimated API-equivalent cost from a reviewed pricing snapshot, with a
-  visible coverage/date and `estimated` label; Claude Code, Copilot, Grok, and
-  other provider cost integrations remain follow-on work;
+- Codex and complete Copilot estimated API-equivalent costs from reviewed
+  pricing snapshots, with visible coverage/date and an `estimated` label;
+  incomplete provider records remain `unknown`;
 - a Sources/diagnostics surface for path status, parser version, scan age,
   permissions, warnings, and data gaps; manual source selection is not a
   v0.1 requirement;
@@ -119,7 +120,8 @@ The first scan imports safely available supported history. Canonical usage facts
 are retained cumulatively; current source rescans are idempotent, and no
 deletion UI exists yet. Disabling or forgetting a source must not silently
 delete retained history. Copilot is the exception to append-style ingestion:
-its latest persisted `session.shutdown` cumulative snapshot replaces the prior
+active CLI `assistant.message` output-token totals are provisional, and the
+latest persisted `session.shutdown` cumulative snapshot replaces the prior
 snapshot for the same session/model instead of being summed.
 
 ## Non-goals
@@ -239,7 +241,7 @@ These are planned acceptance criteria, not completed checks:
 | PRD-AC-01 | The first scan shows what was found, what was not found, and why. | Discovery and onboarding test. |
 | PRD-AC-02 | Current-user Codex, Claude Code, and experimental Copilot adapters import anonymized fixtures without prompt/response content; Claude also persists no project/file path. | Adapter fixture and privacy tests; platform claims need their own runtime evidence. |
 | PRD-AC-03 | Repeated scans and rotated files do not duplicate canonical events. | Cursor, fingerprint, and migration tests. |
-| PRD-AC-04 | After the first usage slice, the dashboard labels every Codex estimated cost with its pricing snapshot/date and coverage, while unsupported provider estimates remain unknown. | Pricing, dashboard, and accessibility tests. |
+| PRD-AC-04 | After the first usage slice, the dashboard labels every Codex and complete Copilot estimated cost with its pricing snapshot/date and coverage, while incomplete provider estimates remain unknown. | Pricing, dashboard, and accessibility tests. |
 | PRD-AC-05 | Unavailable, stale, permission-denied, unsupported, and disabled sources are distinguishable and actionable. | Source-health test. |
 | PRD-AC-06 | Daily, weekly, and monthly threshold crossings notify at most once per period and threshold, with last-scan caveats. | Alert boundary and notification test. |
 | PRD-AC-07 | The app continues a configured background scan while the window is hidden, and `Exit TokenStats` fully stops it. | Tray and lifecycle test on each target platform. |

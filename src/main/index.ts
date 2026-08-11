@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
-import type { ScanResult, ScanSourceResult, Warning } from '../shared/contracts'
+import type { ScanResult, ScanSourceResult, SourceStatus, Warning } from '../shared/contracts'
 import { PARSER_VERSION as CODEX_PARSER_VERSION, SOURCE_ID as CODEX_SOURCE_ID, scanCodex } from './codex'
 import { PARSER_VERSION as CLAUDE_PARSER_VERSION, SOURCE_ID as CLAUDE_SOURCE_ID, scanClaude } from './claude'
 import { PARSER_VERSION as COPILOT_PARSER_VERSION, SOURCE_ID as COPILOT_SOURCE_ID, scanCopilot } from './copilot'
@@ -12,7 +12,7 @@ let scanRunning = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
 const ZOOM_STEP = 0.1
-type Source = { sourceId: string; label: string; kind: ScanSourceResult['kind']; parserVersion: string; root: string; scan: (db: TokenDatabase, root: string) => { files: number; events: number; warnings: Warning[] } }
+type Source = { sourceId: string; label: string; kind: ScanSourceResult['kind']; parserVersion: string; root: string; scan: (db: TokenDatabase, root: string) => { files: number; events: number; warnings: Warning[]; status?: SourceStatus } }
 type ZoomShortcutInput = { type: string; key: string; code: string; control: boolean; meta: boolean; alt: boolean }
 type ZoomAction = 'in' | 'out' | 'reset'
 
@@ -31,15 +31,18 @@ export function nextZoomFactor(action: ZoomAction, current: number): number {
 }
 
 export function sourceRoot(override: string | undefined, fallback: string): string { return override && isAbsolute(override) ? override : fallback }
-export function currentSources(home = homedir(), env = process.env): Source[] { return [
+export function currentSources(home = homedir(), env = process.env): Source[] {
+  const copilotHome = sourceRoot(env.COPILOT_HOME, join(home, '.copilot'))
+  const copilotOtelFile = sourceRoot(env.COPILOT_OTEL_FILE_EXPORTER_PATH, join(copilotHome, 'otel', 'tokenstats.jsonl'))
+  return [
   { sourceId: CODEX_SOURCE_ID, label: 'Codex', kind: 'codex', parserVersion: CODEX_PARSER_VERSION, root: join(home, '.codex', 'sessions'), scan: scanCodex },
   { sourceId: CLAUDE_SOURCE_ID, label: 'Claude Code', kind: 'claude', parserVersion: CLAUDE_PARSER_VERSION, root: join(sourceRoot(env.CLAUDE_CONFIG_DIR, join(home, '.claude')), 'projects'), scan: scanClaude },
-  { sourceId: COPILOT_SOURCE_ID, label: 'GitHub Copilot', kind: 'copilot', parserVersion: COPILOT_PARSER_VERSION, root: join(sourceRoot(env.COPILOT_HOME, join(home, '.copilot')), 'session-state'), scan: scanCopilot }
+  { sourceId: COPILOT_SOURCE_ID, label: 'GitHub Copilot', kind: 'copilot', parserVersion: COPILOT_PARSER_VERSION, root: join(copilotHome, 'session-state'), scan: (db, root) => scanCopilot(db, root, copilotOtelFile) }
 ] }
 
 export function scanAllSources(db: TokenDatabase, sources = currentSources()): ScanResult {
   const results: ScanSourceResult[] = []; let filesScanned = 0; let eventsImported = 0; let warnings = 0
-  for (const source of sources) { const runId = db.beginScan(source.sourceId, source.kind, source.parserVersion); try { const result = source.scan(db, source.root); const status: ScanSourceResult['status'] = result.files > 0 ? 'success' : 'not found'; db.finishScan(runId, source.sourceId, { ...result, ok: true }); filesScanned += result.files; eventsImported += result.events; warnings += result.warnings.length; results.push({ sourceId: source.sourceId, label: source.label, kind: source.kind, status, filesScanned: result.files, eventsImported: result.events, warnings: result.warnings.length }) } catch { const sourceWarnings = [{ message: `${source.label} scan failed without storing source content.`, count: 1 }]; db.finishScan(runId, source.sourceId, { files: 0, events: 0, warnings: sourceWarnings, ok: false }); warnings += 1; results.push({ sourceId: source.sourceId, label: source.label, kind: source.kind, status: 'error', filesScanned: 0, eventsImported: 0, warnings: 1, error: 'Scan failed. Check source availability and try again.' }) } }
+  for (const source of sources) { const runId = db.beginScan(source.sourceId, source.kind, source.parserVersion); try { const result = source.scan(db, source.root); const status: ScanSourceResult['status'] = result.status ?? (result.files > 0 ? 'success' : 'not found'); const sourceOk = status !== 'error'; db.finishScan(runId, source.sourceId, { ...result, ok: sourceOk, status: sourceOk ? (status === 'success' ? 'healthy' : status) : 'error' }); filesScanned += result.files; eventsImported += result.events; warnings += result.warnings.length; results.push({ sourceId: source.sourceId, label: source.label, kind: source.kind, status, filesScanned: result.files, eventsImported: result.events, warnings: result.warnings.length, ...(sourceOk ? {} : { error: 'Scan failed. Check source availability and try again.' }) }) } catch { const sourceWarnings = [{ message: `${source.label} scan failed without storing source content.`, count: 1 }]; db.finishScan(runId, source.sourceId, { files: 0, events: 0, warnings: sourceWarnings, ok: false }); warnings += 1; results.push({ sourceId: source.sourceId, label: source.label, kind: source.kind, status: 'error', filesScanned: 0, eventsImported: 0, warnings: 1, error: 'Scan failed. Check source availability and try again.' }) } }
   return { ok: results.every((result) => result.status !== 'error'), filesScanned, eventsImported, warnings, sources: results }
 }
 

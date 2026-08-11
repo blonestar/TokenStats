@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readdirSync, readFileSync, lstatSync } from 'node:fs'
+import { closeSync, lstatSync, openSync, readSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import type { Warning } from '../shared/contracts'
 import type { TokenDatabase, UsageEvent } from './database'
@@ -7,8 +7,11 @@ import type { TokenDatabase, UsageEvent } from './database'
 const SOURCE_ID = 'codex-current-user'
 const PARSER_VERSION = 'codex-jsonl-v2'
 const MAX_WARNINGS = 20
+const READ_CHUNK_BYTES = 64 * 1024
+const WRITE_BATCH_SIZE = 500
 const UNKNOWN_MODEL = 'Unknown'
 type Json = Record<string, unknown>
+type CodexLine = { line: string; offset: number; nextOffset: number }
 const safeNumber = (value: unknown): number | null => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null
 const text = (value: unknown): string | null => typeof value === 'string' && value.length <= 200 ? value : null
 const modelName = (value: unknown): string | null => typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 100 ? value.trim() : null
@@ -37,35 +40,74 @@ export function extractEvent(line: string, relativeFile: string, byteOffset: num
   return { ...event, eventId, sourceId: SOURCE_ID, sessionId, occurredAt: new Date(timestamp).toISOString(), relativeFile, byteOffset, parserVersion: PARSER_VERSION, model: modelName(model) ?? UNKNOWN_MODEL }
 }
 
-function modelBefore(content: Buffer, cursor: number): string {
-  let position = 0; let model = UNKNOWN_MODEL
-  while (position < cursor) {
-    const end = content.indexOf(10, position)
-    if (end < 0 || end >= cursor) break
-    const line = content.subarray(position, end).toString('utf8').trim(); position = end + 1
-    if (!line) continue
-    try { model = extractModel(line) ?? model } catch { /* malformed context is ignored */ }
+function* readLines(file: string): Generator<CodexLine> {
+  const descriptor = openSync(file, 'r')
+  const chunk = Buffer.allocUnsafe(READ_CHUNK_BYTES)
+  let readOffset = 0
+  let pending = Buffer.alloc(0)
+  let pendingOffset = 0
+  try {
+    while (true) {
+      const bytesRead = readSync(descriptor, chunk, 0, chunk.length, readOffset)
+      if (bytesRead === 0) break
+      const chunkData = chunk.subarray(0, bytesRead)
+      const merged = pending.length > 0 ? Buffer.concat([pending, chunkData]) : chunkData
+      let lineStart = 0
+      while (true) {
+        const newline = merged.indexOf(10, lineStart)
+        if (newline < 0) break
+        const offset = pendingOffset + lineStart
+        yield { line: merged.subarray(lineStart, newline).toString('utf8').trim(), offset, nextOffset: pendingOffset + newline + 1 }
+        lineStart = newline + 1
+      }
+      if (lineStart < merged.length) {
+        pending = Buffer.from(merged.subarray(lineStart))
+        pendingOffset += lineStart
+      } else {
+        pending = Buffer.alloc(0)
+        pendingOffset = readOffset + bytesRead
+      }
+      readOffset += bytesRead
+    }
+  } finally {
+    closeSync(descriptor)
   }
-  return model
 }
 
 export function scanFile(db: TokenDatabase, root: string, file: string, warnings: Warning[]): number {
   const relativeFile = relative(root, file).replaceAll('\\', '/')
-  const content = readFileSync(file)
+  const fileSize = statSync(file).size
   let cursor = db.getCursor(SOURCE_ID, relativeFile)
-  if (cursor > content.length) cursor = 0
-  let model = modelBefore(content, cursor)
-  let position = cursor; const events: UsageEvent[] = []
-  while (position < content.length) {
-    const end = content.indexOf(10, position)
-    if (end < 0) break
-    const line = content.subarray(position, end).toString('utf8').trim()
-    const offset = position; position = end + 1
-    if (!line) continue
-    try { model = extractModel(line) ?? model; const event = extractEvent(line, relativeFile, offset, model); if (event) events.push(event) }
-    catch { if (warnings.length < MAX_WARNINGS) warnings.push({ message: 'Skipped malformed or invalid Codex usage record.', count: 1 }) }
+  if (cursor === fileSize) return 0
+  if (cursor > fileSize) cursor = 0
+  let model = UNKNOWN_MODEL
+  let position = 0
+  let imported = 0
+  let events: UsageEvent[] = []
+  for (const record of readLines(file)) {
+    position = record.nextOffset
+    if (record.offset < cursor) {
+      if (record.line.includes('turn_context')) {
+        try { model = extractModel(record.line) ?? model } catch { /* malformed context is ignored */ }
+      }
+      continue
+    }
+    if (!record.line) continue
+    try {
+      if (record.line.includes('turn_context')) model = extractModel(record.line) ?? model
+      if (!record.line.includes('event_msg')) continue
+      const event = extractEvent(record.line, relativeFile, record.offset, model)
+      if (event) events.push(event)
+      if (events.length >= WRITE_BATCH_SIZE) {
+        imported += db.writeFile(SOURCE_ID, relativeFile, position, events)
+        events = []
+      }
+    } catch {
+      if (warnings.length < MAX_WARNINGS) warnings.push({ message: 'Skipped malformed or invalid Codex usage record.', count: 1 })
+    }
   }
-  return db.writeFile(SOURCE_ID, relativeFile, position, events)
+  imported += db.writeFile(SOURCE_ID, relativeFile, position, events)
+  return imported
 }
 
 function rolloutFiles(root: string): string[] {

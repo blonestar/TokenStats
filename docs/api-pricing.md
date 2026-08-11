@@ -1,4 +1,4 @@
-Status: Accepted data standard; Codex runtime cost integration implemented
+Status: Accepted data standard; Codex and complete-snapshot Copilot runtime cost integration implemented
 
 Audience: maintainers, adapter authors, and contributors implementing cost estimates
 
@@ -8,16 +8,18 @@ Last reviewed: 2026-08-11
 
 # API pricing catalog
 
-TokenStats stores public API prices as reviewed, versioned data instead of
-looking them up at runtime. The initial catalog contains OpenAI models relevant
-to Codex. Later snapshots can add Anthropic/Claude Code, GitHub Copilot,
-xAI/Grok, and other providers without changing the version 1 structure.
+TokenStats stores public provider prices as reviewed, versioned data instead of
+looking them up at runtime. The catalog contains OpenAI models relevant to
+Codex and GitHub Copilot per-token reference rates. Later snapshots can add
+additional provider or plan-specific rates without changing the version 1
+structure.
 
-The Electron main process bundles and reads the catalog for the Codex dashboard.
-The current slice calculates a query-time estimated API-equivalent USD amount,
-exposes pricing snapshot/date and event coverage, and fails closed to `unknown`
-when an event cannot be priced. Claude Code, GitHub Copilot, xAI/Grok, and other
-providers are catalog extensions and runtime integrations still to be reviewed.
+The Electron main process bundles and reads the catalog for the Codex and
+GitHub Copilot dashboards. The current slice calculates a query-time estimated
+API-equivalent USD amount for complete token snapshots, exposes pricing
+snapshot/date and event coverage, and fails closed to `unknown` when an event
+cannot be priced. Active Copilot CLI snapshots with output-only data remain
+unpriced until a complete shutdown snapshot is persisted.
 
 ## Version 1 rules
 
@@ -48,10 +50,12 @@ than an improvised field.
 
 ## Cost semantics
 
-The current entries are direct-provider Standard API list prices. They exclude
-subscription charges, provider credits or discounts, tool-call fees, regional
-processing uplifts, third-party hosting, and Batch/Flex/Fast modes. A cost
-derived from local Codex, Claude Code, Copilot, or Grok usage must therefore be
+The OpenAI entries are direct-provider Standard API list prices. The GitHub
+Copilot entry is a provider reference-rate snapshot: all prices are per million
+tokens and GitHub states that one AI credit equals $0.01 USD. Both exclude
+subscription allowances, provider credits or discounts, tool-call fees,
+regional processing uplifts, third-party hosting, and unsupported billing
+variants. A cost derived from local Codex or Copilot usage must therefore be
 shown as an **estimated API-equivalent cost**, not an observed bill.
 
 Adapters must also establish whether cached, cache-write, and reasoning counts
@@ -67,3 +71,14 @@ and the linked official model pages recorded in the catalog. It includes the
 GPT-5.6 Sol, Terra, and Luna family, GPT-5.5, GPT-5.4, and GPT-5.3-Codex. For
 models whose official documentation applies long-context pricing above 272,000
 input tokens, the catalog stores separate short- and long-context rates.
+
+## Current GitHub Copilot snapshot
+
+The `github-copilot-2026-08-11` snapshot was checked on 2026-08-11 against
+the [official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
+It stores the OpenAI, Anthropic, Google, GitHub fine-tuned, Microsoft, xAI,
+and Moonshot model tables shown there, including their long-context tiers.
+Claude Sonnet 5 is recorded with the promotional rate and its stated
+2026-08-31 end date in the tier note. Copilot code completions and next-edit
+suggestions are excluded because GitHub documents a separate counting
+mechanism for them.

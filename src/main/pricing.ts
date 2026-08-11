@@ -4,6 +4,7 @@ import type { UsageEvent } from './database'
 import type { CostEstimate, PricingSnapshotInfo } from '../shared/contracts'
 
 export const ACTIVE_SNAPSHOT_ID = 'openai-codex-2026-08-11'
+export const COPILOT_SNAPSHOT_ID = 'github-copilot-2026-08-11'
 
 type PricingRates = {
   inputTokens?: number
@@ -26,13 +27,14 @@ type PricingSnapshot = {
 }
 type PricingCatalog = { format: string; formatVersion: number; snapshots: PricingSnapshot[] }
 type PricingEvent = Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens'>
-type MutableCost = { amountUsd: number; pricedEvents: number; totalEvents: number; snapshotIds: Set<string> }
+type MutableCost = { amountUsd: number; pricedEvents: number; totalEvents: number; snapshotIds: Set<string>; pricingSnapshotIds: Set<string> }
 
 const pricingCatalog = catalog as PricingCatalog
 
-function activeSnapshot(): PricingSnapshot | undefined {
+function snapshotForSource(sourceId: string): PricingSnapshot | undefined {
   if (pricingCatalog.format !== 'tokenstats-api-pricing' || pricingCatalog.formatVersion !== 1) return undefined
-  return pricingCatalog.snapshots.find((snapshot) => snapshot.id === ACTIVE_SNAPSHOT_ID)
+  const snapshotId = sourceId === CODEX_SOURCE_ID ? ACTIVE_SNAPSHOT_ID : sourceId === 'copilot-current-user' ? COPILOT_SNAPSHOT_ID : null
+  return snapshotId ? pricingCatalog.snapshots.find((snapshot) => snapshot.id === snapshotId) : undefined
 }
 
 function snapshotInfo(snapshot: PricingSnapshot): PricingSnapshotInfo {
@@ -53,6 +55,11 @@ function modelFor(snapshot: PricingSnapshot, modelId: string): PricingModel | un
   return snapshot.models.find((model) => model.matchIds.includes(modelId))
 }
 
+function snapshotForEvent(event: PricingEvent): PricingSnapshot | undefined {
+  const snapshot = snapshotForSource(event.sourceId)
+  return snapshot && modelFor(snapshot, event.model) ? snapshot : undefined
+}
+
 function tierFor(model: PricingModel, inputTokens: number): PricingTier | undefined {
   return model.tiers.find((tier) => (tier.minimumInputTokens === undefined || inputTokens >= tier.minimumInputTokens) && (tier.maximumInputTokens === undefined || inputTokens <= tier.maximumInputTokens))
 }
@@ -60,8 +67,8 @@ function tierFor(model: PricingModel, inputTokens: number): PricingTier | undefi
 export type EventCost = { amountUsd: number; snapshotId: string }
 
 export function estimateEventCost(event: PricingEvent): EventCost | null {
-  const snapshot = activeSnapshot()
-  if (!snapshot || snapshot.provider !== 'openai' || snapshot.product !== 'codex' || snapshot.currency !== 'USD' || event.sourceId !== CODEX_SOURCE_ID) return null
+  const snapshot = snapshotForSource(event.sourceId)
+  if (!snapshot || snapshot.currency !== 'USD') return null
   const model = modelFor(snapshot, event.model)
   const inputTokens = validCount(event.inputTokens, true)
   const outputTokens = validCount(event.outputTokens, true)
@@ -83,7 +90,7 @@ export function estimateEventCost(event: PricingEvent): EventCost | null {
 }
 
 function emptyAggregate(totalEvents = 0): MutableCost {
-  return { amountUsd: 0, pricedEvents: 0, totalEvents, snapshotIds: new Set<string>() }
+  return { amountUsd: 0, pricedEvents: 0, totalEvents, snapshotIds: new Set<string>(), pricingSnapshotIds: new Set<string>() }
 }
 
 export function costKey(sourceId: string, model: string): string { return `${sourceId}\u0000${model}` }
@@ -96,7 +103,8 @@ function publicEstimate(aggregate: MutableCost): CostEstimate {
     coverage: aggregate.pricedEvents === 0 ? 'none' : aggregate.pricedEvents === aggregate.totalEvents ? 'complete' : 'partial',
     pricedEvents: aggregate.pricedEvents,
     totalEvents: aggregate.totalEvents,
-    snapshotIds: [...aggregate.snapshotIds].sort()
+    snapshotIds: [...aggregate.snapshotIds].sort(),
+    pricingSnapshotIds: [...aggregate.pricingSnapshotIds].sort()
   }
 }
 
@@ -106,12 +114,17 @@ export function summarizeCosts(events: readonly PricingEvent[]): CostSummary {
   const total = emptyAggregate()
   const bySeries = new Map<string, MutableCost>()
   const snapshots = new Map<string, PricingSnapshotInfo>()
-  const snapshot = activeSnapshot()
   for (const event of events) {
     total.totalEvents += 1
     const key = costKey(event.sourceId, event.model)
     const series = bySeries.get(key) ?? emptyAggregate()
     series.totalEvents += 1
+    const pricingSnapshot = snapshotForEvent(event)
+    if (pricingSnapshot) {
+      total.pricingSnapshotIds.add(pricingSnapshot.id)
+      series.pricingSnapshotIds.add(pricingSnapshot.id)
+      snapshots.set(pricingSnapshot.id, snapshotInfo(pricingSnapshot))
+    }
     const estimate = estimateEventCost(event)
     if (estimate) {
       total.amountUsd += estimate.amountUsd
@@ -120,6 +133,7 @@ export function summarizeCosts(events: readonly PricingEvent[]): CostSummary {
       series.amountUsd += estimate.amountUsd
       series.pricedEvents += 1
       series.snapshotIds.add(estimate.snapshotId)
+      const snapshot = pricingCatalog.snapshots.find((item) => item.id === estimate.snapshotId)
       if (snapshot) snapshots.set(snapshot.id, snapshotInfo(snapshot))
     }
     bySeries.set(key, series)

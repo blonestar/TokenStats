@@ -208,6 +208,225 @@
         }
       ],
       "notes": "Direct OpenAI Standard API list prices for text tokens. Subscription charges, tool-call fees, regional processing uplifts, Batch/Flex/Fast pricing, and third-party hosting are excluded."
+    },
+    {
+      "id": "github-copilot-2026-08-11",
+      "provider": "github",
+      "product": "copilot",
+      "verifiedAt": "2026-08-11",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "provider_reference_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "github-copilot-models-and-pricing",
+          "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+          "retrievedAt": "2026-08-11"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-5-mini",
+          "matchIds": ["gpt-5-mini"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.25, "cachedInputTokens": 0.025, "outputTokens": 2 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.3-codex",
+          "matchIds": ["gpt-5.3-codex"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 1.75, "cachedInputTokens": 0.175, "outputTokens": 14 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.4",
+          "matchIds": ["gpt-5.4"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": { "inputTokens": 2.5, "cachedInputTokens": 0.25, "outputTokens": 15 } },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "outputTokens": 22.5 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.4-mini",
+          "matchIds": ["gpt-5.4-mini"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.75, "cachedInputTokens": 0.075, "outputTokens": 4.5 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.4-nano",
+          "matchIds": ["gpt-5.4-nano"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.2, "cachedInputTokens": 0.02, "outputTokens": 1.25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.5",
+          "matchIds": ["gpt-5.5"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "outputTokens": 30 } },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": { "inputTokens": 10, "cachedInputTokens": 1, "outputTokens": 45 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.6-luna",
+          "matchIds": ["gpt-5.6-luna"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 200000, "rates": { "inputTokens": 0.2, "cachedInputTokens": 0.02, "cacheWriteInputTokens": 0.25, "outputTokens": 1.2 } },
+            { "id": "long-context", "minimumInputTokens": 200001, "rates": { "inputTokens": 0.4, "cachedInputTokens": 0.04, "cacheWriteInputTokens": 0.5, "outputTokens": 1.8 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.6-sol",
+          "matchIds": ["gpt-5.6-sol"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 30 } },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": { "inputTokens": 10, "cachedInputTokens": 1, "cacheWriteInputTokens": 12.5, "outputTokens": 45 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-5.6-terra",
+          "matchIds": ["gpt-5.6-terra"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": { "inputTokens": 2, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 2.5, "outputTokens": 12 } },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": { "inputTokens": 4, "cachedInputTokens": 0.4, "cacheWriteInputTokens": 5, "outputTokens": 18 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-haiku-4.5",
+          "matchIds": ["claude-haiku-4.5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 1, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 1.25, "outputTokens": 5 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-4",
+          "matchIds": ["claude-sonnet-4"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 3, "cachedInputTokens": 0.3, "cacheWriteInputTokens": 3.75, "outputTokens": 15 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-4.5",
+          "matchIds": ["claude-sonnet-4.5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 3, "cachedInputTokens": 0.3, "cacheWriteInputTokens": 3.75, "outputTokens": 15 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-4.6",
+          "matchIds": ["claude-sonnet-4.6"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 3, "cachedInputTokens": 0.3, "cacheWriteInputTokens": 3.75, "outputTokens": 15 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-4.5",
+          "matchIds": ["claude-opus-4.5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-4.6",
+          "matchIds": ["claude-opus-4.6"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-4.7",
+          "matchIds": ["claude-opus-4.7"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-4.8",
+          "matchIds": ["claude-opus-4.8"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-5",
+          "matchIds": ["claude-opus-5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 5, "cachedInputTokens": 0.5, "cacheWriteInputTokens": 6.25, "outputTokens": 25 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-5",
+          "matchIds": ["claude-sonnet-5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 2, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 2.5, "outputTokens": 10 }, "notes": "Promotional rates shown by GitHub through 2026-08-31." }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-4.8-fast",
+          "matchIds": ["claude-opus-4.8-fast", "claude-opus-4.8-fast-mode"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 10, "cachedInputTokens": 1, "cacheWriteInputTokens": 12.5, "outputTokens": 50 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-fable-5",
+          "matchIds": ["claude-fable-5", "fable-5"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 10, "cachedInputTokens": 1, "cacheWriteInputTokens": 12.5, "outputTokens": 50 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gemini-3.1-pro",
+          "matchIds": ["gemini-3.1-pro"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 200000, "rates": { "inputTokens": 2, "cachedInputTokens": 0.2, "outputTokens": 12 } },
+            { "id": "long-context", "minimumInputTokens": 200001, "rates": { "inputTokens": 4, "cachedInputTokens": 0.4, "outputTokens": 18 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gemini-3.5-flash",
+          "matchIds": ["gemini-3.5-flash"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 1.5, "cachedInputTokens": 0.15, "outputTokens": 9 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gemini-3.6-flash",
+          "matchIds": ["gemini-3.6-flash"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 1.5, "cachedInputTokens": 0.15, "outputTokens": 7.5 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "raptor-mini",
+          "matchIds": ["raptor-mini"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.25, "cachedInputTokens": 0.025, "outputTokens": 2 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "mai-code-1-flash",
+          "matchIds": ["mai-code-1-flash"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.75, "cachedInputTokens": 0.075, "outputTokens": 4.5 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "grok-4.5",
+          "matchIds": ["grok-4.5"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 200000, "rates": { "inputTokens": 2, "cachedInputTokens": 0.5, "outputTokens": 6 } },
+            { "id": "long-context", "minimumInputTokens": 200001, "rates": { "inputTokens": 4, "cachedInputTokens": 1, "outputTokens": 12 } }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "kimi-k2.7-code",
+          "matchIds": ["kimi-k2.7-code"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 0.95, "cachedInputTokens": 0.19, "outputTokens": 4 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "kimi-k3",
+          "matchIds": ["kimi-k3"],
+          "tiers": [{ "id": "all-contexts", "minimumInputTokens": 0, "rates": { "inputTokens": 3, "cachedInputTokens": 0.3, "outputTokens": 15 } }],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        }
+      ],
+      "notes": "GitHub Copilot per-token reference rates, all per 1 million tokens. One GitHub AI credit equals $0.01 USD. These are not a subscription bill; included allowances, annual-plan multipliers, model availability, promotional rates, and plan-specific billing can change the effective charge. Code completions and next-edit suggestions use a separate unlimited counting mechanism and are excluded."
     }
   ]
 }

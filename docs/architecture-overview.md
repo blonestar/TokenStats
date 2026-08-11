@@ -161,6 +161,16 @@ The flow must be idempotent across repeated scans, file rotation, renames,
 application restarts, and sleep/resume reconciliation. A parser version change
 may trigger a controlled reparse without silently deleting prior facts.
 
+The implemented Copilot adapter reads current-user `session-state/events.jsonl`
+records and, when the user has enabled the CLI file exporter, a separate OTel
+JSONL file. It accepts only complete `chat` spans with bounded model, session,
+turn, timestamp, and token metadata. The ingestion layer keeps the OTel cursor
+and non-content file metadata separate, switches away from matching session-state
+fallback events only after aggregate token equality, retains both provenance
+rows with an inclusion flag, and retries an incomplete final JSONL line on the
+next scan. Missing, rotated, or truncated OTel files reset tracking without
+deleting retained history.
+
 ## Autodetection and manual sources
 
 Discovery must be fast, predictable, and explainable. The proposed order is:
@@ -186,11 +196,13 @@ The implemented Fedora slice scans current-user Codex `~/.codex/sessions`,
 Claude Code `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and experimental GitHub
 Copilot `${COPILOT_HOME:-~/.copilot}/session-state`. Claude accepts only
 assistant-message usage and persists opaque file IDs rather than content or
-project/file paths. Copilot uses the latest persisted `session.shutdown`
-cumulative snapshot for each session/model and replaces the previous snapshot.
-Missing roots are normal. Fixtures cover the adapter formats; platform support
-and macOS validation still require their own runtime evidence. OpenCode remains
-a later candidate.
+project/file paths. Copilot imports active CLI `assistant.message` output-token
+snapshots, then uses the latest persisted `session.shutdown` cumulative
+snapshot for each session/model and replaces the previous snapshot. Active
+snapshots leave input/cache fields unknown until shutdown; missing roots are
+normal. Fixtures cover the adapter formats; platform support and macOS
+validation still require their own runtime evidence. OpenCode remains a later
+candidate.
 
 ## IPC boundary
 
@@ -253,14 +265,15 @@ implementation.
 
 ## Pricing input boundary
 
-The accepted version 1 catalog and schema live in `../pricing/`. The initial
-2026-08-11 snapshot contains reviewed OpenAI/Codex Standard API list prices and
-is bundled into the privileged main process. The current dashboard calculates
-query-time Codex estimates from it and returns immutable snapshot metadata and
-coverage; no cost is stored in the usage-event table. Provider expansion,
-historical persisted estimates, and an explicit non-AI catalog refresh remain
-follow-on work. Runtime AI search is outside the architecture because pricing
-must be deterministic, reviewable, and usable offline. A future explicit
+The accepted version 1 catalog and schema live in `../pricing/`. The
+2026-08-11 snapshots contain reviewed OpenAI/Codex Standard API list prices and
+GitHub Copilot provider reference rates, bundled into the privileged main
+process. The current dashboard calculates query-time Codex and complete
+Copilot estimates from them and returns immutable snapshot metadata and
+coverage; no cost is stored in the usage-event table. Historical persisted
+estimates and an explicit non-AI catalog refresh remain follow-on work. Runtime
+AI search is outside the architecture because pricing must be deterministic,
+reviewable, and usable offline. A future explicit
 non-AI refresh can add a new snapshot; it must never rewrite the snapshot used
 by historical estimates silently.
 

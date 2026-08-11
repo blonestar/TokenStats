@@ -50,8 +50,12 @@ An adapter must not write directly to SQLite. It produces canonical events; the 
 1. Current-user Codex local session/usage records.
 2. Current-user Claude Code assistant-message usage records; stored file IDs
    are opaque and neither content nor project/file paths are persisted.
-3. Experimental current-user GitHub Copilot `session.shutdown` cumulative
-   snapshots, replacing rather than summing the prior snapshot per session/model.
+3. Current-user GitHub Copilot `session-state` active CLI
+   `assistant.message` output-token snapshots, finalized by `session.shutdown`
+   cumulative snapshots, plus opt-in OTel file-exporter `chat` spans with
+   complete input/output/cache metadata. OTel events take precedence over the
+   matching session-state fallback per session/model only after aggregate
+   token equality; both provenance rows remain retained.
 4. OpenCode local usage/session records as a follow-on candidate.
 
 The first three have implementation and fixture evidence, but not all-platform
