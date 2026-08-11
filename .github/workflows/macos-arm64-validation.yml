@@ -1,0 +1,49 @@
+name: macOS arm64 validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Install pnpm
+        run: npm install --global pnpm@11.7.0
+      - name: Assert native Apple Silicon runner
+        run: test "$(uname -m)" = arm64
+      - name: Install dependencies from lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Test
+        run: pnpm test
+      - name: Package macOS arm64 ZIP
+        run: pnpm package:mac:arm64
+      - name: Validate packaged macOS arm64 app
+        run: bash scripts/validate-macos-arm64.sh
+      - name: Create and verify checksum manifest
+        run: |
+          cd dist
+          shasum -a 256 TokenStats-*-mac-arm64.zip > SHA256SUMS.txt
+          shasum -a 256 --check SHA256SUMS.txt
+      - name: Upload internal validation artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: tokenstats-macos-arm64-validation
+          path: |
+            dist/TokenStats-*-mac-arm64.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
