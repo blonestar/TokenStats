@@ -28,6 +28,14 @@ unpriced until a complete shutdown snapshot is persisted.
 - `snapshots` is append-only in meaning. When a price changes, add a new
   snapshot with a new `id`; do not rewrite the snapshot used by historical
   estimates.
+- `sourceIds` on a snapshot maps the reviewed rates to exact TokenStats source
+  identities such as `codex-current-user` or `copilot-current-user`. Runtime
+  pricing matches this field exactly; a new provider remains `unknown` until a
+  reviewed snapshot explicitly maps it.
+- When multiple snapshots map one source, query-time estimates select the
+  snapshot with the greatest `verifiedAt`, then greatest `effectiveFrom`, then
+  lexicographically greatest `id` as a deterministic tie-breaker. This is a
+  current-catalog rule, not a historical billing assertion.
 - Every snapshot identifies the `provider`, product, verification date,
   effective date when the provider publishes one, ISO currency, billing mode,
   unit, and official sources. `effectiveFrom: null` means the official source

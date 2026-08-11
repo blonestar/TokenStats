@@ -8,7 +8,7 @@ export type DashboardRange = { start: string; end: string; startLabel: string; e
 export type DashboardTrend = TokenUsage & { bucket: string; model: string; sourceId: string; eventCount: number }
 export type DashboardModelTotal = TokenUsage & { model: string; sourceId: string; eventCount: number; estimatedCost: CostEstimate }
 export type SourceStatus = 'healthy' | 'otel enabled' | 'otel file present' | 'session-state fallback' | 'not found' | 'error' | 'not scanned'
-export type DashboardSource = { sourceId: string; label: string; status: SourceStatus; lastSuccessfulScan: string | null; filesScanned: number; eventsImported: number; warnings: Warning[] }
+export type DashboardSource = { sourceId: string; providerId: string; label: string; status: SourceStatus; lastSuccessfulScan: string | null; filesScanned: number; eventsImported: number; warnings: Warning[] }
 export type Dashboard = {
   period: DashboardPeriod
   range: DashboardRange
@@ -24,6 +24,6 @@ export type Dashboard = {
   categories: Array<{ category: string; tokens: number }>
   sources: DashboardSource[]
 }
-export type ScanSourceResult = { sourceId: string; label: string; kind: 'codex' | 'claude' | 'copilot'; status: SourceStatus | 'success'; filesScanned: number; eventsImported: number; warnings: number; error?: string }
+export type ScanSourceResult = { sourceId: string; providerId: string; label: string; kind: string; status: SourceStatus | 'success'; filesScanned: number; eventsImported: number; warnings: number; error?: string }
 export type ScanResult = { ok: boolean; filesScanned: number; eventsImported: number; warnings: number; sources: ScanSourceResult[]; error?: string }
 export interface TokenStatsApi { getDashboard(period?: DashboardPeriod): Promise<Dashboard>; scanAll(): Promise<ScanResult> }

@@ -3,7 +3,7 @@ import Ajv from 'ajv/dist/2020.js'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { SOURCE_ID as CODEX_SOURCE_ID } from '../src/main/codex'
-import { estimateEventCost, summarizeCosts } from '../src/main/pricing'
+import { estimateEventCost, selectLatestSnapshotForSource, summarizeCosts } from '../src/main/pricing'
 
 const catalog = JSON.parse(readFileSync(join(__dirname, '..', 'pricing', 'api-pricing.json'), 'utf8'))
 const schema = JSON.parse(readFileSync(join(__dirname, '..', 'pricing', 'api-pricing.schema.json'), 'utf8'))
@@ -20,6 +20,15 @@ const event = (overrides: Partial<Parameters<typeof estimateEventCost>[0]> = {})
 })
 
 describe('pricing estimates', () => {
+  it('selects the latest reviewed snapshot when multiple snapshots map one source', () => {
+    const snapshots = [
+      { id: 'codex-2026-01', sourceIds: ['codex-current-user'], verifiedAt: '2026-01-01', effectiveFrom: null },
+      { id: 'codex-2026-08', sourceIds: ['codex-current-user'], verifiedAt: '2026-08-11', effectiveFrom: '2026-08-01' }
+    ] as const
+    expect(selectLatestSnapshotForSource(snapshots, 'codex-current-user')?.id).toBe('codex-2026-08')
+    expect(selectLatestSnapshotForSource(snapshots, 'unknown-source')).toBeUndefined()
+  })
+
   it('validates the complete pricing catalog against its JSON Schema', () => {
     const ajv = new Ajv({ allErrors: true, strict: false }).addFormat('uri', (value: string) => {
       try { return Boolean(new URL(value).protocol) } catch { return false }

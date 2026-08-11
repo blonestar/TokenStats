@@ -54,6 +54,13 @@ and fallback reconciliation; a controlled live Copilot OTel smoke run also
 passed on the current Fedora host. This is not cross-platform or clean-machine
 evidence.
 
+The current providers are modularized behind a registry in
+`src/main/providers/`. Each module owns discovery and parser behavior, while
+the shared ingestion contracts keep canonical events, cursors, deduplication,
+and migrations in the central layer. A future provider can be added as a new
+module with fixture and contract coverage; no external runtime plug-in loader
+is implemented yet.
+
 ```bash
 pnpm install
 pnpm test
@@ -71,7 +78,8 @@ implementation:
 
 - Electron + TypeScript + React/Vite;
 - SQLite in the application-data directory, with explicit migrations;
-- one adapter per harness, with incremental scanning and fixture coverage;
+- one provider module per harness, with incremental scanning and fixture
+  coverage;
 - Fedora x64 with the current-user Codex, Claude Code, and experimental
   GitHub Copilot adapters; OpenCode remains a later candidate;
 - a privileged Electron main process for filesystem access and ingestion;

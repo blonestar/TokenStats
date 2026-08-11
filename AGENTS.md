@@ -20,10 +20,12 @@
   `last_token_usage`, tracks bounded `turn_context.payload.model` metadata,
   preserves stable event IDs, and resets only Codex cursors when a parser
   version change requires metadata backfill. SQLite schema version 2 adds the
-  non-content `usage_events.model` field; schema version 3 replaces any stored
-  Claude file references with opaque identifiers; schema version 4 adds the
-  non-content inclusion flag and schema version 5 stores non-content OTel file
-  metadata used for safe fallback reconciliation.
+  non-content `usage_events.model` field; schema version 3 completes the
+  compatible storage transition; schema version 4 adds the non-content
+  inclusion flag and schema version 5 stores non-content OTel file metadata
+  used for safe fallback reconciliation. Schema version 6 adds the
+  provider-migration ledger; the registered `claude-file-identifiers@1`
+  migration then converts any legacy Claude file references to opaque IDs.
 - Current-user scanning covers Codex `~/.codex/sessions`, Claude Code
   `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and GitHub Copilot
   `${COPILOT_HOME:-~/.copilot}/session-state`. Copilot also reads the opt-in
@@ -41,6 +43,14 @@
 - The SQLite database is under Electron `userData`, so both source discovery
   and retained application data are isolated per OS user. Rescans are
   idempotent; history is cumulative until an explicit future deletion feature.
+- Provider modules are registered in `src/main/providers/registry.ts`; their
+  source definitions and optional migrations are injected into the central
+  database. Provider parsers use the generic canonical-event and
+  `IngestionStore` contracts in `src/main/ingestion/` rather than importing
+  the concrete database implementation. The current registry contains Codex,
+  Claude Code, and GitHub Copilot modules; adding another provider requires a
+  module, registry entry, fixtures/contract coverage, and reviewed pricing
+  source metadata when an estimate is supported.
 - The renderer uses `chart.js` and `react-chartjs-2` for source-and-model-
   separated Line/Bar trends. Dashboard IPC accepts `today`, `yesterday`,
   `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, or `last6Months`; the last
@@ -104,13 +114,16 @@ the validation spikes described in `docs/`, is:
   tray/background behavior in the privileged Electron main process;
 - a renderer without direct filesystem access;
 - SQLite with explicit SQL migrations and idempotent imports;
-- one adapter per harness, with anonymized fixtures and incremental cursors;
+- one provider module per harness, with anonymized fixtures and incremental
+  cursors;
 - a versioned `.tokenstats` archive plus CSV/JSON exports;
 - GitHub/GitHub Actions with CI, tag-driven builds, checksums, and draft
   releases once implementation and release work are authorized.
 
-Except for the current Fedora multi-source slice, these are proposals rather than evidence
-that the corresponding feature exists.
+The provider registry, canonical event boundary, and current three-provider
+modules are implemented in the Fedora multi-source slice. The versioned
+archive, import/export, CI, release, and broader background/platform behavior
+remain proposals rather than evidence that those features exist.
 
 ## Before making changes
 
@@ -137,8 +150,8 @@ that the corresponding feature exists.
   run remains required. This internal validation is not public distribution:
   Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
   gate remain required.
-- The current suite covers Codex, Claude Code, Copilot, database, and
-  orchestration behavior: per-event usage, model grouping/fallback,
+- The current suite covers the provider registry plus Codex, Claude Code,
+  Copilot, database, and orchestration behavior: per-event usage, model grouping/fallback,
   parser-version backfill, period grouping, incremental cursors,
   idempotency/snapshot replacement, OTel complete/partial spans and fallback
   reconciliation, malformed records, and privacy columns.

@@ -2,10 +2,12 @@ import { createHash } from 'node:crypto'
 import { closeSync, lstatSync, openSync, readSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import type { Warning } from '../shared/contracts'
-import type { TokenDatabase, UsageEvent } from './database'
+import type { IngestionStore, SourceDefinition, UsageEvent } from './ingestion/contracts'
+import type { ProviderModule } from './providers/contracts'
 
 const SOURCE_ID = 'codex-current-user'
 const PARSER_VERSION = 'codex-jsonl-v2'
+const SOURCE_DEFINITION: SourceDefinition = { sourceId: SOURCE_ID, providerId: 'codex', label: 'Codex', kind: 'codex' }
 const MAX_WARNINGS = 20
 const READ_CHUNK_BYTES = 64 * 1024
 const WRITE_BATCH_SIZE = 500
@@ -74,7 +76,7 @@ function* readLines(file: string): Generator<CodexLine> {
   }
 }
 
-export function scanFile(db: TokenDatabase, root: string, file: string, warnings: Warning[]): number {
+export function scanFile(db: IngestionStore, root: string, file: string, warnings: Warning[]): number {
   const relativeFile = relative(root, file).replaceAll('\\', '/')
   const fileSize = statSync(file).size
   let cursor = db.getCursor(SOURCE_ID, relativeFile)
@@ -116,9 +118,15 @@ function rolloutFiles(root: string): string[] {
   try { visit(root) } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
   return output.sort()
 }
-export function scanCodex(db: TokenDatabase, sessionsRoot: string): { files: number; events: number; warnings: Warning[] } {
+export function scanCodex(db: IngestionStore, sessionsRoot: string): { files: number; events: number; warnings: Warning[] } {
   const warnings: Warning[] = []; let events = 0; const files = rolloutFiles(sessionsRoot)
   for (const file of files) events += scanFile(db, sessionsRoot, file, warnings)
   return { files: files.length, events, warnings }
 }
+export const codexProvider: ProviderModule = {
+  id: 'codex',
+  definition: SOURCE_DEFINITION,
+  discover: ({ home }) => [{ ...SOURCE_DEFINITION, parserVersion: PARSER_VERSION, root: join(home, '.codex', 'sessions'), scan: scanCodex }]
+}
+
 export { PARSER_VERSION, SOURCE_ID, UNKNOWN_MODEL }

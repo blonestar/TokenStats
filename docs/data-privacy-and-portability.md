@@ -16,9 +16,11 @@ dashboard use, and logical import/export.
 The implemented Fedora slice has a local SQLite database for sources, cursors,
 scan runs, and usage events, but no portability/export implementation yet.
 Schema version 2 stores bounded model identifiers alongside token metadata,
-schema version 3 converts Claude file references to opaque IDs, schema version
-4 adds a non-content inclusion flag, and schema version 5 stores non-content
-OTel file metadata. Claude imports
+schema version 3 completes the compatible storage transition, schema version 4
+adds a non-content inclusion flag, and schema version 5 stores non-content OTel
+file metadata. Schema version 6 adds only a non-content provider-migration
+ledger; the registered `claude-file-identifiers@1` migration converts any
+legacy Claude file references to opaque IDs. Claude imports
 assistant-message usage only and stores no content or project/file path. The
 `codex-jsonl-v2` migration path resets only Codex cursors, rescans read-only
 source records, and fills missing model metadata without changing event IDs or

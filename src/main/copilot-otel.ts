@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { lstatSync, readFileSync } from 'node:fs'
 import type { SourceStatus, Warning } from '../shared/contracts'
-import type { TokenDatabase, UsageEvent } from './database'
+import type { IngestionStore, UsageEvent } from './ingestion/contracts'
 
 export const OTEL_RELATIVE_FILE = 'otel/tokenstats.jsonl'
 const SOURCE_ID = 'copilot-current-user'
@@ -106,16 +106,16 @@ export function extractCopilotOtelSpan(line: string, byteOffset = 0): UsageEvent
 const fileSignature = (stat: NonNullable<ReturnType<typeof lstatSync>>): string => JSON.stringify([stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs])
 const emptyResult = (warnings: Warning[], status: SourceStatus): OTelScanResult => ({ files: 0, events: 0, warnings, status, completeSpans: 0, fallbackRemoved: 0 })
 
-export function scanCopilotOtelFile(db: TokenDatabase, file: string, warnings: Warning[]): OTelScanResult {
+export function scanCopilotOtelFile(db: IngestionStore, file: string, warnings: Warning[]): OTelScanResult {
   let stat: ReturnType<typeof lstatSync>
   try { stat = lstatSync(file) } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') { db.resetFileTracking(SOURCE_ID, OTEL_RELATIVE_FILE); db.deactivateCopilotOtel(SOURCE_ID, OTEL_RELATIVE_FILE); return emptyResult(warnings, 'session-state fallback') }
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') { db.resetFileTracking(SOURCE_ID, OTEL_RELATIVE_FILE); db.deactivatePreferredFile(SOURCE_ID, OTEL_RELATIVE_FILE); return emptyResult(warnings, 'session-state fallback') }
     throw error
   }
   if (!stat.isFile()) {
     if (warnings.length < MAX_WARNINGS) warnings.push({ message: 'Skipped Copilot OTel path because it is not a regular file.', count: 1 })
     db.resetFileTracking(SOURCE_ID, OTEL_RELATIVE_FILE)
-    db.deactivateCopilotOtel(SOURCE_ID, OTEL_RELATIVE_FILE)
+    db.deactivatePreferredFile(SOURCE_ID, OTEL_RELATIVE_FILE)
     return emptyResult(warnings, 'session-state fallback')
   }
   let content: Buffer
@@ -123,7 +123,7 @@ export function scanCopilotOtelFile(db: TokenDatabase, file: string, warnings: W
   let cursor = db.getCursor(SOURCE_ID, OTEL_RELATIVE_FILE)
   const storedSignature = db.getFileSignature(SOURCE_ID, OTEL_RELATIVE_FILE)
   const rotated = cursor > content.length || (cursor > 0 && (storedSignature === null || storedSignature !== fileSignature(stat)))
-  if (rotated) { db.resetFileTracking(SOURCE_ID, OTEL_RELATIVE_FILE); db.deactivateCopilotOtel(SOURCE_ID, OTEL_RELATIVE_FILE); cursor = 0 }
+  if (rotated) { db.resetFileTracking(SOURCE_ID, OTEL_RELATIVE_FILE); db.deactivatePreferredFile(SOURCE_ID, OTEL_RELATIVE_FILE); cursor = 0 }
   let position = cursor
   const events: UsageEvent[] = []
   while (position < content.length) {
@@ -143,7 +143,7 @@ export function scanCopilotOtelFile(db: TokenDatabase, file: string, warnings: W
   }
   const imported = db.writeFile(SOURCE_ID, OTEL_RELATIVE_FILE, position, events, true)
   db.setFileSignature(SOURCE_ID, OTEL_RELATIVE_FILE, fileSignature(stat))
-  const reconciliation = db.reconcileCopilotOtel(SOURCE_ID, OTEL_RELATIVE_FILE)
+  const reconciliation = db.reconcilePreferredFile(SOURCE_ID, OTEL_RELATIVE_FILE)
   const status: SourceStatus = reconciliation.activeEvents > 0 ? 'otel enabled' : 'otel file present'
   return { files: 1, events: imported, warnings, status, completeSpans: reconciliation.completeEvents, fallbackRemoved: reconciliation.removedFallback }
 }

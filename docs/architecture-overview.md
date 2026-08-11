@@ -11,9 +11,10 @@ Last reviewed: 2026-08-11
 This document describes the proposed architecture for a local-first Electron
 application. The implemented Fedora slice has application code, package
 manifest, typed two-operation IPC, SQLite migrations, and current-user Codex,
-Claude Code, and experimental GitHub Copilot adapters. It has model-aware
-schema/parser support, allowlisted period queries, and a Chart.js model trend
-renderer; the broader architecture below remains proposed.
+Claude Code, and experimental GitHub Copilot provider modules. It also has a
+provider registry, generic canonical-event/ingestion-store boundary,
+model-aware schema/parser support, allowlisted period queries, and a Chart.js
+model trend renderer; the broader architecture below remains proposed.
 
 ## Architectural goals
 
@@ -52,6 +53,14 @@ IPC, and avoid granting Node or shell access to the renderer. See the official
 [Electron security guidance](https://www.electronjs.org/docs/latest/tutorial/security),
 [BrowserWindow API](https://www.electronjs.org/docs/latest/api/browser-window),
 and [Electron context isolation guidance](https://www.electronjs.org/docs/latest/tutorial/context-isolation).
+
+The current provider boundary is implemented in `src/main/providers/` and
+`src/main/ingestion/`. A `ProviderModule` exposes an identity, source
+definition, discovery function, and optional provider-owned migration hooks.
+Discovery returns `ProviderSource` values whose scanners consume the generic
+`IngestionStore` and emit canonical `UsageEvent` values. The registry is the
+explicit extension point for the current Codex, Claude Code, and GitHub
+Copilot modules; it is not a dynamic external plug-in loader.
 
 ## React/Vite frontend
 
@@ -160,6 +169,17 @@ The central ingestion flow is proposed as:
 The flow must be idempotent across repeated scans, file rotation, renames,
 application restarts, and sleep/resume reconciliation. A parser version change
 may trigger a controlled reparse without silently deleting prior facts.
+
+In the implemented slice, the provider scanners call only the generic
+ingestion-store contract. `TokenDatabase` owns SQL transactions, deduplication,
+cursors, inclusion/reconciliation state, scan history, and dashboard reads.
+Provider migrations are supplied by the registry with stable IDs and explicit
+versions, tracked in a non-content ledger, so a provider migration can be
+added after the global schema chain has already reached version 6. The current
+example is the Claude opaque-file-ID migration. Adding a provider is currently a code change:
+implement its module, register it, add anonymized fixtures and
+contract/integration tests, and add a reviewed pricing snapshot/source mapping
+if cost estimates are supported.
 
 The implemented Copilot adapter reads current-user `session-state/events.jsonl`
 records and, when the user has enabled the CLI file exporter, a separate OTel

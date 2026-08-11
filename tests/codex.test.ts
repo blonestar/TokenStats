@@ -4,9 +4,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { TokenDatabase } from '../src/main/database'
 import { extractEvent, scanCodex, PARSER_VERSION, SOURCE_ID } from '../src/main/codex'
+import { providerMigrations, sourceDefinitions } from '../src/main/providers/registry'
 const cleanup: Array<{ database: TokenDatabase; directory: string }> = []
 const augustNow = new Date('2026-08-11T12:00:00.000Z')
-function setup(): { db: TokenDatabase; root: string; file: string } { const dir = mkdtempSync(join(tmpdir(), 'tokenstats-')); const root = join(dir, 'sessions'); const folder = join(root, '2026', '08', '01'); mkdirSync(folder, { recursive: true }); const db = new TokenDatabase(join(dir, 'usage.sqlite')); cleanup.push({ database: db, directory: dir }); return { db, root, file: join(folder, 'rollout-fixture.jsonl') } }
+function setup(): { db: TokenDatabase; root: string; file: string } { const dir = mkdtempSync(join(tmpdir(), 'tokenstats-')); const root = join(dir, 'sessions'); const folder = join(root, '2026', '08', '01'); mkdirSync(folder, { recursive: true }); const db = new TokenDatabase(join(dir, 'usage.sqlite'), sourceDefinitions, providerMigrations); cleanup.push({ database: db, directory: dir }); return { db, root, file: join(folder, 'rollout-fixture.jsonl') } }
 afterEach(() => { while (cleanup.length) { const item = cleanup.pop()!; item.database.close(); rmSync(item.directory, { recursive: true, force: true }) } })
 describe('Codex scanner', () => {
   it('extracts only per-event last_token_usage, never cumulative total_token_usage', () => { const line = readFileSync(join(__dirname, 'fixtures', 'rollout.jsonl'), 'utf8').split('\n')[1]; const event = extractEvent(line, '2026/08/01/rollout-fixture.jsonl', 90)!; expect(event.totalTokens).toBe(125); expect(event.inputTokens).toBe(100); expect(JSON.stringify(event)).not.toContain('must-not-persist') })

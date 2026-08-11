@@ -1,10 +1,6 @@
 import catalog from '../../pricing/api-pricing.json'
-import { SOURCE_ID as CODEX_SOURCE_ID } from './codex'
-import type { UsageEvent } from './database'
+import type { UsageEvent } from './ingestion/contracts'
 import type { CostEstimate, PricingSnapshotInfo } from '../shared/contracts'
-
-export const ACTIVE_SNAPSHOT_ID = 'openai-codex-2026-08-11'
-export const COPILOT_SNAPSHOT_ID = 'github-copilot-2026-08-11'
 
 type PricingRates = {
   inputTokens?: number
@@ -19,7 +15,9 @@ type PricingSnapshot = {
   id: string
   provider: string
   product: string
+  sourceIds: string[]
   verifiedAt: string
+  effectiveFrom: string | null
   currency: string
   billingMode: string
   unit: { metric: string; quantity: number }
@@ -31,10 +29,15 @@ type MutableCost = { amountUsd: number; pricedEvents: number; totalEvents: numbe
 
 const pricingCatalog = catalog as PricingCatalog
 
+type SnapshotSelection = Pick<PricingSnapshot, 'id' | 'sourceIds' | 'verifiedAt' | 'effectiveFrom'>
+
+export function selectLatestSnapshotForSource<T extends SnapshotSelection>(snapshots: readonly T[], sourceId: string): T | undefined {
+  return snapshots.filter((snapshot) => snapshot.sourceIds.includes(sourceId)).sort((left, right) => right.verifiedAt.localeCompare(left.verifiedAt) || (right.effectiveFrom ?? '').localeCompare(left.effectiveFrom ?? '') || right.id.localeCompare(left.id))[0]
+}
+
 function snapshotForSource(sourceId: string): PricingSnapshot | undefined {
   if (pricingCatalog.format !== 'tokenstats-api-pricing' || pricingCatalog.formatVersion !== 1) return undefined
-  const snapshotId = sourceId === CODEX_SOURCE_ID ? ACTIVE_SNAPSHOT_ID : sourceId === 'copilot-current-user' ? COPILOT_SNAPSHOT_ID : null
-  return snapshotId ? pricingCatalog.snapshots.find((snapshot) => snapshot.id === snapshotId) : undefined
+  return selectLatestSnapshotForSource(pricingCatalog.snapshots, sourceId)
 }
 
 function snapshotInfo(snapshot: PricingSnapshot): PricingSnapshotInfo {

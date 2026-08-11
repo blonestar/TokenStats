@@ -36,6 +36,21 @@ type HarnessAdapter = {
 
 An adapter must not write directly to SQLite. It produces canonical events; the central ingestion layer handles deduplication, transactions, cursors, and audit history.
 
+## Current implementation alignment
+
+The Fedora slice now realizes the core boundary with `ProviderModule` and
+`ProviderSource` contracts in `src/main/providers/`, a registry, and shared
+canonical-event/`IngestionStore` contracts in `src/main/ingestion/`. The
+registry currently exposes Codex, Claude Code, and GitHub Copilot modules;
+their scanners retain provider-specific parsing while the central database
+owns writes, cursors, deduplication, inclusion/reconciliation state, and the
+versioned migration chain. Provider-owned migration hooks are supported for
+format-specific legacy data.
+
+The future `probe`, `diagnose`, asynchronous discovery, cancellation, and
+dynamic external plug-in loading described in this proposal are not implemented
+by that registry yet.
+
 ## Incremental scanning
 
 - A watcher signals that a source changed, but periodic rescanning remains the fallback.
