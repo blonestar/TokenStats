@@ -11,12 +11,16 @@ Last reviewed: 2026-08-11
 This folder is the canonical home for official TokenStats documentation. A
 narrow Fedora/Electron slice is implemented, including current-user Codex,
 Claude Code, and experimental GitHub Copilot scanning, model-aware retained
-usage, period views, a real Line/Bar dashboard, and a Codex estimated
-API-equivalent USD cost with pricing date/coverage metadata. The packaged Fedora
+usage, period views, a real Line/Bar dashboard, and estimated API-equivalent
+USD costs for Codex and complete Copilot snapshots with pricing date/coverage
+metadata. The packaged Fedora
 AppImage and multi-source scan have local runtime evidence: Codex usage was
 imported, the current Claude root was found but yielded no usage events, and
-Copilot was not found. Claude/Copilot usage parsing therefore still has fixture
-evidence rather than live usage evidence. Most
+the current Copilot CLI session-state root was found with active
+output-token records. The implemented Copilot adapter also supports the
+opt-in CLI OTel JSONL file and keeps session-state as a fallback. A controlled
+live OTel smoke run passed on the current Fedora host; this remains
+runtime-surface-specific; most
 behavior described by these documents remains proposed rather than implemented.
 
 The implemented current-user source set is Codex, Claude Code, and experimental
@@ -24,6 +28,9 @@ GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
 tracked in the open-question matrix. The local-only macOS arm64 workflow has
 not been pushed or run; its ad-hoc-signed, unnotarized package validation is
 internal-only and not public-distribution evidence.
+
+The [GitHub Copilot OTel ingestion](copilot-otel.md) note documents the opt-in
+file exporter, privacy allowlist, cursor behavior, and fallback reconciliation.
 
 ## Documentation structure
 

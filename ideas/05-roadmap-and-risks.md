@@ -3,9 +3,9 @@
 > **Current direction:** the Fedora x64 slice includes current-user Codex,
 > Claude Code, and experimental GitHub Copilot adapters. An early macOS arm64
 > validation remains a later manual step.
-> The reviewed Codex pricing snapshot and query-time estimate are implemented;
-> provider expansion, persistence, and alerts remain follow-on work. This note
-> retains older alternatives for rationale only.
+> The reviewed Codex and GitHub Copilot pricing snapshots and complete-snapshot
+> query-time estimates are implemented; pricing persistence and alerts remain
+> follow-on work. This note retains older alternatives for rationale only.
 
 ## Phase 0 — prove the formats
 
@@ -29,7 +29,7 @@
 - watcher plus periodic reconciliation;
 - source health and diagnostics;
 - daily/model/harness breakdown;
-- observed tokens; the implemented Codex estimate; provider expansion and
+- observed tokens; the implemented Codex and complete Copilot estimates;
   persisted pricing snapshots remain follow-on work.
 - daily/weekly/monthly alert rules;
 - native notifications, tray mode, 60-second refresh, and `Refresh now`;

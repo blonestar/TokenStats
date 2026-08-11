@@ -20,17 +20,37 @@
   `last_token_usage`, tracks bounded `turn_context.payload.model` metadata,
   preserves stable event IDs, and resets only Codex cursors when a parser
   version change requires metadata backfill. SQLite schema version 2 adds the
-  non-content `usage_events.model` field; schema version 3 replaces any stored
-  Claude file references with opaque identifiers.
+  non-content `usage_events.model` field; schema version 3 completes the
+  compatible storage transition; schema version 4 adds the non-content
+  inclusion flag and schema version 5 stores non-content OTel file metadata
+  used for safe fallback reconciliation. Schema version 6 adds the
+  provider-migration ledger; the registered `claude-file-identifiers@1`
+  migration then converts any legacy Claude file references to opaque IDs.
 - Current-user scanning covers Codex `~/.codex/sessions`, Claude Code
-  `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and experimental GitHub Copilot
-  `${COPILOT_HOME:-~/.copilot}/session-state`. Claude accepts assistant-message
-  usage only and uses opaque file IDs, not content or paths. Copilot keeps the
-  latest persisted `session.shutdown` cumulative snapshot per session/model and
-  replaces, rather than sums, a prior snapshot; a missing root is normal.
+  `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and GitHub Copilot
+  `${COPILOT_HOME:-~/.copilot}/session-state`. Copilot also reads the opt-in
+  OTel JSONL file at `${COPILOT_OTEL_FILE_EXPORTER_PATH:-<copilot-home>/otel/tokenstats.jsonl}`.
+  Claude accepts assistant-message usage only and uses opaque file IDs, not
+  content or paths. Copilot imports complete OTel `chat` spans when available,
+  suppresses the matching session-state fallback by session/model only after
+  aggregate token equality, and keeps active `assistant.message` output-only
+  snapshots as a fallback until a full shutdown snapshot or OTel span is
+  available. Missing, truncated, rotated, and symlinked OTel paths do not
+  delete retained events; cursors are reset and the fallback is re-evaluated.
+  OTel parsing allowlists model, conversation/turn metadata, timestamps, and
+  token fields; prompt, response, tool, path, and arbitrary attributes are
+  never persisted.
 - The SQLite database is under Electron `userData`, so both source discovery
   and retained application data are isolated per OS user. Rescans are
   idempotent; history is cumulative until an explicit future deletion feature.
+- Provider modules are registered in `src/main/providers/registry.ts`; their
+  source definitions and optional migrations are injected into the central
+  database. Provider parsers use the generic canonical-event and
+  `IngestionStore` contracts in `src/main/ingestion/` rather than importing
+  the concrete database implementation. The current registry contains Codex,
+  Claude Code, and GitHub Copilot modules; adding another provider requires a
+  module, registry entry, fixtures/contract coverage, and reviewed pricing
+  source metadata when an estimate is supported.
 - The renderer uses `chart.js` and `react-chartjs-2` for source-and-model-
   separated Line/Bar trends. Dashboard IPC accepts `today`, `yesterday`,
   `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, or `last6Months`; the last
@@ -38,11 +58,11 @@
   local timezone.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
-  Standard API list prices for Codex-relevant OpenAI models. The dashboard
-  calculates and labels a query-time Codex API-equivalent estimate with
-  snapshot/date and coverage metadata; Claude Code, Copilot, and other
-  providers remain unknown until their own pricing semantics are reviewed.
-  Subscription usage must not be presented as an observed bill.
+  Standard API list prices for Codex-relevant OpenAI models and a reviewed
+  GitHub Copilot provider-reference snapshot. The dashboard calculates and
+  labels query-time API-equivalent estimates for complete Codex/Copilot token
+  snapshots with snapshot/date and coverage metadata; incomplete subscription
+  usage must remain unknown and must not be presented as an observed bill.
 - Treat `docs/` documents as the source of accepted project documentation only
   when their status and evidence support that claim. Treat `ideas/README.md`,
   `ideas/00-open-questions.md`, and the numbered documents in `ideas/` as
@@ -94,13 +114,16 @@ the validation spikes described in `docs/`, is:
   tray/background behavior in the privileged Electron main process;
 - a renderer without direct filesystem access;
 - SQLite with explicit SQL migrations and idempotent imports;
-- one adapter per harness, with anonymized fixtures and incremental cursors;
+- one provider module per harness, with anonymized fixtures and incremental
+  cursors;
 - a versioned `.tokenstats` archive plus CSV/JSON exports;
 - GitHub/GitHub Actions with CI, tag-driven builds, checksums, and draft
   releases once implementation and release work are authorized.
 
-Except for the current Fedora multi-source slice, these are proposals rather than evidence
-that the corresponding feature exists.
+The provider registry, canonical event boundary, and current three-provider
+modules are implemented in the Fedora multi-source slice. The versioned
+archive, import/export, CI, release, and broader background/platform behavior
+remain proposals rather than evidence that those features exist.
 
 ## Before making changes
 
@@ -127,9 +150,14 @@ that the corresponding feature exists.
   run remains required. This internal validation is not public distribution:
   Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
   gate remain required.
-- The current suite covers Codex, Claude Code, Copilot, database, and
-  orchestration behavior: per-event usage, model grouping/fallback,
+- The current suite covers the provider registry plus Codex, Claude Code,
+  Copilot, database, and orchestration behavior: per-event usage, model grouping/fallback,
   parser-version backfill, period grouping, incremental cursors,
-  idempotency/snapshot replacement, malformed records, and privacy columns.
+  idempotency/snapshot replacement, OTel complete/partial spans and fallback
+  reconciliation, malformed records, and privacy columns.
+- A controlled current-host Copilot CLI OTel smoke session produced a JSONL
+  file with a complete chat span; the adapter imported it with input/output
+  fields and no capture fields. This is not clean-machine, cross-platform, or
+  subscription-billing evidence.
 - Keep the distinction clear between a local change, a committed/pushed
   change, a merged change, a released artifact, and verified live behavior.

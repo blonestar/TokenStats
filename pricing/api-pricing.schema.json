@@ -89,6 +89,7 @@
         "id",
         "provider",
         "product",
+        "sourceIds",
         "verifiedAt",
         "effectiveFrom",
         "currency",
@@ -102,6 +103,12 @@
         "id": { "$ref": "#/$defs/identifier" },
         "provider": { "$ref": "#/$defs/identifier" },
         "product": { "$ref": "#/$defs/identifier" },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
         "verifiedAt": { "$ref": "#/$defs/date" },
         "effectiveFrom": {
           "oneOf": [
@@ -119,7 +126,9 @@
             "quantity": { "type": "integer", "minimum": 1 }
           }
         },
-        "pricingBasis": { "const": "api_list_price" },
+        "pricingBasis": {
+          "enum": ["api_list_price", "provider_reference_price"]
+        },
         "billingMode": {
           "enum": ["standard", "batch", "flex", "fast", "other"]
         },

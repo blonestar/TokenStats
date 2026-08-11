@@ -10,15 +10,19 @@ estimated cost as an exact bill.
 > **Status:** an internal Fedora desktop slice is implemented. Its packaged
 > AppImage and multi-source scan have been exercised on the current Fedora/KDE
 > host. Codex usage was imported; the current Claude Code root was discovered
-> but yielded no usage events, and Copilot was not found. Clean-machine, real
-> Claude/Copilot usage, CI, release, and cross-platform validation remain open.
+> but yielded no usage events. Copilot CLI usage is parsed from complete OTel
+> `chat` spans when its opt-in file exporter is enabled, with active
+> `assistant.message` and `session.shutdown` records retained as a fallback.
+> Clean-machine, CI, release, and cross-platform validation remain open.
 
 ## Current slice and proposed direction
 
 The implemented Electron package has a React dashboard and SQLite database.
 Its privileged main process scans the current OS user's Codex
 `~/.codex/sessions`, Claude Code `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`,
-and GitHub Copilot `${COPILOT_HOME:-~/.copilot}/session-state` records. The
+and GitHub Copilot `${COPILOT_HOME:-~/.copilot}/session-state` records, plus the
+optional `${COPILOT_OTEL_FILE_EXPORTER_PATH:-<copilot-home>/otel/tokenstats.jsonl}`
+OTel file. The
 dashboard separates every statistic by source and model, uses Chart.js for
 Line/Bar trends, and provides `Today`, `Yesterday`, `This week`, `Last week`,
 `This month`, `Last month`, and `Last 6 months` views. The six-month view uses
@@ -28,21 +32,34 @@ an explicit future deletion feature is introduced.
 
 Codex imports per-event `last_token_usage` with the active model context.
 Claude Code imports assistant-message usage only and stores neither content nor
-project/file paths; it uses opaque file IDs. Experimental Copilot support uses
-the latest persisted `session.shutdown` cumulative snapshot for each
-session/model, replacing the prior snapshot instead of summing snapshots. A
-missing source root is a normal not-found result. The app does not persist
-prompt, response, source-code, command, or raw-record content. Alerts, tray
+project/file paths; it uses opaque file IDs. Copilot imports only complete OTel
+`chat` metadata when available and switches away from matching session-state
+fallback events only after aggregate token equality; without OTel, active CLI
+output-token snapshots are replaced by the latest persisted `session.shutdown`
+cumulative snapshot for each session/model.
+A missing source root or OTel file is a normal fallback state. The app does not
+persist prompt, response, source-code, command, or raw-record content. Alerts, tray
 behavior, updater, exports, and telemetry are not implemented. For Codex
-events, the dashboard shows an estimated API-equivalent USD cost with
-pricing-snapshot date and coverage; other providers remain unknown until their
-pricing semantics are reviewed.
+events and complete Copilot snapshots, the dashboard shows an estimated
+API-equivalent USD cost with pricing-snapshot date and coverage; incomplete
+provider records remain unknown.
 
 The local runtime validation imported cumulative history from the current user's Codex
 profile, repeated the incremental scan, rendered derived statistics, and passed
 SQLite integrity and storage-schema privacy checks without copying raw records
 into the repository. The v2 parser backfilled existing events with model
-metadata without changing stable event IDs or duplicating usage rows.
+metadata without changing stable event IDs or duplicating usage rows. OTel
+fixture coverage verifies complete/partial JSONL spans, metadata allowlisting,
+and fallback reconciliation; a controlled live Copilot OTel smoke run also
+passed on the current Fedora host. This is not cross-platform or clean-machine
+evidence.
+
+The current providers are modularized behind a registry in
+`src/main/providers/`. Each module owns discovery and parser behavior, while
+the shared ingestion contracts keep canonical events, cursors, deduplication,
+and migrations in the central layer. A future provider can be added as a new
+module with fixture and contract coverage; no external runtime plug-in loader
+is implemented yet.
 
 ```bash
 pnpm install
@@ -61,7 +78,8 @@ implementation:
 
 - Electron + TypeScript + React/Vite;
 - SQLite in the application-data directory, with explicit migrations;
-- one adapter per harness, with incremental scanning and fixture coverage;
+- one provider module per harness, with incremental scanning and fixture
+  coverage;
 - Fedora x64 with the current-user Codex, Claude Code, and experimental
   GitHub Copilot adapters; OpenCode remains a later candidate;
 - a privileged Electron main process for filesystem access and ingestion;
@@ -84,9 +102,9 @@ gate remain required.
 
 - Usage data is the primary product fact.
 - Cost is always labeled `observed`, `estimated`, or `unknown`.
-- Codex API-equivalent cost is derived from the reviewed pricing catalog and is
-  labeled with its snapshot date and coverage; other providers remain
-  follow-on work.
+- Codex and complete Copilot API-equivalent costs are derived from the reviewed
+  pricing catalog and labeled with snapshot date and coverage; incomplete
+  provider records remain `unknown`.
 - The app is local-first and does not ingest prompt or response content by
   default.
 - Imports should be incremental, idempotent, and traceable to their source.
@@ -107,6 +125,7 @@ that a feature exists.
 - [Product requirements](docs/product-requirements.md)
 - [Architecture overview](docs/architecture-overview.md)
 - [Data, privacy, and portability](docs/data-privacy-and-portability.md)
+- [GitHub Copilot OTel ingestion](docs/copilot-otel.md)
 - [Platform, packaging, and release](docs/platform-packaging-and-release.md)
 - [Versioning and update channels](docs/versioning-and-update-channels.md)
 - [UI, window, tray, and alerts](docs/ui-window-tray-alerts.md)

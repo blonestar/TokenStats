@@ -39,10 +39,12 @@ const chartPalette = ['#67b7ff', '#f4b860', '#63d3a1', '#b79cff', '#f28686', '#5
 const tokens = (value: number | null | undefined): number => value ?? 0
 const exact = (value: number | null | undefined): string => exactNumber.format(tokens(value))
 const compact = (value: number | null | undefined): string => compactNumber.format(tokens(value))
-const costText = (estimate: CostEstimate): string => estimate.amountUsd === null ? 'No reliable estimate' : usdNumber.format(estimate.amountUsd)
-const costCoverageText = (estimate: CostEstimate): string => estimate.coverage === 'complete' ? `${exact(estimate.pricedEvents)} events priced` : estimate.coverage === 'partial' ? `${exact(estimate.pricedEvents)} of ${exact(estimate.totalEvents)} events priced` : 'No priced events'
+const pricingSnapshotIds = (estimate: CostEstimate): string[] => estimate.pricingSnapshotIds ?? []
+const costText = (estimate: CostEstimate): string => estimate.amountUsd !== null ? usdNumber.format(estimate.amountUsd) : pricingSnapshotIds(estimate).length > 0 ? 'Incomplete token data' : 'No reliable estimate'
+const costCoverageText = (estimate: CostEstimate): string => estimate.coverage === 'complete' ? `${exact(estimate.pricedEvents)} events priced` : estimate.coverage === 'partial' ? `${exact(estimate.pricedEvents)} of ${exact(estimate.totalEvents)} events priced` : pricingSnapshotIds(estimate).length > 0 ? 'Pricing found · token fields incomplete' : 'No priced events'
 const pricingSourceText = (data: Dashboard, estimate: CostEstimate): string => {
-  const snapshots = estimate.snapshotIds.length === 0 ? [] : data.pricingSnapshots.filter((snapshot) => estimate.snapshotIds.includes(snapshot.id))
+  const snapshotIds = estimate.snapshotIds.length > 0 ? estimate.snapshotIds : pricingSnapshotIds(estimate)
+  const snapshots = snapshotIds.length === 0 ? [] : data.pricingSnapshots.filter((snapshot) => snapshotIds.includes(snapshot.id))
   return snapshots.length === 0 ? 'No matching pricing snapshot' : snapshots.map((snapshot) => `${snapshot.provider} · checked ${snapshot.verifiedAt}`).join(' · ')
 }
 const costTitle = (estimate: CostEstimate, data: Dashboard): string => `${costText(estimate)} · ${costCoverageText(estimate)} · ${pricingSourceText(data, estimate)} · estimated API-equivalent cost, not a bill`
@@ -51,6 +53,8 @@ const seriesKey = (sourceId: string, model: string): string => `${sourceId}\u000
 const seriesColor = (index: number): string => chartPalette[index] ?? `hsl(${Math.round((index * 137.508) % 360)} 76% 62%)`
 const sourceLabel = (data: Dashboard, sourceId: string): string => data.sources.find((source) => source.sourceId === sourceId)?.label ?? sourceId
 const seriesLabel = (data: Dashboard, sourceId: string, model: string): string => `${sourceLabel(data, sourceId)} · ${model}`
+const sourceReady = (status: string): boolean => !['error', 'not found', 'not scanned'].includes(status)
+const sourceStatusNote = (status: string): string => status === 'otel enabled' ? 'Complete OTel token data is currently selected; session-state remains retained as a fallback.' : status === 'otel file present' ? 'OTel file found, but no complete OTel data is currently selected; session-state fallback may be active.' : status === 'session-state fallback' ? 'Active Copilot records may have output tokens only. Enable the OTel file exporter for input and cache usage.' : status === 'healthy' ? 'Local source scan completed.' : status === 'not found' ? 'Source directory or file was not found.' : status === 'error' ? 'Scan failed. Check source availability and try again.' : 'Run a local scan to check this source.'
 
 function bucketLabels(data: Dashboard): Array<{ bucket: string; label: string }> {
   const start = new Date(data.range.start)
@@ -137,7 +141,7 @@ function App(): React.JSX.Element {
         <div><h1>TokenStats</h1><p>Local usage metadata only — no prompt or response content stored.</p></div>
       </div>
       <div className="header-actions">
-        <span className="source-summary">{data.sources.filter((source) => source.status === 'healthy').length} of {data.sources.length} sources ready</span>
+        <span className="source-summary">{data.sources.filter((source) => sourceReady(source.status)).length} of {data.sources.length} sources ready</span>
         <button className="scan-button" onClick={() => void scan()} disabled={scanning} aria-busy={scanning}>{scanning ? 'Scanning local sources…' : 'Scan local sources'}</button>
       </div>
     </header>
@@ -211,7 +215,7 @@ function ModelBreakdown({ data, models, total, colors }: { data: Dashboard; mode
 }
 
 function SourceFooter({ data }: { data: Dashboard }): React.JSX.Element {
-  return <footer className="source-footer" aria-label="Local source status"><p className="section-kicker">Local source status</p><div className="source-status-list">{data.sources.map((source) => <section className="source-status" key={source.sourceId}><div><strong>{source.label}</strong><span className={`source-indicator is-${source.status.replaceAll(' ', '-')}`}>{source.status}</span></div><span>{source.lastSuccessfulScan ? `Last successful scan ${scanDate.format(new Date(source.lastSuccessfulScan))}` : 'Not scanned yet'}</span><span>{exact(source.filesScanned)} files · {exact(source.eventsImported)} new events</span>{source.warnings.length > 0 && <div className="warnings" role="status">{source.warnings.map((warning, index) => <span key={`${warning.message}-${index}`}>{warning.message}{warning.count > 1 ? ` (${warning.count})` : ''}</span>)}</div>}</section>)}</div></footer>
+  return <footer className="source-footer" aria-label="Local source status"><p className="section-kicker">Local source status</p><div className="source-status-list">{data.sources.map((source) => <section className="source-status" key={source.sourceId}><div><strong>{source.label}</strong><span className={`source-indicator is-${source.status.replaceAll(' ', '-')}`}>{source.status}</span></div><span>{source.lastSuccessfulScan ? `Last successful scan ${scanDate.format(new Date(source.lastSuccessfulScan))}` : 'Not scanned yet'}</span><span>{exact(source.filesScanned)} files · {exact(source.eventsImported)} new events</span><small>{sourceStatusNote(source.status)}</small>{source.warnings.length > 0 && <div className="warnings" role="status">{source.warnings.map((warning, index) => <span key={`${warning.message}-${index}`}>{warning.message}{warning.count > 1 ? ` (${warning.count})` : ''}</span>)}</div>}</section>)}</div></footer>
 }
 
 createRoot(document.getElementById('root')!).render(<App />)

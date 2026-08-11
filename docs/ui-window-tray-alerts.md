@@ -50,8 +50,9 @@ weekly periods, and the month periods, plus monthly buckets for `Last 6 months`.
 It retains exact hover values and a visible per-model total/share list.
 Missing buckets inside the selected calendar range are shown as zero only after
 the full retained source history has been queried. The summary and model list
-show Codex estimated API-equivalent cost with coverage and pricing date;
-estimated-cost and session chart modes remain follow-on proposals. A later
+show Codex or complete Copilot estimated API-equivalent cost with coverage and
+pricing date; estimated-cost and session chart modes remain follow-on
+proposals. A later
 detailed breakdown should expose:
 
 ```text
@@ -69,8 +70,10 @@ Cost is secondary derived data. Every cost surface must identify:
 - `Observed` cost when a source directly supplies a cost fact;
 - `Estimated API-equivalent cost` when TokenStats calculates it from a stored
   pricing snapshot;
+- `Incomplete token data` with the matched pricing snapshot when a provider
+  model is known but the current usage record does not contain all token fields;
 - `Unknown` or `No reliable cost estimate` when the source or pricing data is
-  insufficient.
+  insufficient or the model has no matching catalog entry.
 
 Estimated values must expose their pricing snapshot date/source and confidence.
 Subscription usage without a defensible API equivalent must remain unknown. The

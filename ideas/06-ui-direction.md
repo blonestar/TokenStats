@@ -2,9 +2,9 @@
 
 > **Current direction:** visual polish and an effective dashboard matter from
 > the first slice, but the frameless/translucent shell remains open and must
-> not block data correctness. The summary/model Codex estimate is implemented;
-> full cost chart views remain follow-on. Alerts are personal budgets rather
-> than provider quotas.
+> not block data correctness. Summary/model Codex and complete Copilot estimates
+> are implemented; full cost chart views remain follow-on. Alerts are personal
+> budgets rather than provider quotas.
 
 The screenshot is a useful signal that the product should have a dark, dense, analytical dashboard, but it should not be the final information model. The current example puts estimated cost too far in front and does not show whether sources are healthy or data is complete.
 
