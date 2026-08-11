@@ -1,0 +1,64 @@
+{
+  "name": "tokenstats",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "author": "TokenStats contributors",
+  "desktopName": "local.tokenstats.app.desktop",
+  "description": "Local-first AI coding assistant token usage dashboard",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "build": "electron-vite build",
+    "package:unpacked": "pnpm build && electron-builder --linux --dir",
+    "package:linux": "pnpm build && electron-builder --linux AppImage",
+    "package:mac:arm64": "bash scripts/create-macos-icon.sh && pnpm build && electron-builder --mac zip --arm64 --publish never",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "chart.js": "4.5.1",
+    "react": "19.2.8",
+    "react-chartjs-2": "5.3.1",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "2.0.0",
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "43.3.0",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "4.1.10"
+  },
+  "build": {
+    "appId": "local.tokenstats.app",
+    "productName": "TokenStats",
+    "files": ["out/**", "package.json"],
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Utility",
+      "icon": "assets/icons",
+      "syncDesktopName": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": ["arm64"]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "assets/icons/TokenStats.icns",
+      "identity": "-",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    }
+  }
+}

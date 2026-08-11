@@ -1,0 +1,213 @@
+{
+  "$schema": "./api-pricing.schema.json",
+  "format": "tokenstats-api-pricing",
+  "formatVersion": 1,
+  "snapshots": [
+    {
+      "id": "openai-codex-2026-08-11",
+      "provider": "openai",
+      "product": "codex",
+      "verifiedAt": "2026-08-11",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "openai-api-pricing",
+          "url": "https://developers.openai.com/api/docs/pricing",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.6-sol",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.6-terra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.6-luna",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.5",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.5",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.4",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.4",
+          "retrievedAt": "2026-08-11"
+        },
+        {
+          "id": "openai-gpt-5.3-codex",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.3-codex",
+          "retrievedAt": "2026-08-11"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-5.6-sol",
+          "matchIds": ["gpt-5.6-sol", "gpt-5.6"],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 30
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 45
+              }
+            }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-5.6-sol"]
+        },
+        {
+          "modelId": "gpt-5.6-terra",
+          "matchIds": ["gpt-5.6-terra"],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 2,
+                "cachedInputTokens": 0.2,
+                "cacheWriteInputTokens": 2.5,
+                "outputTokens": 12
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 4,
+                "cachedInputTokens": 0.4,
+                "cacheWriteInputTokens": 5,
+                "outputTokens": 18
+              }
+            }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-5.6-terra"]
+        },
+        {
+          "modelId": "gpt-5.6-luna",
+          "matchIds": ["gpt-5.6-luna"],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 0.2,
+                "cachedInputTokens": 0.02,
+                "cacheWriteInputTokens": 0.25,
+                "outputTokens": 1.2
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 0.4,
+                "cachedInputTokens": 0.04,
+                "cacheWriteInputTokens": 0.5,
+                "outputTokens": 1.8
+              }
+            }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-5.6-luna"]
+        },
+        {
+          "modelId": "gpt-5.5",
+          "matchIds": ["gpt-5.5", "gpt-5.5-2026-04-23"],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "outputTokens": 30
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "outputTokens": 45
+              }
+            }
+          ],
+          "sourceIds": ["openai-gpt-5.5"]
+        },
+        {
+          "modelId": "gpt-5.4",
+          "matchIds": ["gpt-5.4", "gpt-5.4-2026-03-05"],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 2.5,
+                "cachedInputTokens": 0.25,
+                "outputTokens": 15
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "outputTokens": 22.5
+              }
+            }
+          ],
+          "sourceIds": ["openai-gpt-5.4"]
+        },
+        {
+          "modelId": "gpt-5.3-codex",
+          "matchIds": ["gpt-5.3-codex"],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 1.75,
+                "cachedInputTokens": 0.175,
+                "outputTokens": 14
+              }
+            }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-5.3-codex"]
+        }
+      ],
+      "notes": "Direct OpenAI Standard API list prices for text tokens. Subscription charges, tool-call fees, regional processing uplifts, Batch/Flex/Fast pricing, and third-party hosting are excluded."
+    }
+  ]
+}

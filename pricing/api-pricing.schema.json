@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TokenStats API pricing catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "format", "formatVersion", "snapshots"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "tokenstats-api-pricing" },
+    "formatVersion": { "const": 1 },
+    "snapshots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/snapshot" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "url", "retrievedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "url": { "type": "string", "format": "uri" },
+        "retrievedAt": { "$ref": "#/$defs/date" }
+      }
+    },
+    "rates": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "inputTokens": { "type": "number", "minimum": 0 },
+        "cachedInputTokens": { "type": "number", "minimum": 0 },
+        "cacheWriteInputTokens": { "type": "number", "minimum": 0 },
+        "outputTokens": { "type": "number", "minimum": 0 },
+        "reasoningOutputTokens": { "type": "number", "minimum": 0 }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "rates"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "minimumInputTokens": { "type": "integer", "minimum": 0 },
+        "maximumInputTokens": { "type": "integer", "minimum": 0 },
+        "rates": { "$ref": "#/$defs/rates" },
+        "notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelId", "matchIds", "tiers", "sourceIds"],
+      "properties": {
+        "modelId": { "type": "string", "minLength": 1 },
+        "matchIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/tier" }
+        },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provider",
+        "product",
+        "verifiedAt",
+        "effectiveFrom",
+        "currency",
+        "unit",
+        "pricingBasis",
+        "billingMode",
+        "sources",
+        "models"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
+        "product": { "$ref": "#/$defs/identifier" },
+        "verifiedAt": { "$ref": "#/$defs/date" },
+        "effectiveFrom": {
+          "oneOf": [
+            { "$ref": "#/$defs/date" },
+            { "type": "null" }
+          ]
+        },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["metric", "quantity"],
+          "properties": {
+            "metric": { "const": "tokens" },
+            "quantity": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "pricingBasis": { "const": "api_list_price" },
+        "billingMode": {
+          "enum": ["standard", "batch", "flex", "fast", "other"]
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/source" }
+        },
+        "models": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/model" }
+        },
+        "notes": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@ artifacts/
 *.msi
 *.rpm
 *.snap
+assets/icons/TokenStats.icns
 
 # Local application data and exports
 data/
