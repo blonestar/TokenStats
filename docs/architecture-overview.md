@@ -71,7 +71,7 @@ and command results through preload rather than reconstructing database queries.
 
 The current dashboard implements `Today`, `Yesterday`, `This week`, `Last week`,
 `This month`, `Last month`, and `Last 6 months` queries. It uses hourly buckets
-for `Today`, daily buckets for the shorter day/week/month periods, and monthly
+for `Today` and `Yesterday`, daily buckets for the shorter week/month periods, and monthly
 buckets for `Last 6 months`, with source-and-model-separated totals and Chart.js
 Line/Bar views. Other navigation and settings surfaces listed below remain
 proposed.
