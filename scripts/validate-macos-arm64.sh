@@ -50,11 +50,11 @@ done < <(find "$app_path" -type f -name '*.node' -print0)
 better_sqlite3_module=""
 for native_module in "${native_modules[@]}"; do
   require_arm64 "$native_module" "native module $native_module"
-  if [[ "$(basename "$native_module")" == "better_sqlite3.node" ]]; then
+  if [[ "$native_module" == */better-sqlite3/prebuilds/darwin-arm64.node ]]; then
     better_sqlite3_module="$native_module"
   fi
 done
-[[ -n "$better_sqlite3_module" ]] || fail "packaged better_sqlite3.node not found"
+[[ -n "$better_sqlite3_module" ]] || fail "packaged better-sqlite3 darwin-arm64 prebuild not found"
 
 codesign --verify --deep --strict "$app_path" || fail "codesign verification failed"
 codesign --display --verbose=4 "$app_path" >"$signature_details" 2>&1 || fail "could not inspect code signature"
