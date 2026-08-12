@@ -59,7 +59,7 @@ const sourceStatusNote = (status: string): string => status === 'otel enabled' ?
 function bucketLabels(data: Dashboard): Array<{ bucket: string; label: string }> {
   const start = new Date(data.range.start)
   const end = new Date(data.range.end)
-  if (data.period === 'today') {
+  if (data.period === 'today' || data.period === 'yesterday') {
     return Array.from({ length: 24 }, (_, hour) => {
       const date = new Date(start)
       date.setHours(hour, 0, 0, 0)
@@ -193,7 +193,7 @@ function DashboardView({ data, chartType, setChartType }: { data: Dashboard; cha
     interaction: { mode: 'index', intersect: false },
     plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${exact(context.parsed.y)} tokens` } } },
     scales: {
-      x: { grid: { color: 'rgba(171, 194, 222, 0.09)' }, ticks: { color: '#9dacc0', maxRotation: 0, autoSkip: true, maxTicksLimit: data.period === 'today' ? 8 : data.period === 'last6Months' ? 6 : 10 } },
+      x: { grid: { color: 'rgba(171, 194, 222, 0.09)' }, ticks: { color: '#9dacc0', maxRotation: 0, autoSkip: true, maxTicksLimit: data.period === 'today' || data.period === 'yesterday' ? 8 : data.period === 'last6Months' ? 6 : 10 } },
       y: { beginAtZero: true, grid: { color: 'rgba(171, 194, 222, 0.12)' }, border: { display: false }, ticks: { color: '#9dacc0', callback: (value) => compact(Number(value)) } }
     }
   }), [data.period])

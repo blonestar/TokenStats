@@ -45,7 +45,7 @@ should show the total for the selected date range and, when available, separate
 input, output, cached input, cache write, reasoning, and total values.
 
 The implemented chart shows observed tokens separated by model. It offers Line
-and Bar modes, hourly buckets for `Today`, daily buckets for `Yesterday`, the
+and Bar modes, hourly buckets for `Today` and `Yesterday`, daily buckets for the
 weekly periods, and the month periods, plus monthly buckets for `Last 6 months`.
 It retains exact hover values and a visible per-model total/share list.
 Missing buckets inside the selected calendar range are shown as zero only after
