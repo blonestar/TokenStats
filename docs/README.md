@@ -4,7 +4,7 @@ Audience: contributors, product reviewers, architecture reviewers, and users eva
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-12
 
 # TokenStats documentation
 
@@ -26,8 +26,10 @@ behavior described by these documents remains proposed rather than implemented.
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
 tracked in the open-question matrix. The local-only macOS arm64 workflow has
-not been pushed or run; its ad-hoc-signed, unnotarized package validation is
-internal-only and not public-distribution evidence.
+not been pushed or run; local Linux CI and tag-driven draft-release workflows
+also have not been pushed or run. Their checks are not CI or release evidence
+until a GitHub run completes. The macOS workflow's ad-hoc-signed, unnotarized
+package validation is internal-only and not public-distribution evidence.
 
 The [GitHub Copilot OTel ingestion](copilot-otel.md) note documents the opt-in
 file exporter, privacy allowlist, cursor behavior, and fallback reconciliation.

@@ -9,8 +9,9 @@ credentials, and raw logs are not stored.
 ![TokenStats dashboard](docs/images/tokenstats-dashboard.png)
 
 > **Status:** An internal Fedora/Electron slice, tested on the current
-> Fedora/KDE host. Clean-machine, CI, cross-platform, and public-release
-> validation are not done yet.
+> Fedora/KDE host. Local CI and tag-driven draft-release workflows now exist,
+> but have not been pushed or run. Clean-machine, published-release, and
+> cross-platform validation remain open.
 
 ## Current features
 
@@ -32,10 +33,11 @@ pnpm dev
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm release:check-version --stable-only -- v0.1.0
 pnpm package:linux
 ```
 
-Tray/background behavior, alerts, automatic updates, exports, CI, and public
+Tray/background behavior, alerts, automatic updates, exports, and public
 distribution are not implemented yet.
 
 See the [documentation](docs/README.md) for details and [open questions](ideas/README.md)
