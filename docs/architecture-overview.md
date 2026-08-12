@@ -76,8 +76,9 @@ calendar-date queries. It uses hourly buckets for single-day ranges, daily
 buckets for shorter ranges, and monthly buckets for longer ranges, with
 source-and-model-separated totals and Chart.js Line/Bar/Pie views. Hovering or
 focusing a model breakdown row isolates its color in the active chart and mutes
-the other series/segments. Other navigation and settings surfaces listed below
-remain proposed.
+the other series/segments. The current slice also includes a basic Settings
+view for a confirmed, backup-first local database reset and re-import; the
+other navigation and settings surfaces listed below remain proposed.
 
 The initial UI information model is proposed as:
 

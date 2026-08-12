@@ -4,7 +4,7 @@ Audience: users, privacy reviewers, contributors implementing storage, and maint
 
 Source of truth: this document for data collection, storage, privacy, export/import, and migration rules; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-12
 
 # TokenStats data, privacy, and portability
 
@@ -22,7 +22,7 @@ file metadata. Schema version 6 adds only a non-content provider-migration
 ledger; the registered `claude-file-identifiers@1` migration converts any
 legacy Claude file references to opaque IDs. Claude imports
 assistant-message usage only and stores no content or project/file path. The
-`codex-jsonl-v2` migration path resets only Codex cursors, rescans read-only
+`codex-jsonl-v3` migration path resets only Codex cursors, rescans read-only
 source records, and fills missing model metadata without changing event IDs or
 counting duplicate rows as new imports. Copilot reconciles each persisted
 session/model to its latest shutdown snapshot rather than summing snapshots;
@@ -35,8 +35,11 @@ retain their historical rows while resetting file tracking and re-evaluating
 the fallback. OTel prompt/response/tool/path attributes are ignored even if
 the exporter is configured to capture content.
 Application data lives under Electron `userData`; together with current-user
-source roots, this isolates data per OS user. The broader model below still
-requires migration and portability tests.
+source roots, this isolates data per OS user. The implemented Settings reset
+creates a verified SQLite backup plus non-content metadata under
+`userData/backups/`, clears imported data/cursors/scan history transactionally,
+and re-runs the normal local scan. It never modifies source logs. Full
+portability/export behavior still requires additional implementation and tests.
 
 ## Data collected from local sources
 

@@ -18,7 +18,7 @@ describe('provider registry', () => {
     } as NodeJS.ProcessEnv)
 
     expect(sources.map((source) => ({ providerId: source.providerId, sourceId: source.sourceId, parserVersion: source.parserVersion }))).toEqual([
-      { providerId: 'codex', sourceId: 'codex-current-user', parserVersion: 'codex-jsonl-v2' },
+      { providerId: 'codex', sourceId: 'codex-current-user', parserVersion: 'codex-jsonl-v3' },
       { providerId: 'claude', sourceId: 'claude-current-user', parserVersion: 'claude-jsonl-v2' },
       { providerId: 'copilot', sourceId: 'copilot-current-user', parserVersion: 'copilot-events-v3-otel' }
     ])

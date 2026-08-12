@@ -12,8 +12,9 @@ This document describes both the implemented Codex dashboard slice and the
 broader proposed desktop experience. The current screen has selected-period or
 custom-calendar token totals, model-separated Chart.js Line/Bar/Pie trends, exact model totals,
 token-category totals, source health, and a manual scan action. Custom window
-chrome, navigation, tray items, alerts, notifications, settings, and update UI
-remain proposed.
+chrome, tray items, alerts, notifications, and update UI remain proposed. The
+current slice also includes a basic Settings view for the local database reset
+and re-import flow.
 
 ## Dashboard information architecture
 

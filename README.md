@@ -31,9 +31,12 @@ use daily buckets, and longer ranges use monthly buckets. The selected chart,
 period, and custom range persist locally; the application version is shown beside
 the logo.
 Current-source rescans are idempotent and retained history is cumulative until
-an explicit future deletion feature is introduced.
+the user explicitly resets imported data from Settings. Reset creates and
+verifies a timestamped SQLite backup, clears only TokenStats' imported data,
+and scans the source logs again; source files are never changed.
 
-Codex imports per-event `last_token_usage` with the active model context.
+Codex imports per-event `last_token_usage` with the active model context from
+both `turn_context` and Codex thread-settings records.
 Claude Code imports assistant-message usage only and stores neither content nor
 project/file paths; it uses opaque file IDs. Copilot imports only complete OTel
 `chat` metadata when available and switches away from matching session-state
@@ -41,8 +44,10 @@ fallback events only after aggregate token equality; without OTel, active CLI
 output-token snapshots are replaced by the latest persisted `session.shutdown`
 cumulative snapshot for each session/model.
 A missing source root or OTel file is a normal fallback state. The app does not
-persist prompt, response, source-code, command, or raw-record content. Alerts, tray
-behavior, updater, exports, and telemetry are not implemented. For Codex
+persist prompt, response, source-code, command, or raw-record content. Full
+alerts, tray behavior, updater, exports, and telemetry are not implemented;
+the current Settings view only covers the local database reset/re-import
+action. For Codex
 events and complete Copilot snapshots, the dashboard shows an estimated
 API-equivalent USD cost with pricing-snapshot date and coverage; incomplete
 provider records remain unknown.
@@ -50,7 +55,7 @@ provider records remain unknown.
 The local runtime validation imported cumulative history from the current user's Codex
 profile, repeated the incremental scan, rendered derived statistics, and passed
 SQLite integrity and storage-schema privacy checks without copying raw records
-into the repository. The v2 parser backfilled existing events with model
+into the repository. The v3 parser backfills existing events with model
 metadata without changing stable event IDs or duplicating usage rows. OTel
 fixture coverage verifies complete/partial JSONL spans, metadata allowlisting,
 and fallback reconciliation; a controlled live Copilot OTel smoke run also

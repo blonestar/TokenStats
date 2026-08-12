@@ -1,13 +1,15 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { join } from 'node:path'
-import type { ScanResult, ScanSourceResult } from '../shared/contracts'
+import type { ResetDatabaseResult, ScanResult, ScanSourceResult } from '../shared/contracts'
 import { TokenDatabase } from './database'
+import { backupAndClearDatabase } from './database-reset'
 import type { ProviderSource } from './ingestion/contracts'
 import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
 export { sourceRoot } from './providers/discovery'
 
 let database: TokenDatabase | undefined
 let scanRunning = false
+let resetRunning = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
 const ZOOM_STEP = 0.1
@@ -91,11 +93,55 @@ function runAllScan(): ScanResult {
     }
   }
 
+  if (resetRunning) {
+    return {
+      ok: false,
+      filesScanned: 0,
+      eventsImported: 0,
+      warnings: 0, sources: [],
+      error: 'The database is being reset.'
+    }
+  }
+
   scanRunning = true
   try {
     return scanAllSources(database)
   } finally {
     scanRunning = false
+  }
+}
+
+async function resetDatabase(): Promise<ResetDatabaseResult> {
+  if (!database) return { ok: false, error: 'Local database is not ready.' }
+  if (scanRunning) return { ok: false, error: 'A scan is already running. Try again when it finishes.' }
+  if (resetRunning) return { ok: false, error: 'The database is already being reset.' }
+
+  resetRunning = true
+  try {
+    const confirmation = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Reset local database?',
+      message: 'Reset imported TokenStats data and re-import from local source logs?',
+      detail: 'A verified SQLite backup will be retained first. Source files are not changed. This cannot be undone from the app.',
+      buttons: ['Cancel', 'Reset and re-import'],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true
+    })
+    if (confirmation.response !== 1) return { ok: false, cancelled: true }
+    const reset = await backupAndClearDatabase(database, { userData: app.getPath('userData'), appVersion: app.getVersion() })
+    if (!reset.ok) return reset
+    try {
+      const reimport = scanAllSources(database)
+      return { ...reset, ok: reimport.ok, reimport, ...(reimport.ok ? {} : { error: 'Database reset succeeded, but re-import reported an error.' }) }
+    } catch {
+      const reimport: ScanResult = { ok: false, filesScanned: 0, eventsImported: 0, warnings: 1, sources: [], error: 'Re-import failed before a source result was recorded.' }
+      return { ...reset, ok: false, reimport, error: `Database reset succeeded, but re-import failed. Verified backup ${reset.backupName ?? 'was'} retained.` }
+    }
+  } catch {
+    return { ok: false, error: 'The database could not be reset. Existing data was kept.' }
+  } finally {
+    resetRunning = false
   }
 }
 
@@ -109,6 +155,7 @@ app.whenReady().then(() => {
   ipcMain.handle('tokenstats:getDashboard', (_event, period: unknown) => database?.dashboard(period))
   ipcMain.handle('tokenstats:getVersion', () => app.getVersion())
   ipcMain.handle('tokenstats:scanAll', runAllScan)
+  ipcMain.handle('tokenstats:resetDatabase', resetDatabase)
 
   createWindow()
 

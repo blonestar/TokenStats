@@ -8,6 +8,34 @@ import type { Dashboard, DashboardBucket, DashboardPeriod, DashboardRange, Sourc
 
 export type { UsageEvent } from './ingestion/contracts'
 
+export type DatabaseDataCounts = {
+  events: number
+  cursors: number
+  fileSignatures: number
+  scanRuns: number
+  sources: number
+}
+
+const dataTables = ['usage_events', 'source_cursors', 'source_file_signatures', 'scan_runs', 'sources'] as const
+
+function dataCounts(database: Database.Database): DatabaseDataCounts {
+  const count = (table: (typeof dataTables)[number]): number => Number(database.prepare(`SELECT count(*) FROM ${table}`).pluck().get())
+  return { events: count('usage_events'), cursors: count('source_cursors'), fileSignatures: count('source_file_signatures'), scanRuns: count('scan_runs'), sources: count('sources') }
+}
+
+export function verifyDatabaseBackup(file: string, expected: DatabaseDataCounts): boolean {
+  let backup: Database.Database | undefined
+  try {
+    backup = new Database(file, { readonly: true, fileMustExist: true })
+    if (backup.pragma('integrity_check', { simple: true }) !== 'ok') return false
+    return JSON.stringify(dataCounts(backup)) === JSON.stringify(expected)
+  } catch {
+    return false
+  } finally {
+    backup?.close()
+  }
+}
+
 const periods: DashboardPeriod[] = ['today', 'yesterday', 'thisWeek', 'lastWeek', 'thisMonth', 'lastMonth', 'last6Months']
 const validPeriod = (value: unknown): DashboardPeriod => periods.includes(value as DashboardPeriod) ? value as DashboardPeriod : 'thisMonth'
 const localDate = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -190,6 +218,14 @@ INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, datetime(
     const categories = this.db.prepare(`SELECT 'Input' category,coalesce(sum(input_tokens),0) tokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Output',coalesce(sum(output_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Cached input',coalesce(sum(cached_input_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Reasoning',coalesce(sum(reasoning_output_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?`).all(...params, ...params, ...params, ...params) as Dashboard['categories']
     const sources = this.sourceDefinitions.map(({ sourceId, providerId, label }) => { const source = this.db.prepare('SELECT status,last_successful_scan lastSuccessfulScan FROM sources WHERE id=?').get(sourceId) as { status: SourceStatus; lastSuccessfulScan: string | null } | undefined; const recent = this.db.prepare('SELECT files_scanned filesScanned,events_imported eventsImported,warnings_json FROM scan_runs WHERE source_id=? ORDER BY id DESC LIMIT 1').get(sourceId) as { filesScanned: number; eventsImported: number; warnings_json: string } | undefined; return { sourceId, providerId, label, status: source?.status ?? 'not scanned', lastSuccessfulScan: source?.lastSuccessfulScan ?? null, filesScanned: recent?.filesScanned ?? 0, eventsImported: recent?.eventsImported ?? 0, warnings: recent ? JSON.parse(recent.warnings_json) : [] } })
     return { period, range, totals: { inputTokens: row.inputTokens, outputTokens: row.outputTokens, cachedInputTokens: row.cachedInputTokens, cacheWriteInputTokens: row.cacheWriteInputTokens, reasoningOutputTokens: row.reasoningOutputTokens, totalTokens: row.totalTokens }, estimatedCost: costs.total, pricingSnapshots: costs.snapshots, eventCount: row.eventCount, sessionCount: row.sessionCount, activeDayCount: row.activeDayCount, daily, trend, modelTotals, categories, sources }
+  }
+  getDataCounts(): DatabaseDataCounts { return dataCounts(this.db) }
+  schemaVersion(): number { return Number(this.db.prepare('SELECT max(version) FROM schema_migrations').pluck().get() ?? 0) }
+  async backup(destination: string): Promise<void> { await this.db.backup(destination) }
+  clearImportedData(): void {
+    this.db.transaction(() => {
+      for (const table of dataTables) this.db.prepare(`DELETE FROM ${table}`).run()
+    })()
   }
   close(): void { this.db.close() }
 }
