@@ -4,13 +4,13 @@ Audience: users, UX reviewers, accessibility reviewers, and contributors impleme
 
 Source of truth: this document for dashboard, window, tray, alert, and update interaction requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-12
 
 # TokenStats UI, window, tray, and alerts
 
 This document describes both the implemented Codex dashboard slice and the
-broader proposed desktop experience. The current screen has selected-period
-token totals, model-separated Chart.js Line/Bar trends, exact model totals,
+broader proposed desktop experience. The current screen has selected-period or
+custom-calendar token totals, model-separated Chart.js Line/Bar/Pie trends, exact model totals,
 token-category totals, source health, and a manual scan action. Custom window
 chrome, navigation, tray items, alerts, notifications, settings, and update UI
 remain proposed.
@@ -44,10 +44,12 @@ The first KPI is **Observed tokens**, not a large dollar amount. The overview
 should show the total for the selected date range and, when available, separate
 input, output, cached input, cache write, reasoning, and total values.
 
-The implemented chart shows observed tokens separated by model. It offers Line
-and Bar modes, hourly buckets for `Today` and `Yesterday`, daily buckets for the
-weekly periods, and the month periods, plus monthly buckets for `Last 6 months`.
-It retains exact hover values and a visible per-model total/share list.
+The implemented chart shows observed tokens separated by model. It offers Line,
+Bar, and Pie modes, hourly buckets for single-day ranges, daily buckets for
+shorter ranges, and monthly buckets for longer ranges. A custom calendar control
+selects an inclusive start/end date in the local timezone. Hovering or focusing
+a row in the visible per-model total/share list keeps that model's chart color
+and turns the other series or pie segments gray. It retains exact tooltip values.
 Missing buckets inside the selected calendar range are shown as zero only after
 the full retained source history has been queried. The summary and model list
 show Codex or complete Copilot estimated API-equivalent cost with coverage and
@@ -62,6 +64,10 @@ Harness | Model | Sessions | Input | Output | Cached | Reasoning | Est. cost | C
 Compact values such as `42.1M` should have full values in the tooltip or detail
 view. The selected date range, timezone, source freshness, and data coverage
 must remain visible.
+
+The implemented Electron window uses the committed TokenStats T-and-graph icon
+for its Linux window and taskbar identity. Broader custom window chrome remains
+proposed.
 
 ## Estimated-cost labeling
 

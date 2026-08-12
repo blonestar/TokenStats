@@ -4,17 +4,18 @@ Audience: contributors, architecture reviewers, security reviewers, and maintain
 
 Source of truth: this document for the proposed system boundaries; unresolved alternatives are tracked in ../ideas/00-open-questions.md and the numbered idea notes
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-12
 
 # TokenStats architecture overview
 
 This document describes the proposed architecture for a local-first Electron
 application. The implemented Fedora slice has application code, package
-manifest, typed two-operation IPC, SQLite migrations, and current-user Codex,
+manifest, typed three-operation IPC, SQLite migrations, and current-user Codex,
 Claude Code, and experimental GitHub Copilot provider modules. It also has a
 provider registry, generic canonical-event/ingestion-store boundary,
-model-aware schema/parser support, allowlisted period queries, and a Chart.js
-model trend renderer; the broader architecture below remains proposed.
+model-aware schema/parser support, allowlisted preset/custom date queries, and a
+Chart.js Line/Bar/Pie model trend renderer with model-hover isolation; the
+broader architecture below remains proposed.
 
 ## Architectural goals
 
@@ -70,11 +71,13 @@ settings, and custom window controls. The renderer should receive view models
 and command results through preload rather than reconstructing database queries.
 
 The current dashboard implements `Today`, `Yesterday`, `This week`, `Last week`,
-`This month`, `Last month`, and `Last 6 months` queries. It uses hourly buckets
-for `Today` and `Yesterday`, daily buckets for the shorter week/month periods, and monthly
-buckets for `Last 6 months`, with source-and-model-separated totals and Chart.js
-Line/Bar views. Other navigation and settings surfaces listed below remain
-proposed.
+`This month`, `Last month`, `Last 6 months`, and validated custom inclusive
+calendar-date queries. It uses hourly buckets for single-day ranges, daily
+buckets for shorter ranges, and monthly buckets for longer ranges, with
+source-and-model-separated totals and Chart.js Line/Bar/Pie views. Hovering or
+focusing a model breakdown row isolates its color in the active chart and mutes
+the other series/segments. Other navigation and settings surfaces listed below
+remain proposed.
 
 The initial UI information model is proposed as:
 

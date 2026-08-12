@@ -11,7 +11,7 @@ Last reviewed: 2026-08-11
 This folder is the canonical home for official TokenStats documentation. A
 narrow Fedora/Electron slice is implemented, including current-user Codex,
 Claude Code, and experimental GitHub Copilot scanning, model-aware retained
-usage, period views, a real Line/Bar dashboard, and estimated API-equivalent
+usage, period views, a real Line/Bar/Pie dashboard with custom date ranges, and estimated API-equivalent
 USD costs for Codex and complete Copilot snapshots with pricing date/coverage
 metadata. The packaged Fedora
 AppImage and multi-source scan have local runtime evidence: Codex usage was

@@ -7,7 +7,10 @@ button { font: inherit; }
 .topbar { justify-content: space-between; gap: 20px; padding-bottom: 10px; border-bottom: 1px solid #233044; }
 .brand { gap: 10px; }
 .brand img { width: 34px; height: 34px; }
+.brand-title { display: flex; align-items: baseline; gap: 6px; }
 .brand h1 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
+.app-version { color: #8192a7; font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.app-by { color: #8192a7; font-size: 10px; }
 .brand p { margin: 2px 0 0; color: #aebdce; font-size: 12px; }
 .header-actions { gap: 12px; }
 .source-summary, .source-indicator { color: #aebdce; font-size: 12px; white-space: nowrap; }
@@ -25,10 +28,17 @@ button { font: inherit; }
 .scan-button { min-height: 36px; padding: 0 12px; border: 1px solid #659fda; border-radius: 7px; background: #68aef1; color: #07111d; font-size: 12px; font-weight: 750; cursor: pointer; }
 .scan-button:hover:not(:disabled) { background: #88c2fb; }
 .scan-button:disabled { cursor: wait; opacity: .65; }
-.period-row { justify-content: space-between; min-height: 46px; padding: 7px 0; }
+.period-row { justify-content: space-between; min-height: 46px; gap: 12px; padding: 7px 0; }
+.period-controls { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 8px; }
 .segmented-control { display: inline-flex; padding: 2px; border: 1px solid #29394e; border-radius: 8px; background: #111b28; }
 .segmented-control button { min-height: 30px; padding: 0 11px; border: 0; border-radius: 5px; background: transparent; color: #aebdce; font-size: 12px; cursor: pointer; }
 .segmented-control button[aria-pressed=true] { background: #27435e; color: #f4f8fc; box-shadow: inset 0 0 0 1px #3a6389; }
+.custom-date-picker { display: flex; align-items: center; gap: 6px; color: #9dafc3; font-size: 11px; }
+.custom-date-picker label { display: inline-flex; align-items: center; gap: 4px; }
+.custom-date-picker input { min-height: 30px; padding: 0 7px; border: 1px solid #29394e; border-radius: 6px; background: #111b28; color: #eff5fc; color-scheme: dark; font: inherit; }
+.custom-date-picker input:focus-visible { border-color: #68aef1; outline: 2px solid #68aef1; outline-offset: 1px; }
+.apply-date-button { min-height: 30px; padding: 0 10px; border: 1px solid #659fda; border-radius: 6px; background: #27435e; color: #f4f8fc; font-size: 11px; font-weight: 700; cursor: pointer; }
+.apply-date-button:disabled { cursor: not-allowed; opacity: .45; }
 .refreshing { color: #aebdce; font-size: 12px; }
 .error { margin: 12px 0 0; padding: 9px 11px; border-left: 3px solid #f08d8d; background: #301b24; color: #ffd8d8; font-size: 12px; }
 .summary { display: flex; align-items: end; justify-content: space-between; gap: 28px; padding: 11px 0 12px; border-bottom: 1px solid #233044; }
@@ -50,8 +60,10 @@ button { font: inherit; }
 .panel-heading h2, .token-breakdown h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
 .chart-toggle button { min-width: 48px; }
 .chart-frame { height: 224px; margin-top: 8px; }
+.pie-chart-frame { max-width: 340px; margin-right: auto; margin-left: auto; }
 .model-list { margin-top: 5px; }
-.model-row { display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 0; border-bottom: 1px solid #223044; }
+.model-row { display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 4px; border-bottom: 1px solid #223044; border-radius: 4px; cursor: pointer; transition: background-color .12s ease; }
+.model-row:hover, .model-row:focus-visible, .model-row.is-active { background: rgba(103, 183, 255, .1); }
 .model-row:last-child { border-bottom: 0; }
 .model-dot { width: 7px; height: 7px; border-radius: 50%; }
 .model-name, .model-value { display: flex; min-width: 0; flex-direction: column; }

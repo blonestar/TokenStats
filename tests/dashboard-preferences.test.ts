@@ -12,7 +12,7 @@ function createStorage(): Pick<Storage, 'getItem' | 'setItem'> {
 describe('dashboard preferences', () => {
   it('restores the selected period and chart type', () => {
     const storage = createStorage()
-    const preferences: DashboardPreferences = { period: 'last6Months', chartType: 'bar' }
+    const preferences: DashboardPreferences = { period: 'last6Months', chartType: 'pie', customRange: { startDate: '2026-08-01', endDate: '2026-08-11' } }
 
     saveDashboardPreferences(preferences, storage)
 
@@ -23,13 +23,20 @@ describe('dashboard preferences', () => {
     const storage = createStorage()
     storage.setItem('tokenstats.dashboard-preferences', JSON.stringify({ period: 'invalid', chartType: 'bar' }))
 
-    expect(loadDashboardPreferences(storage)).toEqual({ period: 'thisMonth', chartType: 'bar' })
+    expect(loadDashboardPreferences(storage)).toEqual({ period: 'thisMonth', chartType: 'bar', customRange: { startDate: '', endDate: '' } })
   })
 
   it('falls back to defaults for malformed stored JSON', () => {
     const storage = createStorage()
     storage.setItem('tokenstats.dashboard-preferences', '{not-json')
 
-    expect(loadDashboardPreferences(storage)).toEqual({ period: 'thisMonth', chartType: 'line' })
+    expect(loadDashboardPreferences(storage)).toEqual({ period: 'thisMonth', chartType: 'line', customRange: { startDate: '', endDate: '' } })
+  })
+
+  it('rejects invalid custom date ranges', () => {
+    const storage = createStorage()
+    storage.setItem('tokenstats.dashboard-preferences', JSON.stringify({ period: 'custom', chartType: 'line', customRange: { startDate: '2026-02-30', endDate: '2026-02-01' } }))
+
+    expect(loadDashboardPreferences(storage)).toEqual({ period: 'custom', chartType: 'line', customRange: { startDate: '', endDate: '' } })
   })
 })

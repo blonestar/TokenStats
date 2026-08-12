@@ -24,9 +24,12 @@ and GitHub Copilot `${COPILOT_HOME:-~/.copilot}/session-state` records, plus the
 optional `${COPILOT_OTEL_FILE_EXPORTER_PATH:-<copilot-home>/otel/tokenstats.jsonl}`
 OTel file. The
 dashboard separates every statistic by source and model, uses Chart.js for
-Line/Bar trends, and provides `Today`, `Yesterday`, `This week`, `Last week`,
-`This month`, `Last month`, and `Last 6 months` views. The six-month view uses
-monthly chart buckets.
+Line/Bar/Pie views, and provides `Today`, `Yesterday`, `This week`, `Last week`,
+`This month`, `Last month`, `Last 6 months`, and a custom inclusive calendar
+date-range view. Custom single-day ranges use hourly buckets, shorter ranges
+use daily buckets, and longer ranges use monthly buckets. The selected chart,
+period, and custom range persist locally; the application version is shown beside
+the logo.
 Current-source rescans are idempotent and retained history is cumulative until
 an explicit future deletion feature is introduced.
 

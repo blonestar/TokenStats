@@ -41,9 +41,10 @@ evidence supports a different status.
 
 The implemented dashboard currently answers token totals by source and model for
 `Today`, `Yesterday`, `This week`, `Last week`, `This month`, `Last month`, and
-`Last 6 months`, with hourly, daily, or monthly Line/Bar trends, exact model
-totals, session/event/day counts, category totals, source scan health, and
-estimated API-equivalent USD cost for Codex and complete Copilot snapshots with
+`Last 6 months`, and custom inclusive calendar date ranges, with hourly, daily,
+or monthly Line/Bar/Pie trends, model-hover isolation, exact model totals,
+session/event/day counts, category totals, source scan health, and estimated
+API-equivalent USD cost for Codex and complete Copilot snapshots with
 snapshot/date and coverage. It does not yet implement project drilldown,
 budgets, tray behavior, export/import, or updates.
 
