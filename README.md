@@ -10,8 +10,8 @@ credentials, and raw logs are not stored.
 
 > **Status:** An internal Fedora/Electron slice, tested on the current
 > Fedora/KDE host. GitHub CI and the tag-driven `v0.1.0` release run passed;
-> the Linux AppImage is available in a draft GitHub Release. Clean-machine,
-> published-release, and cross-platform validation remain open.
+> the Linux AppImage is published in GitHub Releases. Clean-machine, public
+> distribution readiness, and cross-platform validation remain open.
 
 ## Current features
 

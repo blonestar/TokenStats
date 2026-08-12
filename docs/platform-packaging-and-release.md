@@ -61,7 +61,7 @@ The proposed artifact set is:
 
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
-| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; `v0.1.0` draft AppImage and checksum were verified by GitHub Actions. |
+| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.0` AppImage and checksum were verified by GitHub Actions. |
 | Fedora x64 | `.rpm` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Internal-only validation; workflow exists locally but has not been pushed or run. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
@@ -144,8 +144,7 @@ runtime, notarization, stapling, and a clean-machine Gatekeeper gate.
 
 The repository contains `ci.yml`, `release.yml`, and the manual macOS arm64
 validation workflow. Linux CI run `31601607793` and the tag-driven `v0.1.0`
-release run `31601644690` passed on GitHub; the resulting release is still a
-draft.
+release run `31601644690` passed on GitHub; the resulting release is published.
 The macOS workflow remains local-only, and successful local commands do not
 substitute for clean-machine or cross-platform evidence.
 
