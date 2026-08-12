@@ -61,7 +61,7 @@ The proposed artifact set is:
 
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
-| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate. |
+| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; `v0.1.0` draft AppImage and checksum were verified by GitHub Actions. |
 | Fedora x64 | `.rpm` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Internal-only validation; workflow exists locally but has not been pushed or run. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
@@ -142,10 +142,12 @@ runtime, notarization, stapling, and a clean-machine Gatekeeper gate.
 
 ## GitHub Actions implementation status
 
-The repository contains local `ci.yml`, `release.yml`, and manual macOS arm64
-validation workflows. They have not been pushed or run. The Linux workflows
-are implemented as follows; successful local commands do not substitute for a
-GitHub-hosted run.
+The repository contains `ci.yml`, `release.yml`, and the manual macOS arm64
+validation workflow. Linux CI run `31601607793` and the tag-driven `v0.1.0`
+release run `31601644690` passed on GitHub; the resulting release is still a
+draft.
+The macOS workflow remains local-only, and successful local commands do not
+substitute for clean-machine or cross-platform evidence.
 
 ### `ci.yml`
 
@@ -166,7 +168,7 @@ No separate `build.yml` exists yet. A future preview workflow may:
 
 ### `release.yml`
 
-The current local tag-driven flow:
+The current tag-driven flow, verified by the `v0.1.0` run, is:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
 2. The workflow verifies that the tag exactly matches `package.json`.

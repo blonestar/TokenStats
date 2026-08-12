@@ -10,15 +10,17 @@
   for brainstorming, unresolved questions, and exploratory proposals.
 - `package.json` provides `pnpm dev`, `pnpm test`, `pnpm typecheck`, `pnpm build`,
   `pnpm release:check-version` (with `--stable-only` for Stable tags),
-  `pnpm package:unpacked`, `pnpm package:linux`, and the macOS-only
+  `pnpm package:unpacked`, `pnpm package:linux` (with publishing disabled), and the macOS-only
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
   arm64 runner validates the host, binaries/native module, ad-hoc signature, and
   isolated launch before uploading an internal ZIP plus SHA-256 manifest; it has
   not been pushed or run. Local `.github/workflows/ci.yml` and
   `.github/workflows/release.yml` workflows now run Linux verification and
-  tag-driven draft-release preparation, but they have not been pushed or run.
-  There is no published release, updater, or cross-platform validation yet.
+  tag-driven draft-release preparation. GitHub CI and the tag-driven `v0.1.0`
+  release run have passed; the draft release contains the Linux AppImage and
+  SHA-256 manifest. There is no published release, updater, or cross-platform
+  validation yet.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -137,11 +139,12 @@ the validation spikes described in `docs/`, is:
   releases once implementation and release work are authorized.
 
 The provider registry, canonical event boundary, and current three-provider
-modules are implemented in the Fedora multi-source slice. Local CI and
-tag-driven draft-release workflows now exist with a package/tag version gate,
-but they have not been pushed or run; the versioned archive, import/export,
-published release, updater, and broader background/platform behavior remain
-proposals rather than evidence that those features exist.
+modules are implemented in the Fedora multi-source slice. CI and tag-driven
+draft-release workflows now have verified GitHub runs with a package/tag
+version gate, and `v0.1.0` exists as a draft release with Linux artifacts. The
+versioned archive, import/export, published release, updater, and broader
+background/platform behavior remain proposals rather than evidence that those
+features exist.
 
 ## Before making changes
 
@@ -163,8 +166,9 @@ proposals rather than evidence that those features exist.
   actually run. The packaged AppImage has been started and its multi-source
   scan exercised on the current Fedora/KDE host: Codex usage was imported, the
   current Claude root was discovered but yielded no usage events, and Copilot
-  was not found. That is not clean-machine,
-  cross-platform, published-release, or CI evidence. Fedora cannot validate
+  was not found. That is not clean-machine, cross-platform, or published-release
+  evidence; GitHub PR CI and the successful `v0.1.0` release run are separately
+  verified. Fedora cannot validate
   the ad-hoc-signed, unnotarized macOS artifact; a real Apple Silicon workflow
   run remains required. This internal validation is not public distribution:
   Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
