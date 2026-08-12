@@ -2,8 +2,9 @@
 
 Status: ideation and proposal material. A Fedora slice with current-user Codex,
 Claude Code, and experimental GitHub Copilot scanning now exists. Local Linux
-CI and tag-driven draft-release workflows are implemented but not yet pushed or
-run; ideas remain non-authoritative until recorded in `/docs`.
+CI and tag-driven draft-release workflows have verified GitHub runs, including
+the `v0.1.0` Linux draft release; ideas remain non-authoritative until recorded
+in `/docs`.
 
 The official project documentation is in [`../docs/`](../docs/README.md).
 This folder is intentionally different: it contains brainstorming, unresolved

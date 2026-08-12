@@ -26,10 +26,10 @@ behavior described by these documents remains proposed rather than implemented.
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
 tracked in the open-question matrix. The local-only macOS arm64 workflow has
-not been pushed or run; local Linux CI and tag-driven draft-release workflows
-also have not been pushed or run. Their checks are not CI or release evidence
-until a GitHub run completes. The macOS workflow's ad-hoc-signed, unnotarized
-package validation is internal-only and not public-distribution evidence.
+not been pushed or run. Linux GitHub CI and the tag-driven `v0.1.0` release run
+passed; the resulting GitHub Release remains a draft with the Linux AppImage
+and checksum manifest. The macOS workflow's ad-hoc-signed, unnotarized package
+validation is internal-only and not public-distribution evidence.
 
 The [GitHub Copilot OTel ingestion](copilot-otel.md) note documents the opt-in
 file exporter, privacy allowlist, cursor behavior, and fallback reconciliation.
