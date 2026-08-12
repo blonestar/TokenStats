@@ -15,6 +15,7 @@ import {
 import { Bar, Line } from 'react-chartjs-2'
 import type { CostEstimate, Dashboard, DashboardPeriod } from '../../shared/contracts'
 import tokenStatsIcon from '../../../assets/icons/64x64.png'
+import { loadDashboardPreferences, saveDashboardPreferences, type DashboardChartType } from './dashboard-preferences'
 import './styles.css'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend)
@@ -97,12 +98,14 @@ function humanRange(data: Dashboard): string {
 }
 
 function App(): React.JSX.Element {
-  const [period, setPeriod] = useState<DashboardPeriod>('thisMonth')
+  const [period, setPeriod] = useState<DashboardPeriod>(() => loadDashboardPreferences().period)
   const [data, setData] = useState<Dashboard | null>(null)
   const [scanning, setScanning] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [chartType, setChartType] = useState<'line' | 'bar'>('line')
+  const [chartType, setChartType] = useState<DashboardChartType>(() => loadDashboardPreferences().chartType)
+
+  useEffect(() => { saveDashboardPreferences({ period, chartType }) }, [period, chartType])
 
   const load = async (nextPeriod = period): Promise<void> => {
     setLoading(true)

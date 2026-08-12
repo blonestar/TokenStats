@@ -55,7 +55,8 @@
   separated Line/Bar trends. Dashboard IPC accepts `today`, `yesterday`,
   `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, or `last6Months`; the last
   period groups trends by month, and all boundaries use the current OS user's
-  local timezone.
+  local timezone. The selected period and chart type are persisted in renderer
+  `localStorage` across refreshes and application restarts.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
   Standard API list prices for Codex-relevant OpenAI models and a reviewed
