@@ -8,13 +8,14 @@ Last reviewed: 2026-08-12
 
 # TokenStats platform, packaging, and release
 
-This remains a release-engineering proposal with a local implementation slice.
+This remains a release-engineering proposal with an implemented Fedora slice.
 The repository has a package manifest, version gate, Linux CI workflow, a
-tag-driven Linux draft-release workflow, and a local manual macOS arm64
-validation workflow. None of these workflows has been pushed or run yet; no
-release artifact has been published, and signing configuration or updater
-implementation does not exist. The unpacked build starts and scans on the
-current Fedora/KDE host, which is not clean-machine or release verification.
+tag-driven Linux draft-release workflow, and a manual macOS arm64 validation
+workflow. Linux and native macOS arm64 runs have passed, and the published
+internal `v0.1.0` release contains both platform artifacts plus a combined
+checksum manifest. Signing configuration for production distribution and
+updater implementation do not exist. The unpacked build starts and scans on
+the current Fedora/KDE host, which is not clean-machine verification.
 
 ## Platform targets
 
@@ -63,7 +64,7 @@ The proposed artifact set is:
 | --- | --- | --- |
 | Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.0` AppImage and checksum were verified by GitHub Actions. |
 | Fedora x64 | `.rpm` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
-| macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Internal-only validation; workflow exists locally but has not been pushed or run. |
+| macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
 | Windows later | `.exe` installer and/or `.msix` | Add only after the Windows installer, identity, notifications, signing, and update path are tested. |
@@ -76,6 +77,8 @@ an unversioned `latest` file as the only download reference.
 
 `electron-builder` is the pinned packaging dependency and currently produces
 the Linux AppImage plus the internal macOS arm64 ZIP validation artifact.
+Target-specific file filters keep only the matching `better-sqlite3` prebuild in
+each artifact (`linux-x64.node` for Fedora and `darwin-arm64.node` for macOS).
 `electron-updater` remains a proposed follow-on because the product still needs
 a Linux AppImage feed investigation in addition to macOS and Windows update
 packaging.
@@ -125,28 +128,30 @@ and creates the ad-hoc-signed, unnotarized
 `dist/TokenStats-<version>-mac-arm64.zip` artifact with publishing disabled.
 `.github/workflows/macos-arm64-validation.yml` is manual-only, uses the native
 Apple Silicon `macos-15` runner, and uploads that ZIP with a `SHA256SUMS.txt`
-manifest. The workflow exists locally but has not been pushed or run.
+manifest. Run `31606807111` passed on GitHub, and its ZIP was uploaded to the
+published `v0.1.0` release alongside the Linux AppImage.
 
 Before upload, the workflow asserts an arm64 host; checks the arm64 main
-executable and every packaged `.node` module (including `better_sqlite3.node`);
-verifies the strict, deep ad-hoc code signature; and launches the app with a
-temporary isolated user-data directory until the TokenStats renderer appears
-through a local DevTools endpoint. It does not scan source data or use a real
-application-data directory. The checksum manifest is generated and checked
-inside `dist/`, so its entries are bare artifact filenames.
+executable and every packaged `.node` module, including the target
+`better-sqlite3` `darwin-arm64.node` prebuild; verifies the strict, deep ad-hoc
+code signature; and launches the app with a temporary isolated user-data
+directory until the TokenStats renderer appears through a local DevTools
+endpoint. It does not scan source data or use a real application-data
+directory. The checksum manifest is generated and checked inside `dist/`, so
+its entries are bare artifact filenames.
 
-This ad-hoc-signed, unnotarized artifact is internal-only. Fedora cannot
-validate it; a real Apple Silicon workflow run remains required. Public macOS
-distribution remains unready and requires Developer ID signing, hardened
-runtime, notarization, stapling, and a clean-machine Gatekeeper gate.
+This ad-hoc-signed, unnotarized artifact is internal-only. The native Apple
+Silicon workflow has passed, but public macOS distribution remains unready and
+requires Developer ID signing, hardened runtime, notarization, stapling, and a
+clean-machine Gatekeeper gate.
 
 ## GitHub Actions implementation status
 
 The repository contains `ci.yml`, `release.yml`, and the manual macOS arm64
-validation workflow. Linux CI run `31601607793` and the tag-driven `v0.1.0`
-release run `31601644690` passed on GitHub; the resulting release is published.
-The macOS workflow remains local-only, and successful local commands do not
-substitute for clean-machine or cross-platform evidence.
+validation workflow. Linux CI run `31601607793`, the tag-driven `v0.1.0`
+release run `31601644690`, and macOS arm64 run `31606807111` passed on GitHub;
+the resulting release is published with Linux and macOS artifacts. Successful
+workflow runs still do not substitute for clean-machine evidence.
 
 ### `ci.yml`
 
@@ -177,8 +182,10 @@ The current tag-driven flow, verified by the `v0.1.0` run, is:
 6. A maintainer reviews the artifact, notes, channel, and evidence.
 7. The release is published manually; only then should the Stable feed expose it.
 
-macOS arm64, Ubuntu-specific packaging, Windows artifacts, SBOM/provenance,
-signing, and clean-machine smoke tests remain separate follow-up work.
+Ubuntu-specific packaging, Windows artifacts, SBOM/provenance, production
+signing, and clean-machine smoke tests remain separate follow-up work. The
+manual macOS arm64 validation workflow remains separate from the automated
+Linux tag-release job.
 
 Release jobs should start with read-only permissions and grant write access only
 to the narrow job that creates or publishes the release. Third-party Actions

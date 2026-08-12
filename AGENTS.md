@@ -14,14 +14,14 @@
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
   arm64 runner validates the host, binaries/native module, ad-hoc signature, and
-  isolated launch before uploading an internal ZIP plus SHA-256 manifest; it has
-  not been pushed or run. Local `.github/workflows/ci.yml` and
+  isolated launch before uploading an internal ZIP plus SHA-256 manifest; run
+  `31606807111` passed on GitHub. Local `.github/workflows/ci.yml` and
   `.github/workflows/release.yml` workflows now run Linux verification and
   tag-driven draft-release preparation. GitHub CI and the tag-driven `v0.1.0`
-  release run have passed; `v0.1.0` is published with the Linux AppImage and
-  SHA-256 manifest. No updater or cross-platform validation exists yet, and
-  publication does not establish clean-machine or broader distribution
-  readiness.
+  release run have passed; `v0.1.0` is published with the Linux AppImage,
+  macOS arm64 ZIP, and combined SHA-256 manifest. No updater, clean-machine
+  validation, or broader distribution readiness exists yet; publication does
+  not establish those claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -142,10 +142,11 @@ the validation spikes described in `docs/`, is:
 The provider registry, canonical event boundary, and current three-provider
 modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
-version gate, and `v0.1.0` is published with Linux artifacts. The versioned
-archive, import/export, updater, and broader background/platform behavior remain
-proposals rather than evidence that those features exist; the published Linux
-artifact does not establish cross-platform or clean-machine readiness.
+version gate, and `v0.1.0` is published with Linux and macOS arm64 artifacts.
+The versioned archive, import/export, updater, and broader background/platform
+behavior remain proposals rather than evidence that those features exist; the
+published preview artifacts do not establish clean-machine or production
+distribution readiness.
 
 ## Before making changes
 
@@ -167,13 +168,12 @@ artifact does not establish cross-platform or clean-machine readiness.
   actually run. The packaged AppImage has been started and its multi-source
   scan exercised on the current Fedora/KDE host: Codex usage was imported, the
   current Claude root was discovered but yielded no usage events, and Copilot
-  was not found. That is not clean-machine or cross-platform evidence; GitHub PR
-  CI, the successful `v0.1.0` release run, and the published release are
-  separately verified. Fedora cannot validate
-  the ad-hoc-signed, unnotarized macOS artifact; a real Apple Silicon workflow
-  run remains required. This internal validation is not public distribution:
-  Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
-  gate remain required.
+  was not found. That is not clean-machine evidence; GitHub PR CI, the
+  successful `v0.1.0` release run, native Apple Silicon workflow run
+  `31606807111`, and the published release are separately verified. The Mac
+  artifact is ad-hoc-signed and unnotarized, so this internal validation is not
+  production distribution: Developer ID signing, notarization, stapling, and
+  a clean-machine Gatekeeper gate remain required.
 - The current suite covers the provider registry plus Codex, Claude Code,
   Copilot, database, and orchestration behavior: per-event usage, model grouping/fallback,
   parser-version backfill, period grouping, incremental cursors,
