@@ -14,7 +14,7 @@
     "build": "electron-vite build",
     "release:check-version": "node scripts/validate-release-version.mjs",
     "package:unpacked": "pnpm build && electron-builder --linux --dir",
-    "package:linux": "pnpm build && electron-builder --linux AppImage",
+    "package:linux": "pnpm build && electron-builder --linux AppImage --publish never",
     "package:mac:arm64": "bash scripts/create-macos-icon.sh && pnpm build && electron-builder --mac zip --arm64 --publish never",
     "postinstall": "electron-builder install-app-deps"
   },
