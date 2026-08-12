@@ -9,13 +9,16 @@
 - `docs/` is the canonical project documentation folder. `ideas/` is reserved
   for brainstorming, unresolved questions, and exploratory proposals.
 - `package.json` provides `pnpm dev`, `pnpm test`, `pnpm typecheck`, `pnpm build`,
+  `pnpm release:check-version` (with `--stable-only` for Stable tags),
   `pnpm package:unpacked`, `pnpm package:linux`, and the macOS-only
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
   arm64 runner validates the host, binaries/native module, ad-hoc signature, and
   isolated launch before uploading an internal ZIP plus SHA-256 manifest; it has
-  not been pushed or run. There is no CI, release workflow, updater,
-  published release, or cross-platform validation yet.
+  not been pushed or run. Local `.github/workflows/ci.yml` and
+  `.github/workflows/release.yml` workflows now run Linux verification and
+  tag-driven draft-release preparation, but they have not been pushed or run.
+  There is no published release, updater, or cross-platform validation yet.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -134,9 +137,11 @@ the validation spikes described in `docs/`, is:
   releases once implementation and release work are authorized.
 
 The provider registry, canonical event boundary, and current three-provider
-modules are implemented in the Fedora multi-source slice. The versioned
-archive, import/export, CI, release, and broader background/platform behavior
-remain proposals rather than evidence that those features exist.
+modules are implemented in the Fedora multi-source slice. Local CI and
+tag-driven draft-release workflows now exist with a package/tag version gate,
+but they have not been pushed or run; the versioned archive, import/export,
+published release, updater, and broader background/platform behavior remain
+proposals rather than evidence that those features exist.
 
 ## Before making changes
 
@@ -151,6 +156,7 @@ remain proposals rather than evidence that those features exist.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
+  `pnpm release:check-version --stable-only -- v0.1.0`,
   and `pnpm package:linux`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until

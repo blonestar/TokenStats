@@ -13,7 +13,9 @@ estimated cost as an exact bill.
 > but yielded no usage events. Copilot CLI usage is parsed from complete OTel
 > `chat` spans when its opt-in file exporter is enabled, with active
 > `assistant.message` and `session.shutdown` records retained as a fallback.
-> Clean-machine, CI, release, and cross-platform validation remain open.
+> Local CI and tag-driven draft-release workflows now exist, but have not been
+> pushed or run. Clean-machine, published-release, and cross-platform
+> validation remain open.
 
 ## Current slice and proposed direction
 
@@ -74,6 +76,7 @@ pnpm install
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm release:check-version --stable-only -- v0.1.0
 pnpm package:linux
 # macOS only: creates an ad-hoc-signed, unnotarized arm64 ZIP for internal validation
 pnpm package:mac:arm64
@@ -92,7 +95,8 @@ implementation:
   GitHub Copilot adapters; OpenCode remains a later candidate;
 - a privileged Electron main process for filesystem access and ingestion;
 - a versioned `.tokenstats` archive plus CSV/JSON export;
-- GitHub Actions for CI and platform packaging once implementation begins.
+- GitHub Actions for Linux CI and tag-driven draft-release preparation; the
+  workflows are local and still require a pushed/run validation cycle.
 
 The starting `v0.1.x` line is intended for internal/private development and
 review, not public distribution. Stable and Nightly are the required update

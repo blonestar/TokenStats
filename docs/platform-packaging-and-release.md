@@ -4,16 +4,17 @@ Audience: maintainers, release engineers, platform testers, security reviewers, 
 
 Source of truth: this document for target platforms, packaging, release, signing, and update policy; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-12
 
 # TokenStats platform, packaging, and release
 
-This is a release-engineering proposal. The repository now has a package
-manifest, build script, unpacked Linux packaging command, and a local manual
-macOS arm64 validation workflow, but no CI, release workflow, released
-artifact, signing configuration, or updater implementation. The unpacked build
-starts and scans on the current Fedora/KDE host, which is not yet clean-machine
-or release verification. The macOS workflow has not been pushed or run.
+This remains a release-engineering proposal with a local implementation slice.
+The repository has a package manifest, version gate, Linux CI workflow, a
+tag-driven Linux draft-release workflow, and a local manual macOS arm64
+validation workflow. None of these workflows has been pushed or run yet; no
+release artifact has been published, and signing configuration or updater
+implementation does not exist. The unpacked build starts and scans on the
+current Fedora/KDE host, which is not clean-machine or release verification.
 
 ## Platform targets
 
@@ -71,11 +72,13 @@ Every artifact should include version, platform, and architecture in its name.
 Each published artifact gets a matching SHA-256 checksum entry. Do not rely on
 an unversioned `latest` file as the only download reference.
 
-## electron-builder and electron-updater proposal
+## electron-builder implementation and electron-updater proposal
 
-`electron-builder` plus `electron-updater` is the current candidate because the
-product needs a Linux AppImage investigation in addition to macOS and Windows
-packaging. This is not yet a dependency or implementation decision.
+`electron-builder` is the pinned packaging dependency and currently produces
+the Linux AppImage plus the internal macOS arm64 ZIP validation artifact.
+`electron-updater` remains a proposed follow-on because the product still needs
+a Linux AppImage feed investigation in addition to macOS and Windows update
+packaging.
 
 Electron's built-in [`autoUpdater`](https://www.electronjs.org/docs/latest/api/auto-updater/)
 documents macOS and Windows support and does not provide a built-in Linux
@@ -137,26 +140,24 @@ validate it; a real Apple Silicon workflow run remains required. Public macOS
 distribution remains unready and requires Developer ID signing, hardened
 runtime, notarization, stapling, and a clean-machine Gatekeeper gate.
 
-## GitHub Actions proposal
+## GitHub Actions implementation status
 
-Only the manual macOS arm64 validation workflow exists, and it has not yet run.
-CI and release workflows remain proposals with this intended shape:
+The repository contains local `ci.yml`, `release.yml`, and manual macOS arm64
+validation workflows. They have not been pushed or run. The Linux workflows
+are implemented as follows; successful local commands do not substitute for a
+GitHub-hosted run.
 
 ### `ci.yml`
 
 Run on pull requests and pushes to `main`:
 
 - install from a committed lockfile;
-- typecheck, lint, and run unit/integration tests;
-- run anonymized parser fixtures;
-- migrate a seeded database from the oldest supported schema;
-- test `.tokenstats` export/import round trips;
-- run dependency and security checks;
-- optionally run a packaged smoke test on selected branches or Nightly.
+- run the current Vitest suite and typecheck;
+- build the Electron application and Linux AppImage.
 
-### `build.yml`
+### Future preview build workflow
 
-Run manually or on selected `main` pushes for preview artifacts:
+No separate `build.yml` exists yet. A future preview workflow may:
 
 - build on the appropriate OS/architecture matrix;
 - keep preview artifacts separate from Stable releases;
@@ -165,17 +166,18 @@ Run manually or on selected `main` pushes for preview artifacts:
 
 ### `release.yml`
 
-Proposed tag-driven flow:
+The current local tag-driven flow:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
-2. The workflow verifies that the tag matches application and schema metadata.
-3. Fedora artifacts build first; macOS arm64 artifacts join once the follow-on
-   spike is authorized and validated.
-4. Packaged smoke tests run before publication.
-5. The workflow creates checksums, SBOM/provenance, and release notes.
-6. A draft GitHub Release is created with versioned artifacts.
-7. A maintainer reviews the artifacts, notes, channel, and evidence.
-8. The release is published; only then should the Stable feed expose it.
+2. The workflow verifies that the tag exactly matches `package.json`.
+3. Linux tests, typecheck, and AppImage packaging run.
+4. The workflow creates and verifies a SHA-256 manifest and generated release notes.
+5. A draft GitHub Release is created with the versioned Linux artifact.
+6. A maintainer reviews the artifact, notes, channel, and evidence.
+7. The release is published manually; only then should the Stable feed expose it.
+
+macOS arm64, Ubuntu-specific packaging, Windows artifacts, SBOM/provenance,
+signing, and clean-machine smoke tests remain separate follow-up work.
 
 Release jobs should start with read-only permissions and grant write access only
 to the narrow job that creates or publishes the release. Third-party Actions

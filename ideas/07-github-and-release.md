@@ -2,11 +2,10 @@
 
 ## Repository shape
 
-This remains a release-workflow proposal. A manual macOS arm64 validation
-workflow now exists locally but has not been pushed or run on a real Apple
-Silicon runner; CI,
-preview matrices, and release workflows do not exist. The current official
-release policy is in
+This remains a release-workflow proposal and exploration note. Local Linux CI
+and tag-driven draft-release workflows now exist but have not been pushed or
+run; the manual macOS arm64 validation workflow has not been pushed or run on a
+real Apple Silicon runner. The current official release policy is in
 [`../docs/platform-packaging-and-release.md`](../docs/platform-packaging-and-release.md).
 
 Working structure:
