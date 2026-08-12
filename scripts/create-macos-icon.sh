@@ -15,8 +15,10 @@ command -v sips >/dev/null 2>&1 || {
   exit 1
 }
 
-iconset_dir="$(mktemp -d "${TMPDIR:-/tmp}/TokenStats.iconset.XXXXXX")"
-trap 'rm -r -- "$iconset_dir"' EXIT
+iconset_parent="$(mktemp -d "${TMPDIR:-/tmp}/TokenStats-iconset-parent.XXXXXX")"
+iconset_dir="$iconset_parent/TokenStats.iconset"
+mkdir "$iconset_dir"
+trap 'rm -r -- "$iconset_parent"' EXIT
 
 copy_icon() {
   sips -s format png "$icons_dir/${1}x${1}.png" --out "$iconset_dir/$2" >/dev/null
