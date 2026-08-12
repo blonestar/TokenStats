@@ -30,4 +30,5 @@ export type Dashboard = {
 }
 export type ScanSourceResult = { sourceId: string; providerId: string; label: string; kind: string; status: SourceStatus | 'success'; filesScanned: number; eventsImported: number; warnings: number; error?: string }
 export type ScanResult = { ok: boolean; filesScanned: number; eventsImported: number; warnings: number; sources: ScanSourceResult[]; error?: string }
-export interface TokenStatsApi { getDashboard(query?: DashboardQuery): Promise<Dashboard>; getVersion(): Promise<string>; scanAll(): Promise<ScanResult> }
+export type ResetDatabaseResult = { ok: boolean; cancelled?: boolean; backupName?: string; eventsBackedUp?: number; reimport?: ScanResult; error?: string }
+export interface TokenStatsApi { getDashboard(query?: DashboardQuery): Promise<Dashboard>; getVersion(): Promise<string>; scanAll(): Promise<ScanResult>; resetDatabase(): Promise<ResetDatabaseResult> }

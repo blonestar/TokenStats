@@ -6,7 +6,7 @@ import type { IngestionStore, SourceDefinition, UsageEvent } from './ingestion/c
 import type { ProviderModule } from './providers/contracts'
 
 const SOURCE_ID = 'codex-current-user'
-const PARSER_VERSION = 'codex-jsonl-v2'
+const PARSER_VERSION = 'codex-jsonl-v3'
 const SOURCE_DEFINITION: SourceDefinition = { sourceId: SOURCE_ID, providerId: 'codex', label: 'Codex', kind: 'codex' }
 const MAX_WARNINGS = 20
 const READ_CHUNK_BYTES = 64 * 1024
@@ -21,8 +21,13 @@ const usageKeys = [['input_tokens', 'inputTokens'], ['output_tokens', 'outputTok
 
 export function extractModel(line: string): string | null {
   const record = JSON.parse(line) as Json
-  if (record.type !== 'turn_context') return null
-  return modelName((record.payload as Json | undefined)?.model)
+  const payload = record.payload as Json | undefined
+  if (record.type === 'turn_context') return modelName(payload?.model)
+  if (record.type !== 'event_msg') return null
+  const threadSettings = payload?.thread_settings as Json | undefined
+  const collaborationMode = threadSettings?.collaboration_mode as Json | undefined
+  const collaborationSettings = collaborationMode?.settings as Json | undefined
+  return modelName(threadSettings?.model) ?? modelName(collaborationSettings?.model)
 }
 
 export function extractEvent(line: string, relativeFile: string, byteOffset: number, model = UNKNOWN_MODEL): UsageEvent | null {
@@ -89,14 +94,14 @@ export function scanFile(db: IngestionStore, root: string, file: string, warning
   for (const record of readLines(file)) {
     position = record.nextOffset
     if (record.offset < cursor) {
-      if (record.line.includes('turn_context')) {
+      if (record.line.includes('turn_context') || record.line.includes('thread_settings')) {
         try { model = extractModel(record.line) ?? model } catch { /* malformed context is ignored */ }
       }
       continue
     }
     if (!record.line) continue
     try {
-      if (record.line.includes('turn_context')) model = extractModel(record.line) ?? model
+      if (record.line.includes('turn_context') || record.line.includes('thread_settings')) model = extractModel(record.line) ?? model
       if (!record.line.includes('event_msg')) continue
       const event = extractEvent(record.line, relativeFile, record.offset, model)
       if (event) events.push(event)

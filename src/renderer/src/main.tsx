@@ -55,7 +55,9 @@ const dayKey = (date: Date): string => `${date.getFullYear()}-${String(date.getM
 const seriesKey = (sourceId: string, model: string): string => `${sourceId}\u0000${model}`
 const seriesColor = (index: number): string => chartPalette[index] ?? `hsl(${Math.round((index * 137.508) % 360)} 76% 62%)`
 const sourceLabel = (data: Dashboard, sourceId: string): string => data.sources.find((source) => source.sourceId === sourceId)?.label ?? sourceId
-const seriesLabel = (data: Dashboard, sourceId: string, model: string): string => `${sourceLabel(data, sourceId)} · ${model}`
+const modelLabel = (model: string): string => model === 'Unknown' ? 'Model unavailable' : model
+const unknownModelNote = 'The source log did not provide a model identifier for these records. Tokens are still counted, but no model price can be matched.'
+const seriesLabel = (data: Dashboard, sourceId: string, model: string): string => `${sourceLabel(data, sourceId)} · ${modelLabel(model)}`
 const sourceReady = (status: string): boolean => !['error', 'not found', 'not scanned'].includes(status)
 const sourceStatusNote = (status: string): string => status === 'otel enabled' ? 'Complete OTel token data is currently selected; session-state remains retained as a fallback.' : status === 'otel file present' ? 'OTel file found, but no complete OTel data is currently selected; session-state fallback may be active.' : status === 'session-state fallback' ? 'Active Copilot records may have output tokens only. Enable the OTel file exporter for input and cache usage.' : status === 'healthy' ? 'Local source scan completed.' : status === 'not found' ? 'Source directory or file was not found.' : status === 'error' ? 'Scan failed. Check source availability and try again.' : 'Run a local scan to check this source.'
 const dateInput = (date: Date): string => dayKey(date)
@@ -113,13 +115,16 @@ function App(): React.JSX.Element {
   const [customPickerOpen, setCustomPickerOpen] = useState(preferences.period === 'custom')
   const [customRange, setCustomRange] = useState<CustomDateRange>(initialCustomRange)
   const [draftCustomRange, setDraftCustomRange] = useState<CustomDateRange>(initialCustomRange)
+  const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
   const [data, setData] = useState<Dashboard | null>(null)
   const [scanning, setScanning] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [chartType, setChartType] = useState<DashboardChartType>(preferences.chartType)
   const [version, setVersion] = useState<string | null>(null)
   const requestSequence = useRef(0)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => { saveDashboardPreferences({ period, chartType, customRange }) }, [period, chartType, customRange])
   useEffect(() => { void window.tokenStats.getVersion().then(setVersion).catch(() => setVersion(null)) }, [])
@@ -131,6 +136,7 @@ function App(): React.JSX.Element {
     try {
       const nextData = await window.tokenStats.getDashboard(query)
       if (requestId === requestSequence.current) setData(nextData)
+      if (requestId === requestSequence.current) setError(null)
     } catch {
       if (requestId === requestSequence.current) setError('Dashboard data is unavailable.')
     } finally {
@@ -167,6 +173,7 @@ function App(): React.JSX.Element {
   const scan = async (): Promise<void> => {
     setScanning(true)
     setError(null)
+    setNotice(null)
     try {
       const result = await window.tokenStats.scanAll()
       if (!result.ok) setError(result.error ?? 'Scan failed.')
@@ -175,6 +182,30 @@ function App(): React.JSX.Element {
       setError('Scan failed. Check source availability and try again.')
     } finally {
       setScanning(false)
+    }
+  }
+
+  const resetAndReimport = async (): Promise<void> => {
+    setResetting(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const reset = await window.tokenStats.resetDatabase()
+      if (reset.cancelled) {
+        setNotice('Database reset cancelled. No data was changed.')
+        return
+      }
+      if (!reset.ok) {
+        await load(queryFor())
+        setError(reset.error ?? 'The database reset or re-import reported an error.')
+        return
+      }
+      await load(queryFor())
+      setNotice(`Database reset and re-imported ${exact(reset.reimport?.eventsImported)} events. Verified backup retained as ${reset.backupName ?? 'a local backup'}.`)
+    } catch {
+      setError('The database reset or re-import failed. Existing source files were not changed.')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -189,11 +220,14 @@ function App(): React.JSX.Element {
       </div>
       <div className="header-actions">
         <span className="source-summary">{data.sources.filter((source) => sourceReady(source.status)).length} of {data.sources.length} sources ready</span>
+        <nav className="segmented-control view-nav" aria-label="Application view"><button onClick={() => setView('dashboard')} aria-current={view === 'dashboard' ? 'page' : undefined}>Dashboard</button><button onClick={() => setView('settings')} aria-current={view === 'settings' ? 'page' : undefined}>Settings</button></nav>
         <button className="scan-button" onClick={() => void scan()} disabled={scanning} aria-busy={scanning}>{scanning ? 'Scanning local sources…' : 'Scan local sources'}</button>
       </div>
     </header>
 
     {error && <p className="error" role="alert">{error}</p>}
+    {notice && <p className="notice" role="status">{notice}</p>}
+    {view === 'settings' ? <SettingsView resetting={resetting} scanning={scanning} onReset={resetAndReimport} /> : <>
     <section className="period-row" aria-label="Usage period">
       <div className="period-controls">
         <div className="segmented-control">
@@ -211,6 +245,7 @@ function App(): React.JSX.Element {
     </section>
 
     {data.eventCount === 0 ? <EmptyState data={data} scanning={scanning} onScan={scan} /> : <DashboardView data={data} chartType={chartType} setChartType={setChartType} />}
+    </>}
     <SourceFooter data={data} />
   </main>
 }
@@ -220,6 +255,9 @@ function EmptyState({ data, scanning, onScan }: { data: Dashboard; scanning: boo
   const title = hasScanned ? 'No usage in this date range' : 'Ready for a first private scan'
   const description = hasScanned ? `No recorded token usage was found for ${humanRange(data)}. Try another period or scan local sources for newly available history. TokenStats never stores prompt or response content.` : 'Scan local Codex, Claude Code, and GitHub Copilot/local assistant histories to import token metadata. TokenStats never stores prompt or response content.'
   return <section className="empty-state"><p className="section-kicker">{hasScanned ? 'No usage recorded for this period' : 'No usage data yet'}</p><h2>{title}</h2><p>{description}</p><button className="scan-button" onClick={() => void onScan()} disabled={scanning}>{scanning ? 'Scanning local sources…' : 'Scan local sources'}</button></section>
+}
+function SettingsView({ resetting, scanning, onReset }: { resetting: boolean; scanning: boolean; onReset: () => Promise<void> }): React.JSX.Element {
+  return <section className="settings-page" aria-labelledby="settings-title"><p className="section-kicker">Settings</p><h2 id="settings-title">Local data</h2><article className="settings-card"><div><h3>Reset imported data</h3><p>Creates and verifies a local SQLite backup, then clears imported events, cursors, scan history, and source status. Codex, Claude Code, and GitHub Copilot source files are never changed.</p><p className="settings-note">After the reset, TokenStats scans the local sources again so the dashboard can be rebuilt from the source logs.</p></div><button className="danger-button" onClick={() => void onReset()} disabled={resetting || scanning} aria-busy={resetting}>{resetting ? 'Resetting and re-importing…' : 'Reset database & re-import'}</button></article></section>
 }
 
 function DashboardView({ data, chartType, setChartType }: { data: Dashboard; chartType: DashboardChartType; setChartType: (type: DashboardChartType) => void }): React.JSX.Element {
@@ -297,7 +335,7 @@ function DashboardView({ data, chartType, setChartType }: { data: Dashboard; cha
 }
 
 function ModelBreakdown({ data, models, total, colors, activeModel, onModelHover }: { data: Dashboard; models: Dashboard['modelTotals']; total: number; colors: Map<string, string>; activeModel: string | null; onModelHover: (key: string | null) => void }): React.JSX.Element {
-  return <article className="model-panel"><div className="panel-heading"><div><p className="section-kicker">Model breakdown</p><h2>Where tokens went</h2></div></div><div className="model-list">{models.map((model) => { const key = seriesKey(model.sourceId, model.model); const value = tokens(model.totalTokens); const share = total > 0 ? (value / total) * 100 : 0; return <div className={`model-row${activeModel === key ? ' is-active' : ''}`} key={`${model.model}-${model.sourceId}`} role="button" tabIndex={0} aria-pressed={activeModel === key} onMouseEnter={() => onModelHover(key)} onMouseLeave={() => onModelHover(null)} onFocus={() => onModelHover(key)} onBlur={() => onModelHover(null)} onKeyDown={(event) => { if (event.key === 'Escape') onModelHover(null) }}><span className="model-dot" style={{ backgroundColor: colors.get(key) }} aria-hidden="true" /><div className="model-name"><strong>{seriesLabel(data, model.sourceId, model.model)}</strong><span>{exact(model.eventCount)} {model.eventCount === 1 ? 'event' : 'events'} · {share.toFixed(1)}%</span></div><div className="model-value"><strong title={`${exact(value)} tokens`}>{exact(value)}</strong><span>{compact(value)} tokens</span><span className={`model-cost is-${model.estimatedCost.coverage}`} title={costTitle(model.estimatedCost, data)}>{costText(model.estimatedCost)}</span></div></div> })}</div></article>
+  return <article className="model-panel"><div className="panel-heading"><div><p className="section-kicker">Model breakdown</p><h2>Where tokens went</h2></div></div><div className="model-list">{models.map((model) => { const key = seriesKey(model.sourceId, model.model); const value = tokens(model.totalTokens); const share = total > 0 ? (value / total) * 100 : 0; const unknown = model.model === 'Unknown'; return <div className={`model-row${activeModel === key ? ' is-active' : ''}`} key={`${model.model}-${model.sourceId}`} role="button" tabIndex={0} aria-pressed={activeModel === key} onMouseEnter={() => onModelHover(key)} onMouseLeave={() => onModelHover(null)} onFocus={() => onModelHover(key)} onBlur={() => onModelHover(null)} onKeyDown={(event) => { if (event.key === 'Escape') onModelHover(null) }}><span className="model-dot" style={{ backgroundColor: colors.get(key) }} aria-hidden="true" /><div className="model-name"><strong title={unknown ? unknownModelNote : undefined}>{seriesLabel(data, model.sourceId, model.model)}</strong><span>{exact(model.eventCount)} {model.eventCount === 1 ? 'event' : 'events'} · {share.toFixed(1)}%</span>{unknown && <small>Model identifier missing in source log</small>}</div><div className="model-value"><strong title={`${exact(value)} tokens`}>{exact(value)}</strong><span>{compact(value)} tokens</span><span className={`model-cost is-${model.estimatedCost.coverage}`} title={unknown ? unknownModelNote : costTitle(model.estimatedCost, data)}>{costText(model.estimatedCost)}</span></div></div> })}</div></article>
 }
 
 function SourceFooter({ data }: { data: Dashboard }): React.JSX.Element {

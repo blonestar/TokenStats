@@ -16,8 +16,9 @@
   isolated launch before uploading an internal ZIP plus SHA-256 manifest; it has
   not been pushed or run. There is no CI, release workflow, updater,
   published release, or cross-platform validation yet.
-- The Codex parser is `codex-jsonl-v2`: it ingests only per-event
-  `last_token_usage`, tracks bounded `turn_context.payload.model` metadata,
+- The Codex parser is `codex-jsonl-v3`: it ingests only per-event
+  `last_token_usage`, tracks bounded model metadata from
+  `turn_context.payload.model` and Codex thread settings,
   preserves stable event IDs, and resets only Codex cursors when a parser
   version change requires metadata backfill. SQLite schema version 2 adds the
   non-content `usage_events.model` field; schema version 3 completes the
@@ -42,7 +43,10 @@
   never persisted.
 - The SQLite database is under Electron `userData`, so both source discovery
   and retained application data are isolated per OS user. Rescans are
-  idempotent; history is cumulative until an explicit future deletion feature.
+  idempotent; history is cumulative until the user explicitly resets imported
+  data from Settings. Reset creates and verifies a timestamped SQLite backup,
+  records backup metadata, clears imported data/cursors/scan history, and then
+  re-imports current source files through the existing scan path.
 - Provider modules are registered in `src/main/providers/registry.ts`; their
   source definitions and optional migrations are injected into the central
   database. Provider parsers use the generic canonical-event and
@@ -63,7 +67,8 @@
   displays the live Electron application version beside the logo.
 - The BrowserWindow and Linux packaged application use the committed
   `assets/icons/64x64.png` T-and-graph icon for the window/taskbar identity;
-  the runtime asset is included in the packaged app.
+  the runtime asset is included in the packaged app. The renderer also has a
+  basic Settings view with the guarded local-database reset/re-import action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
   Standard API list prices for Codex-relevant OpenAI models and a reviewed
@@ -162,7 +167,8 @@ remain proposals rather than evidence that those features exist.
   Copilot, database, and orchestration behavior: per-event usage, model grouping/fallback,
   parser-version backfill, period grouping, incremental cursors,
   idempotency/snapshot replacement, OTel complete/partial spans and fallback
-  reconciliation, malformed records, and privacy columns.
+  reconciliation, malformed records, privacy columns, database backup/reset
+  behavior, and main-process reset IPC guards.
 - A controlled current-host Copilot CLI OTel smoke session produced a JSONL
   file with a complete chat span; the adapter imported it with input/output
   fields and no capture fields. This is not clean-machine, cross-platform, or
