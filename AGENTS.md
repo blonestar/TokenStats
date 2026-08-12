@@ -18,9 +18,10 @@
   not been pushed or run. Local `.github/workflows/ci.yml` and
   `.github/workflows/release.yml` workflows now run Linux verification and
   tag-driven draft-release preparation. GitHub CI and the tag-driven `v0.1.0`
-  release run have passed; the draft release contains the Linux AppImage and
-  SHA-256 manifest. There is no published release, updater, or cross-platform
-  validation yet.
+  release run have passed; `v0.1.0` is published with the Linux AppImage and
+  SHA-256 manifest. No updater or cross-platform validation exists yet, and
+  publication does not establish clean-machine or broader distribution
+  readiness.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -141,10 +142,10 @@ the validation spikes described in `docs/`, is:
 The provider registry, canonical event boundary, and current three-provider
 modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
-version gate, and `v0.1.0` exists as a draft release with Linux artifacts. The
-versioned archive, import/export, published release, updater, and broader
-background/platform behavior remain proposals rather than evidence that those
-features exist.
+version gate, and `v0.1.0` is published with Linux artifacts. The versioned
+archive, import/export, updater, and broader background/platform behavior remain
+proposals rather than evidence that those features exist; the published Linux
+artifact does not establish cross-platform or clean-machine readiness.
 
 ## Before making changes
 
@@ -166,9 +167,9 @@ features exist.
   actually run. The packaged AppImage has been started and its multi-source
   scan exercised on the current Fedora/KDE host: Codex usage was imported, the
   current Claude root was discovered but yielded no usage events, and Copilot
-  was not found. That is not clean-machine, cross-platform, or published-release
-  evidence; GitHub PR CI and the successful `v0.1.0` release run are separately
-  verified. Fedora cannot validate
+  was not found. That is not clean-machine or cross-platform evidence; GitHub PR
+  CI, the successful `v0.1.0` release run, and the published release are
+  separately verified. Fedora cannot validate
   the ad-hoc-signed, unnotarized macOS artifact; a real Apple Silicon workflow
   run remains required. This internal validation is not public distribution:
   Developer ID signing, notarization, stapling, and a clean-machine Gatekeeper
