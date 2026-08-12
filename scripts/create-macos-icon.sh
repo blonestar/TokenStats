@@ -15,11 +15,17 @@ command -v sips >/dev/null 2>&1 || {
   exit 1
 }
 
+srgb_profile="/System/Library/ColorSync/Profiles/sRGB Profile.icc"
+[[ -f "$srgb_profile" ]] || {
+  echo "The macOS sRGB ColorSync profile is required to normalize the icon sources." >&2
+  exit 1
+}
+
 iconset_dir="$(mktemp -d "${TMPDIR:-/tmp}/TokenStats.iconset.XXXXXX")"
 trap 'rm -r -- "$iconset_dir"' EXIT
 
 copy_icon() {
-  sips -s format png -s bitsPerSample 8 "$icons_dir/${1}x${1}.png" --out "$iconset_dir/$2" >/dev/null
+  sips -s format png -m "$srgb_profile" "$icons_dir/${1}x${1}.png" --out "$iconset_dir/$2" >/dev/null
 }
 
 copy_icon 16 icon_16x16.png
