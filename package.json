@@ -42,7 +42,7 @@
   "build": {
     "appId": "local.tokenstats.app",
     "productName": "TokenStats",
-    "files": ["out/**", "package.json"],
+    "files": ["out/**", "package.json", "assets/icons/64x64.png"],
     "linux": {
       "target": ["AppImage"],
       "category": "Utility",

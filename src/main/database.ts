@@ -4,7 +4,7 @@ import { dirname } from 'node:path'
 import type { IngestionStore, ProviderMigration, SourceDefinition, UsageEvent } from './ingestion/contracts'
 import { costKey, summarizeCosts, unknownCost } from './pricing'
 import { providerMigrations as registeredProviderMigrations, sourceDefinitions as registeredSourceDefinitions } from './providers/registry'
-import type { Dashboard, DashboardPeriod, DashboardRange, SourceStatus, TokenUsage, Warning } from '../shared/contracts'
+import type { Dashboard, DashboardBucket, DashboardPeriod, DashboardRange, SourceStatus, TokenUsage, Warning } from '../shared/contracts'
 
 export type { UsageEvent } from './ingestion/contracts'
 
@@ -13,8 +13,42 @@ const validPeriod = (value: unknown): DashboardPeriod => periods.includes(value 
 const localDate = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const startOfDay = (date: Date): Date => { const value = new Date(date); value.setHours(0, 0, 0, 0); return value }
 const startOfWeek = (date: Date): Date => { const value = startOfDay(date); const daysFromMonday = (value.getDay() + 6) % 7; value.setDate(value.getDate() - daysFromMonday); return value }
+const dateBucket = (period: DashboardPeriod, start: Date, end: Date): DashboardBucket => {
+  const days = (end.getTime() - start.getTime()) / 86_400_000
+  if (period === 'today' || period === 'yesterday' || (period === 'custom' && days <= 1)) return 'hour'
+  if (period === 'last6Months' || (period === 'custom' && days > 62)) return 'month'
+  return 'day'
+}
+const rangeFromDates = (period: DashboardPeriod, start: Date, end: Date): DashboardRange => {
+  const endLabel = new Date(end)
+  endLabel.setDate(endLabel.getDate() - 1)
+  return {
+    start: start.toISOString(),
+    end: end.toISOString(),
+    startLabel: localDate(start),
+    endLabel: localDate(endLabel),
+    label: period === 'today' ? localDate(start) : `${localDate(start)} to ${localDate(endLabel)}`,
+    bucket: dateBucket(period, start, end)
+  }
+}
+function parseLocalDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? startOfDay(date) : null
+}
 
 function rangeFor(periodInput: unknown, now: Date): { period: DashboardPeriod; range: DashboardRange } {
+  if (typeof periodInput === 'object' && periodInput !== null && (periodInput as { period?: unknown }).period === 'custom') {
+    const custom = periodInput as { startDate?: unknown; endDate?: unknown }
+    const start = parseLocalDate(custom.startDate)
+    const selectedEnd = parseLocalDate(custom.endDate)
+    if (start && selectedEnd && selectedEnd >= start) {
+      const end = new Date(selectedEnd)
+      end.setDate(end.getDate() + 1)
+      return { period: 'custom', range: rangeFromDates('custom', start, end) }
+    }
+  }
   const period = validPeriod(periodInput); const today = startOfDay(now); let start: Date; let end: Date
   if (period === 'today') { start = today; end = new Date(start); end.setDate(end.getDate() + 1) }
   else if (period === 'yesterday') { end = today; start = new Date(end); start.setDate(start.getDate() - 1) }
@@ -23,8 +57,7 @@ function rangeFor(periodInput: unknown, now: Date): { period: DashboardPeriod; r
   else if (period === 'thisMonth') { start = new Date(today); start.setDate(1); end = new Date(start); end.setMonth(end.getMonth() + 1) }
   else if (period === 'lastMonth') { end = new Date(today); end.setDate(1); start = new Date(end); start.setMonth(start.getMonth() - 1) }
   else { end = new Date(today); end.setDate(1); end.setMonth(end.getMonth() + 1); start = new Date(end); start.setMonth(start.getMonth() - 6) }
-  const endLabel = new Date(end); endLabel.setDate(endLabel.getDate() - 1)
-  return { period, range: { start: start.toISOString(), end: end.toISOString(), startLabel: localDate(start), endLabel: localDate(endLabel), label: period === 'today' ? localDate(start) : `${localDate(start)} to ${localDate(endLabel)}` } }
+  return { period, range: rangeFromDates(period, start, end) }
 }
 
 export class TokenDatabase implements IngestionStore {
@@ -145,7 +178,7 @@ INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, datetime(
   dashboard(periodInput: unknown = 'thisMonth', now = new Date()): Dashboard {
     const { period, range } = rangeFor(periodInput, now); const params = [range.start, range.end]
     const row = this.db.prepare(`SELECT count(*) eventCount,count(DISTINCT source_id || char(0) || session_id) sessionCount,count(DISTINCT strftime('%Y-%m-%d', occurred_at, 'localtime')) activeDayCount,coalesce(sum(input_tokens),0) inputTokens,coalesce(sum(output_tokens),0) outputTokens,coalesce(sum(cached_input_tokens),0) cachedInputTokens,coalesce(sum(cache_write_input_tokens),0) cacheWriteInputTokens,coalesce(sum(reasoning_output_tokens),0) reasoningOutputTokens,coalesce(sum(total_tokens),0) totalTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?`).get(...params) as Record<string, number>
-    const bucket = period === 'today' || period === 'yesterday' ? "strftime('%Y-%m-%d %H:00', occurred_at, 'localtime')" : period === 'last6Months' ? "strftime('%Y-%m', occurred_at, 'localtime')" : "strftime('%Y-%m-%d', occurred_at, 'localtime')"
+    const bucket = range.bucket === 'hour' ? "strftime('%Y-%m-%d %H:00', occurred_at, 'localtime')" : range.bucket === 'month' ? "strftime('%Y-%m', occurred_at, 'localtime')" : "strftime('%Y-%m-%d', occurred_at, 'localtime')"
     const costEvents = this.db.prepare('SELECT source_id sourceId,coalesce(model,\'Unknown\') model,input_tokens inputTokens,output_tokens outputTokens,cached_input_tokens cachedInputTokens,cache_write_input_tokens cacheWriteInputTokens,reasoning_output_tokens reasoningOutputTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?').all(...params) as Array<Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens'>>
     const costs = summarizeCosts(costEvents)
     const usage = 'coalesce(sum(input_tokens),0) inputTokens,coalesce(sum(output_tokens),0) outputTokens,coalesce(sum(cached_input_tokens),0) cachedInputTokens,coalesce(sum(cache_write_input_tokens),0) cacheWriteInputTokens,coalesce(sum(reasoning_output_tokens),0) reasoningOutputTokens,coalesce(sum(total_tokens),0) totalTokens'

@@ -52,11 +52,18 @@
   module, registry entry, fixtures/contract coverage, and reviewed pricing
   source metadata when an estimate is supported.
 - The renderer uses `chart.js` and `react-chartjs-2` for source-and-model-
-  separated Line/Bar trends. Dashboard IPC accepts `today`, `yesterday`,
-  `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, or `last6Months`; the last
-  period groups trends by month, and all boundaries use the current OS user's
-  local timezone. The selected period and chart type are persisted in renderer
-  `localStorage` across refreshes and application restarts.
+  separated Line/Bar/Pie views. Dashboard IPC accepts `today`, `yesterday`,
+  `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, `last6Months`, or a validated
+  custom inclusive `YYYY-MM-DD` date range; long custom ranges group trends by
+  month, short ranges by day, and single-day ranges by hour, all in the current
+  OS user's local timezone. Hovering or focusing a model breakdown row keeps
+  that model's chart color and mutes the other series/segments to gray. The
+  selected period, custom range, and chart type are persisted in renderer
+  `localStorage` across refreshes and application restarts. The renderer also
+  displays the live Electron application version beside the logo.
+- The BrowserWindow and Linux packaged application use the committed
+  `assets/icons/64x64.png` T-and-graph icon for the window/taskbar identity;
+  the runtime asset is included in the packaged app.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
   Standard API list prices for Codex-relevant OpenAI models and a reviewed

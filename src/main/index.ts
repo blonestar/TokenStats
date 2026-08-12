@@ -43,6 +43,7 @@ function createWindow(): void {
     height: 690,
     minWidth: 900,
     minHeight: 560,
+    icon: join(app.getAppPath(), 'assets/icons/64x64.png'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -106,6 +107,7 @@ app.whenReady().then(() => {
   )
 
   ipcMain.handle('tokenstats:getDashboard', (_event, period: unknown) => database?.dashboard(period))
+  ipcMain.handle('tokenstats:getVersion', () => app.getVersion())
   ipcMain.handle('tokenstats:scanAll', runAllScan)
 
   createWindow()
