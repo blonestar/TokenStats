@@ -235,7 +235,10 @@ support questions in [Q-021](../ideas/00-open-questions.md),
 
 ## Acceptance criteria
 
-These are planned acceptance criteria, not completed checks:
+These remain the full product acceptance criteria. The close-to-tray and basic
+Show/Hide/Exit tray behavior in PRD-AC-07 is implemented and covered by a
+main-process lifecycle test; scheduled background scanning and the richer tray
+status surface remain proposed.
 
 | ID | Criterion | Verification target |
 | --- | --- | --- |

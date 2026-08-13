@@ -4,7 +4,7 @@ Audience: maintainers, release engineers, platform testers, security reviewers, 
 
 Source of truth: this document for target platforms, packaging, release, signing, and update policy; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-13
 
 # TokenStats platform, packaging, and release
 
@@ -14,8 +14,9 @@ tag-driven Linux draft-release workflow, and a manual macOS arm64 validation
 workflow. Linux and native macOS arm64 runs have passed, and the published
 internal `v0.1.0` release contains both platform artifacts plus a combined
 checksum manifest. Signing configuration for production distribution and
-updater implementation do not exist. The unpacked build starts and scans on
-the current Fedora/KDE host, which is not clean-machine verification.
+updater implementation do not exist. The Linux build now has both portable
+AppImage and Fedora RPM targets. The unpacked build starts and scans on the
+current Fedora/KDE host, which is not clean-machine verification.
 
 ## Platform targets
 
@@ -63,7 +64,7 @@ The proposed artifact set is:
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
 | Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.0` AppImage and checksum were verified by GitHub Actions. |
-| Fedora x64 | `.rpm` | Optional first-release artifact after clean install tests; package-manager updates may be the fallback. |
+| Fedora x64 | `.rpm` | System-installable target with desktop-menu registration; clean-machine install and package-manager update evidence remain pending. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
@@ -76,7 +77,7 @@ an unversioned `latest` file as the only download reference.
 ## electron-builder implementation and electron-updater proposal
 
 `electron-builder` is the pinned packaging dependency and currently produces
-the Linux AppImage plus the internal macOS arm64 ZIP validation artifact.
+the Linux AppImage, Fedora RPM, and internal macOS arm64 ZIP validation artifact.
 Target-specific file filters keep only the matching `better-sqlite3` prebuild in
 each artifact (`linux-x64.node` for Fedora and `darwin-arm64.node` for macOS).
 `electron-updater` remains a proposed follow-on because the product still needs
@@ -94,6 +95,28 @@ and [electron-builder AppImage update guidance](https://www.electron.build/appim
 The updater must not be treated as safe merely because a download completed. It
 must identify the channel and version, verify integrity/signature, coordinate
 with imports and migrations, and retain a recoverable previous state.
+
+## Fedora RPM installation
+
+`pnpm package:linux:rpm` builds a versioned RPM with the standard
+electron-builder desktop entry and packaged TokenStats icons. Installing it
+through Fedora's package manager is the normal system integration path:
+
+```bash
+sudo dnf install ./dist/TokenStats-0.1.0-linux-x86_64.rpm
+```
+
+The launcher is placed in the desktop application menu under the `Utility`
+category and uses the TokenStats icon. The package does not enable login
+autostart; that is a separate user-controlled behavior. Removal is handled by
+the package manager:
+
+```bash
+sudo dnf remove tokenstats
+```
+
+The AppImage remains a portable download and is not treated as a system
+installation by this project.
 
 ## Signing and notarization
 

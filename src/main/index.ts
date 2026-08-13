@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
 import type { ResetDatabaseResult, ScanResult, ScanSourceResult } from '../shared/contracts'
 import { TokenDatabase } from './database'
@@ -10,6 +10,9 @@ export { sourceRoot } from './providers/discovery'
 let database: TokenDatabase | undefined
 let scanRunning = false
 let resetRunning = false
+let mainWindow: BrowserWindow | undefined
+let tray: Tray | undefined
+let isQuitting = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
 const ZOOM_STEP = 0.1
@@ -39,7 +42,55 @@ export function scanAllSources(db: TokenDatabase, sources = currentSources()): S
   return { ok: results.every((result) => result.status !== 'error'), filesScanned, eventsImported, warnings, sources: results }
 }
 
+function showWindow(): void {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+  updateTrayMenu()
+}
+
+function hideWindow(): void {
+  mainWindow?.hide()
+  updateTrayMenu()
+}
+
+function quitApplication(): void {
+  if (isQuitting) return
+  isQuitting = true
+  tray?.destroy()
+  tray = undefined
+  app.quit()
+}
+
+function updateTrayMenu(): void {
+  if (!tray) return
+  const visible = Boolean(mainWindow && mainWindow.isVisible() && !mainWindow.isMinimized())
+  tray.setContextMenu(Menu.buildFromTemplate([
+    {
+      label: visible ? 'Hide window' : 'Show window',
+      click: () => { if (visible) hideWindow(); else showWindow() }
+    },
+    { type: 'separator' },
+    { label: 'Exit TokenStats', click: quitApplication }
+  ]))
+}
+
+function createTray(): void {
+  if (tray) return
+  tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), 'assets/icons/64x64.png')))
+  tray.setToolTip('TokenStats')
+  tray.on('click', showWindow)
+  tray.on('right-click', updateTrayMenu)
+  updateTrayMenu()
+}
+
 function createWindow(): void {
+  if (mainWindow) {
+    showWindow()
+    return
+  }
+
   const window = new BrowserWindow({
     width: 1120,
     height: 690,
@@ -54,6 +105,23 @@ function createWindow(): void {
       sandbox: true
     }
   })
+
+  mainWindow = window
+
+  window.on('close', (event) => {
+    if (isQuitting) return
+    event.preventDefault()
+    hideWindow()
+  })
+  window.on('closed', () => {
+    if (mainWindow === window) mainWindow = undefined
+    updateTrayMenu()
+  })
+  window.on('show', updateTrayMenu)
+  window.on('hide', updateTrayMenu)
+  window.on('minimize', updateTrayMenu)
+  window.on('restore', updateTrayMenu)
+  updateTrayMenu()
 
   window.setMenuBarVisibility(false)
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -157,15 +225,22 @@ app.whenReady().then(() => {
   ipcMain.handle('tokenstats:scanAll', runAllScan)
   ipcMain.handle('tokenstats:resetDatabase', resetDatabase)
 
+  createTray()
   createWindow()
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (mainWindow) showWindow()
+    else createWindow()
   })
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
+  // Closing the window is handled by the BrowserWindow close listener; the tray remains the app's exit surface.
 })
 
-app.on('before-quit', () => database?.close())
+app.on('before-quit', () => {
+  isQuitting = true
+  tray?.destroy()
+  tray = undefined
+  database?.close()
+})

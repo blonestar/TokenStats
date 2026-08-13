@@ -4,7 +4,7 @@ Audience: contributors, product reviewers, architecture reviewers, and users eva
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-13
 
 # TokenStats documentation
 
@@ -22,6 +22,12 @@ opt-in CLI OTel JSONL file and keeps session-state as a fallback. A controlled
 live OTel smoke run passed on the current Fedora host; this remains
 runtime-surface-specific; most
 behavior described by these documents remains proposed rather than implemented.
+
+The Fedora Electron slice now also implements close-to-tray behavior, a basic
+tray menu with Show/Hide window and Exit, and an electron-builder RPM target
+that registers a standard desktop launcher. These are local implementation
+facts; clean-machine installation and broader platform support still require
+separate evidence.
 
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain

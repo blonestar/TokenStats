@@ -10,7 +10,8 @@
   for brainstorming, unresolved questions, and exploratory proposals.
 - `package.json` provides `pnpm dev`, `pnpm test`, `pnpm typecheck`, `pnpm build`,
   `pnpm release:check-version` (with `--stable-only` for Stable tags),
-  `pnpm package:unpacked`, `pnpm package:linux` (with publishing disabled), and the macOS-only
+  `pnpm package:unpacked`, `pnpm package:linux` (portable AppImage),
+  `pnpm package:linux:rpm` (Fedora installable RPM), and the macOS-only
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
   arm64 runner validates the host, binaries/native module, ad-hoc signature, and
@@ -73,8 +74,12 @@
   displays the live Electron application version beside the logo.
 - The BrowserWindow and Linux packaged application use the committed
   `assets/icons/64x64.png` T-and-graph icon for the window/taskbar identity;
-  the runtime asset is included in the packaged app. The renderer also has a
-  basic Settings view with the guarded local-database reset/re-import action.
+  the runtime asset is included in the packaged app. Closing the main window
+  hides it to the tray; the tray menu exposes Show/Hide window and an explicit
+  Exit action that fully quits the app. The Fedora RPM target supplies the
+  standard desktop launcher and Utilities menu registration; automatic login
+  startup is not enabled. The renderer also has a basic Settings view with the
+  guarded local-database reset/re-import action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
   Standard API list prices for Codex-relevant OpenAI models and a reviewed
@@ -143,10 +148,12 @@ The provider registry, canonical event boundary, and current three-provider
 modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
 version gate, and `v0.1.0` is published with Linux and macOS arm64 artifacts.
-The versioned archive, import/export, updater, and broader background/platform
-behavior remain proposals rather than evidence that those features exist; the
-published preview artifacts do not establish clean-machine or production
-distribution readiness.
+Close-to-tray and the basic tray menu are implemented locally, and the Fedora
+RPM packaging target provides the installable launcher path. The versioned
+archive, import/export, updater, detailed tray status, scheduled background
+monitoring, and broader platform behavior remain proposals rather than evidence
+that those features exist; published preview artifacts do not establish
+clean-machine or production distribution readiness.
 
 ## Before making changes
 
@@ -162,7 +169,7 @@ distribution readiness.
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
   `pnpm release:check-version --stable-only -- v0.1.0`,
-  and `pnpm package:linux`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
+  `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until
   actually run. The packaged AppImage has been started and its multi-source
