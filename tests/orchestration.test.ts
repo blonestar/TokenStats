@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-vi.mock('electron', () => ({ app: { whenReady: () => new Promise<void>(() => {}), on: () => undefined, quit: () => undefined }, BrowserWindow: class {}, ipcMain: { handle: () => undefined } }))
+vi.mock('electron', () => ({ app: { whenReady: () => new Promise<void>(() => {}), on: () => undefined, quit: () => undefined }, BrowserWindow: class {}, Tray: class {}, Menu: { buildFromTemplate: () => ({}) }, nativeImage: { createFromPath: () => ({}) }, ipcMain: { handle: () => undefined } }))
 
 import { currentSources, nextZoomFactor, scanAllSources, sourceRoot, zoomShortcutAction } from '../src/main/index'
 import { PARSER_VERSION as COPILOT_PARSER_VERSION, SOURCE_ID as COPILOT_SOURCE_ID, scanCopilot } from '../src/main/copilot'

@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.7.0",
-  "author": "TokenStats contributors",
+  "author": {
+    "name": "TokenStats contributors",
+    "email": "5240133+blonestar@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/blonestar/TokenStats",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blonestar/TokenStats.git"
+  },
   "desktopName": "local.tokenstats.app.desktop",
   "description": "Local-first AI coding assistant token usage dashboard",
   "main": "./out/main/index.js",
@@ -15,6 +23,7 @@
     "release:check-version": "node scripts/validate-release-version.mjs",
     "package:unpacked": "pnpm build && electron-builder --linux --dir",
     "package:linux": "pnpm build && electron-builder --linux AppImage --publish never",
+    "package:linux:rpm": "pnpm build && electron-builder --linux rpm --publish never",
     "package:mac:arm64": "bash scripts/create-macos-icon.sh && pnpm build && electron-builder --mac zip --arm64 --publish never",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -45,10 +54,15 @@
     "productName": "TokenStats",
     "files": ["out/**", "package.json", "assets/icons/64x64.png"],
     "linux": {
-      "target": ["AppImage"],
+      "target": ["AppImage", "rpm"],
       "category": "Utility",
       "icon": "assets/icons",
       "syncDesktopName": true,
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "local.tokenstats.app"
+        }
+      },
       "files": [
         "!node_modules/better-sqlite3/prebuilds/{darwin-arm64,darwin-x64,linux-arm64,linuxmusl-arm64,linuxmusl-x64,win32-arm64,win32-x64}.node"
       ],

@@ -18,13 +18,28 @@ const mocks = vi.hoisted(() => {
     static getAllWindows = vi.fn(() => [])
     webContents = { setWindowOpenHandler: vi.fn(), on: vi.fn(), getZoomFactor: vi.fn(() => 1), setZoomFactor: vi.fn(), loadURL: vi.fn(), loadFile: vi.fn() }
     setMenuBarVisibility = vi.fn()
+    on = vi.fn()
+    isVisible = vi.fn(() => true)
+    isMinimized = vi.fn(() => false)
+    show = vi.fn()
+    hide = vi.fn()
+    focus = vi.fn()
+    restore = vi.fn()
     loadURL = vi.fn()
     loadFile = vi.fn()
   }
-  return { app, beforeQuit: () => beforeQuit?.(), dialog: { showMessageBox: vi.fn() }, handlers, ipcMain: { handle: vi.fn((channel: string, handler: (...args: never[]) => unknown) => handlers.set(channel, handler)) }, BrowserWindow: FakeBrowserWindow }
+  class FakeTray {
+    setToolTip = vi.fn()
+    setContextMenu = vi.fn()
+    on = vi.fn()
+    destroy = vi.fn()
+  }
+  const Menu = { buildFromTemplate: vi.fn((template: unknown) => ({ template })) }
+  const nativeImage = { createFromPath: vi.fn((path: string) => ({ path })) }
+  return { app, beforeQuit: () => beforeQuit?.(), dialog: { showMessageBox: vi.fn() }, handlers, ipcMain: { handle: vi.fn((channel: string, handler: (...args: never[]) => unknown) => handlers.set(channel, handler)) }, BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage }
 })
 
-vi.mock('electron', () => ({ app: mocks.app, BrowserWindow: mocks.BrowserWindow, dialog: mocks.dialog, ipcMain: mocks.ipcMain }))
+vi.mock('electron', () => ({ app: mocks.app, BrowserWindow: mocks.BrowserWindow, Tray: mocks.Tray, Menu: mocks.Menu, nativeImage: mocks.nativeImage, dialog: mocks.dialog, ipcMain: mocks.ipcMain }))
 
 describe('main-process reset IPC', () => {
   let directory: string

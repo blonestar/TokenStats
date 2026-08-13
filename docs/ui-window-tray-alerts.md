@@ -1,10 +1,10 @@
-Status: Proposed
+Status: Implemented Fedora minimum; richer behavior proposed
 
 Audience: users, UX reviewers, accessibility reviewers, and contributors implementing the desktop shell
 
 Source of truth: this document for dashboard, window, tray, alert, and update interaction requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-13
 
 # TokenStats UI, window, tray, and alerts
 
@@ -12,9 +12,10 @@ This document describes both the implemented Codex dashboard slice and the
 broader proposed desktop experience. The current screen has selected-period or
 custom-calendar token totals, model-separated Chart.js Line/Bar/Pie trends, exact model totals,
 token-category totals, source health, and a manual scan action. Custom window
-chrome, tray items, alerts, notifications, and update UI remain proposed. The
-current slice also includes a basic Settings view for the local database reset
-and re-import flow.
+chrome, detailed tray status, alerts, notifications, and update UI remain
+proposed. The current Fedora slice implements close-to-tray behavior and a
+minimal tray menu. It also includes a basic Settings view for the local
+database reset and re-import flow.
 
 ## Dashboard information architecture
 
@@ -89,6 +90,11 @@ not imply that an estimate is an invoice.
 
 ## Custom frameless window
 
+The current Fedora slice still uses the standard Electron window frame. Its
+close action is implemented as close-to-tray, and the tray provides the only
+explicit full-exit action. A renderer-owned frameless title bar and custom
+minimize/maximize/restore controls remain a separate visual proposal.
+
 Visual polish and an effective dashboard matter from the start. The current
 window proposal is a custom shell rather than the standard OS
 frame or an in-window File/Edit/View menu:
@@ -132,7 +138,8 @@ requirement.
 - `Minimize` minimizes the window normally.
 - `Maximize` maximizes the window.
 - `Restore` returns to the last non-maximized bounds.
-- `Close` hides the window to the tray when background monitoring is enabled.
+- `Close` hides the window to the tray in the current Fedora slice. A later
+  monitoring setting may make this configurable.
 
 The close label should make the behavior explicit, for example:
 `Close window and keep TokenStats running in the tray`.
@@ -166,6 +173,16 @@ ambiguous, and harder to scan. Later versions may add tested presets, but not an
 arbitrary field picker in the first release.
 
 ## Tray interaction and menu
+
+The current Fedora slice implements the minimum tray contract:
+
+- the tray icon uses the committed TokenStats icon;
+- left click shows and focuses the main window;
+- right click exposes `Show window` or `Hide window`, followed by `Exit TokenStats`;
+- closing the window does not quit the process;
+- `Exit TokenStats` destroys the tray item and fully quits the process.
+
+The richer status surface below remains proposed.
 
 The tray item is a compact status surface, not a second dashboard. Proposed
 behavior:
