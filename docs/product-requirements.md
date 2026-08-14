@@ -1,10 +1,10 @@
-Status: Implemented Fedora slice; remaining requirements proposed
+Status: Implemented Fedora slice and Linux AppImage update action; remaining requirements proposed
 
 Audience: product owners, contributors, UX reviewers, and users evaluating the MVP
 
 Source of truth: this document for official product requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-08-13
 
 # TokenStats product requirements
 
@@ -45,8 +45,10 @@ The implemented dashboard currently answers token totals by source and model for
 or monthly Line/Bar/Pie trends, model-hover isolation, exact model totals,
 session/event/day counts, category totals, source scan health, and estimated
 API-equivalent USD cost for Codex and complete Copilot snapshots with
-snapshot/date and coverage. It does not yet implement project drilldown,
-budgets, tray behavior, export/import, or updates.
+snapshot/date and coverage. The packaged Linux AppImage also checks for Stable
+updates, downloads only after an explicit click, and requires a separate
+install-and-restart click. Project drilldown, budgets, export/import, and
+broader platform update paths remain open.
 
 ## Target users
 
@@ -71,7 +73,7 @@ and cloud analytics users are not the primary v0.1 audience.
 | Monitor a personal budget | Receive a useful warning before observed usage becomes surprising. | Evaluate user-defined personal-usage budget rules after committed imports and notify once per threshold and period. |
 | Work in the background | Keep monitoring active without keeping the dashboard open. | Close to the tray when enabled, refresh every 60 seconds by default, and provide `Refresh now` and an explicit `Exit TokenStats`. |
 | Move history | Continue with the same usage history on another machine. | Export and import a versioned `.tokenstats` archive, with preview, deduplication, conflict handling, and checksums. |
-| Update safely | Know what will change and retain control of installation. | Check selected channels, show a visible update action, download only after user action, verify, back up when needed, and restart explicitly. |
+| Update safely | Know what will change and retain control of installation. | Check the Stable AppImage feed, show a visible update action, download only after user action, validate the feed checksum, and restart explicitly. |
 
 ## MVP scope: proposed v0.1.0
 
@@ -108,8 +110,8 @@ matrix:
   80%, 100%, and 120% thresholds, subject to the alert-scope questions;
 - native desktop notifications, tray status, close-to-tray behavior, and a
   60-second reconciliation refresh;
-- a visible update action and Stable/Nightly channels, subject to packaging and
-  signing validation;
+- a visible Stable update action for packaged Linux AppImages; Nightly and
+  cross-platform channels remain subject to packaging and signing validation;
 - offline operation for local data import and dashboard use.
 
 The MVP does not promise that every harness, path, model, platform, cost, or
@@ -210,21 +212,23 @@ The first version should provide:
 
 ## Update behavior
 
-The current product proposal uses two human-readable modes:
+The current product direction uses two human-readable modes:
 
 - Stable — recommended default;
 - Nightly — opt-in development build with higher risk and a separate data
   profile by default.
 
-Automatic checks are proposed at startup and every six hours while running.
-Downloading and installation remain explicit user actions. A visible header
-button should show the available version, channel, release notes, and progress;
-the app must not silently restart. Before a migration, the update flow creates
-a recoverable backup, finishes or pauses safe work, verifies the artifact, and
-restarts only after the user confirms installation.
+For packaged Linux AppImages, automatic Stable checks run at startup and every
+six hours while running by default. Settings can disable automatic checks,
+disable the startup check separately, and select a 1, 6, 12, or 24-hour
+interval. Downloading and installation remain explicit user actions. The
+visible blue action beside the version and author shows the available version
+and progress, then changes to `Restart to install new version` after download;
+the app does not silently restart. Release metadata and cross-platform signing, RPM updates,
+and macOS updates remain follow-on validation work.
 
-`Check now` remains available in Settings and the tray even though Manual is
-not a separate channel. `v0.1.x` is an internal/private build and is not a
+`Check now` remains available in Settings even though Manual is not a separate
+channel. `v0.1.x` is an internal/private build and is not a
 public release promise. The project stays on `0.1.x` until the maintainer
 decides that there is enough visible product value to move to `v0.2.0`.
 

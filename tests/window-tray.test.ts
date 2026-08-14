@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => {
 
   const app = {
     whenReady: vi.fn(() => Promise.resolve()),
+    isPackaged: true,
     getAppPath: vi.fn(() => process.cwd()),
     getPath: vi.fn(() => process.cwd()),
     getVersion: vi.fn(() => 'test-version'),
@@ -28,13 +29,15 @@ const mocks = vi.hoisted(() => {
     private readonly listeners = new Map<string, Listener>()
     private visible = true
     private minimized = false
+    closed = false
     webContents = {
       setWindowOpenHandler: vi.fn(),
       on: vi.fn(),
       getZoomFactor: vi.fn(() => 1),
       setZoomFactor: vi.fn(),
       loadURL: vi.fn(),
-      loadFile: vi.fn()
+      loadFile: vi.fn(),
+      send: vi.fn()
     }
     setMenuBarVisibility = vi.fn()
     loadURL = vi.fn()
@@ -59,7 +62,10 @@ const mocks = vi.hoisted(() => {
     close(): void {
       let prevented = false
       this.emit('close', { preventDefault: () => { prevented = true } })
-      if (!prevented) this.emit('closed')
+      if (!prevented) {
+        this.closed = true
+        this.emit('closed')
+      }
     }
 
     private emit(event: string, ...args: unknown[]): void {
@@ -92,8 +98,10 @@ const mocks = vi.hoisted(() => {
   const nativeImage = { createFromPath: vi.fn((path: string) => ({ path })) }
   const dialog = { showMessageBox: vi.fn() }
   const ipcMain = { handle: vi.fn() }
+  const updateListeners = new Map<string, (...args: unknown[]) => void>()
+  const autoUpdater = { autoDownload: true, autoInstallOnAppQuit: true, on: vi.fn((event: string, listener: (...args: unknown[]) => void) => { updateListeners.set(event, listener); return autoUpdater }), checkForUpdates: vi.fn(async () => undefined), downloadUpdate: vi.fn(async () => undefined), quitAndInstall: vi.fn(), emit: (event: string, ...args: unknown[]) => updateListeners.get(event)?.(...args) }
 
-  return { app, beforeQuit: () => beforeQuit?.(), BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, dialog, ipcMain }
+  return { app, beforeQuit: () => beforeQuit?.(), BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, dialog, ipcMain, autoUpdater }
 })
 
 vi.mock('electron', () => ({
@@ -105,11 +113,13 @@ vi.mock('electron', () => ({
   dialog: mocks.dialog,
   ipcMain: mocks.ipcMain
 }))
+vi.mock('electron-updater', () => ({ autoUpdater: mocks.autoUpdater }))
 
 describe('window and tray lifecycle', () => {
   let directory: string
   let window: InstanceType<typeof mocks.BrowserWindow>
   let tray: InstanceType<typeof mocks.Tray>
+  const originalAppImage = process.env.APPIMAGE
 
   const menuLabels = (): string[] => tray.contextMenu?.template
     .filter((item) => typeof item.label === 'string')
@@ -117,6 +127,10 @@ describe('window and tray lifecycle', () => {
 
   beforeAll(async () => {
     directory = mkdtempSync(join(tmpdir(), 'tokenstats-window-tray-'))
+    const appImagePath = join(directory, 'TokenStats.AppImage')
+    writeFileSync(appImagePath, 'test appimage')
+    chmodSync(appImagePath, 0o755)
+    process.env.APPIMAGE = appImagePath
     mocks.app.getPath.mockReturnValue(directory)
     const { TokenDatabase } = await import('../src/main/database')
     vi.spyOn(TokenDatabase.prototype, 'close')
@@ -127,6 +141,8 @@ describe('window and tray lifecycle', () => {
   })
 
   afterAll(() => {
+    if (originalAppImage === undefined) delete process.env.APPIMAGE
+    else process.env.APPIMAGE = originalAppImage
     rmSync(directory, { recursive: true, force: true })
   })
 
@@ -148,6 +164,27 @@ describe('window and tray lifecycle', () => {
 
     expect(window.isVisible()).toBe(true)
     expect(menuLabels()).toEqual(['Hide window', 'Exit TokenStats'])
+  })
+
+  it('changes the tray action from download to install and restart', async () => {
+    mocks.autoUpdater.emit('update-available', { version: '0.1.1' })
+    expect(menuLabels()).toContain('Update available — v0.1.1')
+
+    const downloadItem = tray.contextMenu?.template.find((item) => item.label === 'Update available — v0.1.1')
+    ;(downloadItem?.click as (() => void))()
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(mocks.autoUpdater.downloadUpdate).toHaveBeenCalledTimes(1)
+
+    mocks.autoUpdater.emit('update-downloaded', { version: '0.1.1' })
+    expect(menuLabels()).toContain('Install update and restart · v0.1.1')
+    const installItem = tray.contextMenu?.template.find((item) => item.label === 'Install update and restart · v0.1.1')
+    mocks.autoUpdater.quitAndInstall.mockImplementationOnce(() => { window.close() })
+    ;(installItem?.click as (() => void))()
+    expect(mocks.autoUpdater.quitAndInstall).toHaveBeenCalledWith(false, true)
+    expect(window.closed).toBe(true)
+
+    mocks.autoUpdater.emit('update-not-available')
+    expect(menuLabels()).toEqual(['Show window', 'Exit TokenStats'])
   })
 
   it('exits only through the explicit tray Exit action', async () => {

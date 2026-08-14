@@ -1,10 +1,10 @@
-Status: Implemented Fedora slice; remaining architecture proposed
+Status: Implemented Fedora slice and Linux AppImage update path; remaining architecture proposed
 
 Audience: contributors, architecture reviewers, security reviewers, and maintainers
 
 Source of truth: this document for the proposed system boundaries; unresolved alternatives are tracked in ../ideas/00-open-questions.md and the numbered idea notes
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-13
 
 # TokenStats architecture overview
 
@@ -266,10 +266,11 @@ fallback in the proposed MVP.
 
 ## Update service
 
-The update service is a main-process concern. It should:
+The update service is a main-process concern. The current implementation covers
+the packaged Linux AppImage Stable path and should:
 
-- read the selected channel feed at startup and every six hours when automatic
-  checks are enabled;
+- read the selected channel feed at startup when enabled and at the configured
+  1, 6, 12, or 24-hour interval when automatic checks are enabled;
 - compare versions with prerelease-aware rules;
 - expose a visible update action rather than silently downloading or restarting;
 - download only after user action and report progress;
@@ -280,12 +281,17 @@ The update service is a main-process concern. It should:
 - migrate before ingestion on next launch;
 - retain a usable previous installation and data path if an update fails.
 
-Linux updater behavior needs a dedicated packaging spike. Electron's built-in
+The implemented `electron-updater` controller uses typed preload IPC and keeps
+automatic download/install disabled. Its Settings state is persisted under
+Electron `userData`; it shows enabled/startup/interval controls and current
+last/next check times. It shows the state in the header, Settings, and tray,
+and requires one click to download followed by a second click to install and
+restart. Electron's built-in
 [autoUpdater](https://www.electronjs.org/docs/latest/api/auto-updater/) is
-documented for macOS and Windows, while the project proposal uses
-`electron-builder` and `electron-updater` to investigate an AppImage path and
-package-manager fallback. This remains a proposal, not an available update
-implementation.
+documented for macOS and Windows; the current Linux implementation uses the
+electron-builder AppImage feed. RPM package-manager updates, macOS ZIP updates,
+signature/provenance validation, and clean-machine recovery remain proposals or
+unverified platform work.
 
 ## Pricing input boundary
 

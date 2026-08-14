@@ -31,4 +31,21 @@ export type Dashboard = {
 export type ScanSourceResult = { sourceId: string; providerId: string; label: string; kind: string; status: SourceStatus | 'success'; filesScanned: number; eventsImported: number; warnings: number; error?: string }
 export type ScanResult = { ok: boolean; filesScanned: number; eventsImported: number; warnings: number; sources: ScanSourceResult[]; error?: string }
 export type ResetDatabaseResult = { ok: boolean; cancelled?: boolean; backupName?: string; eventsBackedUp?: number; reimport?: ScanResult; error?: string }
-export interface TokenStatsApi { getDashboard(query?: DashboardQuery): Promise<Dashboard>; getVersion(): Promise<string>; scanAll(): Promise<ScanResult>; resetDatabase(): Promise<ResetDatabaseResult> }
+export type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'error' | 'unsupported'
+export const UPDATE_INTERVAL_HOURS = [1, 6, 12, 24] as const
+export type UpdateIntervalHours = typeof UPDATE_INTERVAL_HOURS[number]
+export type UpdateSettings = { enabled: boolean; checkOnStartup: boolean; intervalHours: UpdateIntervalHours }
+export const DEFAULT_UPDATE_SETTINGS: UpdateSettings = { enabled: true, checkOnStartup: true, intervalHours: 6 }
+export type UpdateState = { status: UpdateStatus; version: string | null; progress: number | null; message: string | null; canInstall: boolean; settings: UpdateSettings; lastCheckedAt: string | null; nextCheckAt: string | null }
+export interface TokenStatsApi {
+  getDashboard(query?: DashboardQuery): Promise<Dashboard>
+  getVersion(): Promise<string>
+  scanAll(): Promise<ScanResult>
+  resetDatabase(): Promise<ResetDatabaseResult>
+  getUpdateState(): Promise<UpdateState>
+  setUpdateSettings(settings: UpdateSettings): Promise<UpdateState>
+  checkForUpdates(): Promise<UpdateState>
+  downloadUpdate(): Promise<UpdateState>
+  installUpdate(): Promise<UpdateState>
+  onUpdateState(listener: (state: UpdateState) => void): () => void
+}

@@ -59,21 +59,31 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Validate tag version
         run: pnpm release:check-version --stable-only -- "$GITHUB_REF_NAME"
-      - name: Package Linux AppImage
-        run: pnpm package:linux
+      - name: Package and publish Linux AppImage update metadata
+        run: pnpm package:linux:release
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Verify Linux updater manifest
+        run: |
+          test -s dist/latest-linux.yml
+          grep -Fq "TokenStats-${GITHUB_REF_NAME#v}-linux-x86_64.AppImage" dist/latest-linux.yml
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto'
+          import { readFileSync } from 'node:fs'
+          import { join } from 'node:path'
+
+          const manifest = readFileSync('dist/latest-linux.yml', 'utf8')
+          const match = manifest.match(/files:\n\s+- url: (\S+)\n\s+sha512: (\S+)/)
+          if (!match) throw new Error('latest-linux.yml has no file SHA-512 entry')
+          const actual = createHash('sha512').update(readFileSync(join('dist', match[1]))).digest('base64')
+          if (actual !== match[2]) throw new Error('latest-linux.yml SHA-512 does not match the AppImage')
+          NODE
       - name: Create and verify checksum manifest
         run: |
           cd dist
           sha256sum TokenStats-*.AppImage > SHA256SUMS.txt
           sha256sum --check SHA256SUMS.txt
-      - name: Create draft GitHub Release
+      - name: Add checksum manifest to draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create "$GITHUB_REF_NAME"
-          dist/TokenStats-*.AppImage
-          dist/SHA256SUMS.txt
-          --draft
-          --verify-tag
-          --title "TokenStats $GITHUB_REF_NAME"
-          --generate-notes
+        run: gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber

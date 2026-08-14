@@ -25,6 +25,10 @@ credentials, and raw logs are not stored.
 - Closing the window hides TokenStats to the system tray; the tray menu provides
   Show/Hide window and Exit.
 - A Fedora RPM package with a standard application launcher and menu entry.
+- Packaged Linux AppImage update checks with Settings controls for enablement,
+  startup checks, and a 1/6/12/24-hour interval; download, then install and
+  restart remain explicit actions. RPM and the current macOS ZIP remain manual
+  update paths.
 
 ## Run
 
@@ -53,8 +57,9 @@ After installation, TokenStats appears in the desktop application menu under
 Utilities with the packaged icon. It does not add an automatic-login entry by
 default. Remove it with `sudo dnf remove tokenstats`.
 
-Tray status metrics, alerts, automatic updates, exports, and public
-distribution remain follow-on work.
+Tray status metrics, alerts, exports, and public distribution remain follow-on
+work. The updater is currently scoped to the packaged Linux AppImage release
+feed.
 
 See the [documentation](docs/README.md) for details and [open questions](ideas/README.md)
 for planned work.

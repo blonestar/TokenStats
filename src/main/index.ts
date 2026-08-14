@@ -1,10 +1,12 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
-import type { ResetDatabaseResult, ScanResult, ScanSourceResult } from '../shared/contracts'
+import { DEFAULT_UPDATE_SETTINGS, type ResetDatabaseResult, type ScanResult, type ScanSourceResult, type UpdateState } from '../shared/contracts'
 import { TokenDatabase } from './database'
 import { backupAndClearDatabase } from './database-reset'
 import type { ProviderSource } from './ingestion/contracts'
 import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
+import { loadUpdateSettings, parseUpdateSettings, saveUpdateSettings } from './update-settings'
+import { createUpdateController, initialUpdateState, isLinuxAppImageUpdateSupported, type UpdateController } from './updater'
 export { sourceRoot } from './providers/discovery'
 
 let database: TokenDatabase | undefined
@@ -12,6 +14,8 @@ let scanRunning = false
 let resetRunning = false
 let mainWindow: BrowserWindow | undefined
 let tray: Tray | undefined
+let updateController: UpdateController | undefined
+let updateSettings = DEFAULT_UPDATE_SETTINGS
 let isQuitting = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
@@ -63,14 +67,30 @@ function quitApplication(): void {
   app.quit()
 }
 
+function updateMenuItem(state: UpdateState): { label: string; enabled?: boolean; click?: () => void } | undefined {
+  if (state.status === 'available') return { label: `Update available — v${state.version ?? 'new version'}`, click: () => { void updateController?.downloadUpdate() } }
+  if (state.status === 'downloading') return { label: `Downloading update${state.progress === null ? '…' : `… ${state.progress}%`}`, enabled: false }
+  if (state.status === 'downloaded') return { label: state.canInstall ? `Install update and restart${state.version ? ` · v${state.version}` : ''}` : 'Waiting to install…', enabled: state.canInstall, click: () => { updateController?.installUpdate() } }
+  if (state.status === 'installing') return { label: 'Installing update…', enabled: false }
+  if (state.status === 'error') return { label: 'Update check unavailable — Check again', click: () => { void updateController?.checkForUpdates() } }
+  return undefined
+}
+
+function publishUpdateState(state: UpdateState): void {
+  updateTrayMenu()
+  mainWindow?.webContents.send('tokenstats:updateState', state)
+}
+
 function updateTrayMenu(): void {
   if (!tray) return
   const visible = Boolean(mainWindow && mainWindow.isVisible() && !mainWindow.isMinimized())
+  const update = updateMenuItem(updateController?.getState() ?? initialUpdateState)
   tray.setContextMenu(Menu.buildFromTemplate([
     {
       label: visible ? 'Hide window' : 'Show window',
       click: () => { if (visible) hideWindow(); else showWindow() }
     },
+    ...(update ? [{ type: 'separator' as const }, update] : []),
     { type: 'separator' },
     { label: 'Exit TokenStats', click: quitApplication }
   ]))
@@ -109,7 +129,7 @@ function createWindow(): void {
   mainWindow = window
 
   window.on('close', (event) => {
-    if (isQuitting) return
+    if (isQuitting || updateController?.getState().status === 'installing') return
     event.preventDefault()
     hideWindow()
   })
@@ -172,10 +192,12 @@ function runAllScan(): ScanResult {
   }
 
   scanRunning = true
+  updateController?.syncInstallability()
   try {
     return scanAllSources(database)
   } finally {
     scanRunning = false
+    updateController?.syncInstallability()
   }
 }
 
@@ -185,6 +207,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
   if (resetRunning) return { ok: false, error: 'The database is already being reset.' }
 
   resetRunning = true
+  updateController?.syncInstallability()
   try {
     const confirmation = await dialog.showMessageBox({
       type: 'warning',
@@ -210,12 +233,15 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
     return { ok: false, error: 'The database could not be reset. Existing data was kept.' }
   } finally {
     resetRunning = false
+    updateController?.syncInstallability()
   }
 }
 
 app.whenReady().then(() => {
+  const userDataPath = app.getPath('userData')
+  updateSettings = loadUpdateSettings(userDataPath)
   database = new TokenDatabase(
-    join(app.getPath('userData'), 'tokenstats.sqlite'),
+    join(userDataPath, 'tokenstats.sqlite'),
     sourceDefinitions,
     providerMigrations
   )
@@ -224,9 +250,29 @@ app.whenReady().then(() => {
   ipcMain.handle('tokenstats:getVersion', () => app.getVersion())
   ipcMain.handle('tokenstats:scanAll', runAllScan)
   ipcMain.handle('tokenstats:resetDatabase', resetDatabase)
+  ipcMain.handle('tokenstats:getUpdateState', () => updateController?.getState() ?? initialUpdateState)
+  ipcMain.handle('tokenstats:setUpdateSettings', (_event, value: unknown) => {
+    const nextSettings = parseUpdateSettings(value)
+    if (!nextSettings) return updateController?.getState() ?? initialUpdateState
+    saveUpdateSettings(userDataPath, nextSettings)
+    updateSettings = nextSettings
+    updateController?.setSettings(nextSettings)
+    return updateController?.getState() ?? { ...initialUpdateState, settings: nextSettings }
+  })
+  ipcMain.handle('tokenstats:checkForUpdates', () => updateController?.checkForUpdates() ?? initialUpdateState)
+  ipcMain.handle('tokenstats:downloadUpdate', () => updateController?.downloadUpdate() ?? initialUpdateState)
+  ipcMain.handle('tokenstats:installUpdate', () => updateController?.installUpdate() ?? initialUpdateState)
 
+  updateController = createUpdateController({
+    enabled: isLinuxAppImageUpdateSupported({ platform: process.platform, isPackaged: app.isPackaged, appImagePath: process.env.APPIMAGE }),
+    settings: updateSettings,
+    onStateChange: publishUpdateState,
+    canInstall: () => !scanRunning && !resetRunning
+  })
   createTray()
   createWindow()
+  updateTrayMenu()
+  updateController.start()
 
   app.on('activate', () => {
     if (mainWindow) showWindow()
@@ -240,6 +286,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   isQuitting = true
+  updateController?.stop()
   tray?.destroy()
   tray = undefined
   database?.close()

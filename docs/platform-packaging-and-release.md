@@ -1,4 +1,4 @@
-Status: Proposed
+Status: Implemented Linux AppImage update slice; remaining platform and release requirements proposed
 
 Audience: maintainers, release engineers, platform testers, security reviewers, and contributors working on packaging
 
@@ -8,14 +8,21 @@ Last reviewed: 2026-08-13
 
 # TokenStats platform, packaging, and release
 
-This remains a release-engineering proposal with an implemented Fedora slice.
-The repository has a package manifest, version gate, Linux CI workflow, a
-tag-driven Linux draft-release workflow, and a manual macOS arm64 validation
-workflow. Linux and native macOS arm64 runs have passed, and the published
-internal `v0.1.0` release contains both platform artifacts plus a combined
-checksum manifest. Signing configuration for production distribution and
-updater implementation do not exist. The Linux build now has both portable
-AppImage and Fedora RPM targets. The unpacked build starts and scans on the
+This remains a release-engineering proposal with an implemented Fedora slice
+and a Linux AppImage updater slice. The repository has a package manifest,
+version gate, Linux CI workflow, a tag-driven Linux draft-release workflow, and
+a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
+have passed, and the published internal `v0.1.0` release contains both
+platform artifacts plus a combined checksum manifest. The updater is wired to
+the Stable GitHub feed for packaged Linux AppImages: automatic checks are
+enabled at startup and every six hours by default, with enablement, startup,
+and 1/6/12/24-hour interval controls in Settings. It downloads only after an
+explicit user action and installs only after a separate install-and-restart
+action. The existing `v0.1.0`
+release predates `latest-linux.yml`; the next release must use the publish path
+to expose updater metadata. RPM and the current macOS ZIP are not updater
+targets. Signing configuration, clean-machine validation, and broader
+distribution readiness remain open. The unpacked build starts and scans on the
 current Fedora/KDE host, which is not clean-machine verification.
 
 ## Platform targets
@@ -74,27 +81,34 @@ Every artifact should include version, platform, and architecture in its name.
 Each published artifact gets a matching SHA-256 checksum entry. Do not rely on
 an unversioned `latest` file as the only download reference.
 
-## electron-builder implementation and electron-updater proposal
+## electron-builder implementation and electron-updater
 
 `electron-builder` is the pinned packaging dependency and currently produces
 the Linux AppImage, Fedora RPM, and internal macOS arm64 ZIP validation artifact.
 Target-specific file filters keep only the matching `better-sqlite3` prebuild in
 each artifact (`linux-x64.node` for Fedora and `darwin-arm64.node` for macOS).
-`electron-updater` remains a proposed follow-on because the product still needs
-a Linux AppImage feed investigation in addition to macOS and Windows update
-packaging.
+`electron-updater` is now a runtime dependency for the packaged Linux AppImage
+path. The main process owns the updater, disables automatic download and
+automatic install-on-quit, and exposes typed IPC state to the renderer. The
+renderer and tray show the available/downloaded state; the first user action
+starts download and the second action calls install-and-restart. The updater
+does not run for development builds, RPM installs without an AppImage runtime,
+or the current macOS ZIP validation artifact.
 
 Electron's built-in [`autoUpdater`](https://www.electronjs.org/docs/latest/api/auto-updater/)
 documents macOS and Windows support and does not provide a built-in Linux
-auto-update path. The project therefore needs a dedicated spike for
-`electron-updater`, AppImage feeds, package-manager fallbacks, artifact
-verification, and channel separation. See the
+auto-update path. The current implementation is the scoped
+`electron-updater`/AppImage feed spike; package-manager fallbacks, artifact
+signing/verification, and channel separation remain follow-on work. See the
 [electron-updater documentation](https://www.electron.build/electron-updater.html)
 and [electron-builder AppImage update guidance](https://www.electron.build/appimage/).
 
-The updater must not be treated as safe merely because a download completed. It
-must identify the channel and version, verify integrity/signature, coordinate
-with imports and migrations, and retain a recoverable previous state.
+The updater must not be treated as safe merely because a download completed. The
+electron-builder manifest provides the feed checksum used by the updater; this
+does not establish publisher identity or signing. The current controller blocks
+installation while a scan or reset is active. Migration backup coordination,
+signed artifacts, interrupted-install recovery, and clean-machine update
+evidence remain follow-on requirements.
 
 ## Fedora RPM installation
 
@@ -199,11 +213,13 @@ The current tag-driven flow, verified by the `v0.1.0` run, is:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
 2. The workflow verifies that the tag exactly matches `package.json`.
-3. Linux tests, typecheck, and AppImage packaging run.
-4. The workflow creates and verifies a SHA-256 manifest and generated release notes.
-5. A draft GitHub Release is created with the versioned Linux artifact.
-6. A maintainer reviews the artifact, notes, channel, and evidence.
-7. The release is published manually; only then should the Stable feed expose it.
+3. Linux tests and typecheck run, then `package:linux:release` publishes the
+   AppImage and `latest-linux.yml` into a draft GitHub Release.
+4. The workflow creates and verifies a SHA-256 manifest and uploads it to the
+   same draft release.
+5. A maintainer reviews the artifact, notes, channel, and evidence.
+6. The release is published manually; only then should the Stable feed expose
+   it to the updater.
 
 Ubuntu-specific packaging, Windows artifacts, SBOM/provenance, production
 signing, and clean-machine smoke tests remain separate follow-up work. The
@@ -236,10 +252,12 @@ who built an artifact. Signing and provenance should be documented separately.
 
 ## Update checks and user-controlled installation
 
-The proposed default is:
+The implemented default and user controls are:
 
-- check at startup and every six hours while the app is running;
-- provide `Check now` in Settings and the tray menu;
+- check at startup and every six hours while the app is running by default;
+- allow automatic checks, startup checks, and the 1/6/12/24-hour interval to be
+  changed in Settings;
+- provide `Check now` in Settings;
 - never download automatically by default;
 - show a visible `Update available — vA.B.C` action with channel, release
   notes, and artifact size;

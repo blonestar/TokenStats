@@ -11,6 +11,7 @@
 - `package.json` provides `pnpm dev`, `pnpm test`, `pnpm typecheck`, `pnpm build`,
   `pnpm release:check-version` (with `--stable-only` for Stable tags),
   `pnpm package:unpacked`, `pnpm package:linux` (portable AppImage),
+  `pnpm package:linux:release` (AppImage plus GitHub updater metadata),
   `pnpm package:linux:rpm` (Fedora installable RPM), and the macOS-only
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
@@ -20,9 +21,12 @@
   `.github/workflows/release.yml` workflows now run Linux verification and
   tag-driven draft-release preparation. GitHub CI and the tag-driven `v0.1.0`
   release run have passed; `v0.1.0` is published with the Linux AppImage,
-  macOS arm64 ZIP, and combined SHA-256 manifest. No updater, clean-machine
-  validation, or broader distribution readiness exists yet; publication does
-  not establish those claims.
+  macOS arm64 ZIP, and combined SHA-256 manifest. `electron-updater` now
+  implements explicit check, download, and install/restart behavior for
+  packaged Linux AppImages; the existing `v0.1.0` release predates updater
+  metadata, so the next published release must use the release publish path.
+  RPM, macOS ZIP, clean-machine validation, and broader distribution readiness
+  remain unverified; publication does not establish those claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -149,11 +153,16 @@ modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
 version gate, and `v0.1.0` is published with Linux and macOS arm64 artifacts.
 Close-to-tray and the basic tray menu are implemented locally, and the Fedora
-RPM packaging target provides the installable launcher path. The versioned
-archive, import/export, updater, detailed tray status, scheduled background
-monitoring, and broader platform behavior remain proposals rather than evidence
-that those features exist; published preview artifacts do not establish
-clean-machine or production distribution readiness.
+RPM packaging target provides the installable launcher path. The updater is
+implemented only for packaged Linux AppImages: automatic checks are enabled by
+default, run at startup and every six hours, and can be disabled or changed to
+1, 6, 12, or 24 hours from Settings; downloads happen only after the visible
+update action and require a second install-and-restart action. The main process
+blocks installation while a scan or reset is active. The versioned archive, import/export,
+detailed tray status, scheduled background monitoring, RPM/macOS update paths,
+and broader platform behavior remain proposals or unverified; published
+preview artifacts do not establish clean-machine or production distribution
+readiness.
 
 ## Before making changes
 
