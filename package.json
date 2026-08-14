@@ -23,6 +23,7 @@
     "release:check-version": "node scripts/validate-release-version.mjs",
     "package:unpacked": "pnpm build && electron-builder --linux --dir",
     "package:linux": "pnpm build && electron-builder --linux AppImage --publish never",
+    "package:linux:release": "pnpm build && electron-builder --linux AppImage --publish always",
     "package:linux:rpm": "pnpm build && electron-builder --linux rpm --publish never",
     "package:mac:arm64": "bash scripts/create-macos-icon.sh && pnpm build && electron-builder --mac zip --arm64 --publish never",
     "postinstall": "electron-builder install-app-deps"
@@ -30,6 +31,7 @@
   "dependencies": {
     "better-sqlite3": "13.0.3",
     "chart.js": "4.5.1",
+    "electron-updater": "6.8.9",
     "react": "19.2.8",
     "react-chartjs-2": "5.3.1",
     "react-dom": "19.2.8"
@@ -40,8 +42,8 @@
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
-    "ajv": "8.20.0",
     "@vitejs/plugin-react": "5.2.0",
+    "ajv": "8.20.0",
     "electron": "43.3.0",
     "electron-builder": "26.15.3",
     "electron-vite": "5.0.0",
@@ -52,9 +54,23 @@
   "build": {
     "appId": "local.tokenstats.app",
     "productName": "TokenStats",
-    "files": ["out/**", "package.json", "assets/icons/64x64.png"],
+    "publish": {
+      "provider": "github",
+      "owner": "blonestar",
+      "repo": "TokenStats",
+      "releaseType": "draft",
+      "publishAutoUpdate": true
+    },
+    "files": [
+      "out/**",
+      "package.json",
+      "assets/icons/64x64.png"
+    ],
     "linux": {
-      "target": ["AppImage", "rpm"],
+      "target": [
+        "AppImage",
+        "rpm"
+      ],
       "category": "Utility",
       "icon": "assets/icons",
       "syncDesktopName": true,
@@ -72,7 +88,9 @@
       "target": [
         {
           "target": "zip",
-          "arch": ["arm64"]
+          "arch": [
+            "arm64"
+          ]
         }
       ],
       "category": "public.app-category.utilities",

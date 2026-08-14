@@ -29,6 +29,13 @@ that registers a standard desktop launcher. These are local implementation
 facts; clean-machine installation and broader platform support still require
 separate evidence.
 
+The packaged Linux AppImage slice now also checks the Stable GitHub feed at
+startup and every six hours by default. Settings exposes automatic-check enablement,
+startup-check behavior, and a 1/6/12/24-hour interval; a visible update action
+appears near the version/author when a release is found. Downloads happen only
+after the user clicks, followed by a separate install-and-restart action. RPM
+and the current macOS ZIP are not covered by this updater path.
+
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
 tracked in the open-question matrix. Linux GitHub CI, the tag-driven `v0.1.0`

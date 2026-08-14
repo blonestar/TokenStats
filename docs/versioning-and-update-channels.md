@@ -1,16 +1,18 @@
-Status: Proposed
+Status: Implemented Linux AppImage update slice; remaining channels proposed
 
 Audience: maintainers, release reviewers, contributors, and users evaluating update safety
 
 Source of truth: this document for version semantics and update-channel behavior; release mechanics are detailed in platform-packaging-and-release.md and unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-14
 
 # TokenStats versioning and update channels
 
-This document defines the proposed version and update policy. Local application
-version metadata and an unpacked Fedora build now exist, but no update feed,
-updater, or released artifact exists yet.
+This document defines the version and update policy. Local application version
+metadata and the packaged Fedora build exist. The Linux AppImage slice now has
+an `electron-updater` feed integration; the existing `v0.1.0` release predates
+the generated updater manifest, so the next published Stable release is the
+first release eligible for this path.
 
 ## Starting version and readiness meaning
 
@@ -143,42 +145,49 @@ export/import operation reviewed by the user.
 
 ## Update-check behavior
 
-The proposed defaults are:
+The implemented defaults and Settings options for packaged Linux AppImages are:
 
-- automatic checks enabled for Stable and Nightly when the user has opted into
-  the channel;
-- one check at startup;
-- another check every six hours while TokenStats is running;
-- `Check now` always available in Settings and the tray menu;
+- automatic Stable checks enabled at startup and every six hours by default;
+- automatic checks can be disabled, startup checks can be disabled separately,
+  and the interval can be set to 1, 6, 12, or 24 hours;
+- `Check now` available in Settings;
 - no automatic download by default;
 - no automatic installation or silent restart.
 
-The app should expose the last check time, selected channel, current version,
-available version, release notes, artifact size, and a data-profile warning
-where relevant.
+Nightly, RPM, and the current macOS ZIP do not yet use this updater path.
+
+The current Linux slice exposes the current/available version, download
+progress, and current-session last/next check times in Settings. Release notes,
+artifact size, and a visible data-profile warning remain follow-on UI work.
 
 ## Visible update button
 
-When a compatible update is available, the main header should show a visible
-text action near Refresh and Settings:
+When a compatible Linux AppImage update is available, the main header shows a
+small blue text-and-icon action beside the version and author:
 
 ```text
-[Refresh]  [Update available — v0.1.1]  [Settings]
+[TokenStats v0.1.0 by Bojan]  [New update available · v0.1.1]
 ```
 
-The action must have an accessible name and cannot rely on color alone. The
-same state should appear in Settings and the tray menu.
+The action has an accessible name and does not rely on color alone. Available,
+downloading, and downloaded states appear in the header, Settings, and tray;
+failed checks appear as a status in Settings and the tray. The icon changes
+from download to install/restart after the download completes.
 
-Proposed button states:
+Implemented Linux AppImage button states:
 
 ```text
-Update available — v0.1.1
+New update available · v0.1.1
 Downloading update… 37%
-Verifying update…
-Ready to install — restart TokenStats now?
-Up to date
-Update failed — Retry
+Restart to install new version
+Installing update…
+Update check unavailable · Try again in Settings
 ```
+
+The current slice exposes the available version and download progress. Channel
+labels, release notes, artifact size, and a separate verification-progress
+state remain follow-on UI work; the updater still validates the feed checksum
+before the downloaded state is emitted.
 
 The user action starts the download. The app may continue checking in the
 background, but it must not download or install without the configured consent
@@ -188,7 +197,7 @@ flow.
 
 The proposed sequence is:
 
-1. The selected-channel checker finds a newer compatible version.
+1. The Stable checker finds a newer compatible Linux AppImage version.
 2. The app presents the version, channel, release notes, and artifact size.
 3. The user clicks the visible update action.
 4. The app downloads with progress and disables conflicting update actions.
@@ -199,7 +208,7 @@ The proposed sequence is:
    pre-migration backup. The update is blocked if the backup fails.
 8. The app presents `Install and restart` or equivalent explicit confirmation.
 9. The app gracefully closes its windows and background process.
-10. The platform updater installs the already verified artifact.
+10. The Linux AppImage updater installs the already verified artifact.
 11. TokenStats restarts and selects the same channel/profile.
 12. The new process runs database migrations before ingestion.
 13. The app validates key invariants, restores monitoring state, and reports

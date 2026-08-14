@@ -4,7 +4,7 @@ Audience: users, privacy reviewers, contributors implementing storage, and maint
 
 Source of truth: this document for data collection, storage, privacy, export/import, and migration rules; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-13
 
 # TokenStats data, privacy, and portability
 
@@ -40,6 +40,26 @@ creates a verified SQLite backup plus non-content metadata under
 `userData/backups/`, clears imported data/cursors/scan history transactionally,
 and re-runs the normal local scan. It never modifies source logs. Full
 portability/export behavior still requires additional implementation and tests.
+
+## Update connectivity and privacy
+
+When TokenStats is running as a packaged Linux AppImage and automatic checks are
+enabled, the main process makes an HTTPS request to the configured GitHub
+Releases feed at startup when that option is enabled and then at the selected
+1, 6, 12, or 24-hour interval to check the Stable version. A user can also
+start a manual check from Settings while automatic checks are disabled. The
+request is part of the updater protocol and may expose normal network metadata
+such as the requesting IP
+address, user agent, operating system/architecture, current app version, and
+the requested repository URL to GitHub or its delivery infrastructure. TokenStats
+does not send source-log paths, usage records, prompts, responses, source code,
+credentials, or local database contents as part of the check. The update
+artifact is downloaded only after the user clicks the visible update action.
+
+Local scanning and dashboard use remain usable without the update request; a
+failed check is surfaced as update state rather than a data-scan failure. RPM
+installs and the current macOS ZIP validation artifact do not use this updater
+path.
 
 ## Data collected from local sources
 

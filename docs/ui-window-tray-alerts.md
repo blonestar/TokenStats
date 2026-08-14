@@ -1,10 +1,10 @@
-Status: Implemented Fedora minimum; richer behavior proposed
+Status: Implemented Fedora minimum and Linux AppImage update action; richer behavior proposed
 
 Audience: users, UX reviewers, accessibility reviewers, and contributors implementing the desktop shell
 
 Source of truth: this document for dashboard, window, tray, alert, and update interaction requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-13
+Last reviewed: 2026-08-14
 
 # TokenStats UI, window, tray, and alerts
 
@@ -12,10 +12,11 @@ This document describes both the implemented Codex dashboard slice and the
 broader proposed desktop experience. The current screen has selected-period or
 custom-calendar token totals, model-separated Chart.js Line/Bar/Pie trends, exact model totals,
 token-category totals, source health, and a manual scan action. Custom window
-chrome, detailed tray status, alerts, notifications, and update UI remain
-proposed. The current Fedora slice implements close-to-tray behavior and a
-minimal tray menu. It also includes a basic Settings view for the local
-database reset and re-import flow.
+chrome, detailed tray status, alerts, and notifications remain proposed. The
+current Fedora slice implements close-to-tray behavior, a minimal tray menu,
+and a basic Settings view for the local database reset/re-import flow. A
+Linux AppImage update action is implemented: the header icon starts a user-led
+download and changes to an install/restart icon when the download completes.
 
 ## Dashboard information architecture
 
@@ -301,26 +302,31 @@ and [notification guide](https://www.electronjs.org/docs/latest/tutorial/notific
 
 ## Visible update button
 
-When a compatible update is available, show a prominent text button near
-Refresh and Settings:
+When a compatible update is available, show a small blue text button beside
+the application version and author:
 
 ```text
-[Refresh]  [Update available — v0.1.1]  [Settings]
+[TokenStats v0.1.0 by Bojan]  [New update available · v0.1.1]
 ```
 
 The button must:
 
-- identify the version and channel;
-- expose release notes and artifact size nearby;
+- identify the available version;
+- change to `Restart to install new version` after the download completes;
 - use text and an accessible label, not color alone;
 - require an explicit user action to begin download;
-- show downloading, verifying, ready-to-install, restarting, and failed states;
+- show downloading, ready-to-install, installing/restarting, and a clear non-destructive failed status;
 - never silently restart the app.
 
-The same update state belongs in Settings and the tray menu. Stable and Nightly
-are the only required channels; `Check now` is a user action, not a third
-channel. `v0.1.x` remains private/internal until the explicit `v0.2.0`
-readiness decision.
+Channel labels, release notes, artifact size, and a separate verification
+progress state remain follow-on UI work for the current Linux slice.
+
+Available/download/install state appears in the header, Settings, and tray menu;
+failed checks appear as a status in Settings and the tray menu.
+Stable and Nightly are the only required channels; the current manual `Check
+now` action is available in Settings, not a third channel. The current updater
+scope does not include RPM or the macOS ZIP validation artifact. `v0.1.x`
+remains private/internal until the explicit `v0.2.0` readiness decision.
 
 ## Accessibility requirements
 
