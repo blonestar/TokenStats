@@ -119,6 +119,7 @@ describe('window and tray lifecycle', () => {
   let directory: string
   let window: InstanceType<typeof mocks.BrowserWindow>
   let tray: InstanceType<typeof mocks.Tray>
+  const originalEnvironment = { HOME: process.env.HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR, COPILOT_HOME: process.env.COPILOT_HOME, COPILOT_OTEL_FILE_EXPORTER_PATH: process.env.COPILOT_OTEL_FILE_EXPORTER_PATH }
   const originalAppImage = process.env.APPIMAGE
 
   const menuLabels = (): string[] => tray.contextMenu?.template
@@ -127,6 +128,10 @@ describe('window and tray lifecycle', () => {
 
   beforeAll(async () => {
     directory = mkdtempSync(join(tmpdir(), 'tokenstats-window-tray-'))
+    process.env.HOME = directory
+    process.env.CLAUDE_CONFIG_DIR = join(directory, '.claude')
+    process.env.COPILOT_HOME = join(directory, '.copilot')
+    process.env.COPILOT_OTEL_FILE_EXPORTER_PATH = join(directory, 'copilot-otel.jsonl')
     const appImagePath = join(directory, 'TokenStats.AppImage')
     writeFileSync(appImagePath, 'test appimage')
     chmodSync(appImagePath, 0o755)
@@ -141,6 +146,10 @@ describe('window and tray lifecycle', () => {
   })
 
   afterAll(() => {
+    for (const [key, value] of Object.entries(originalEnvironment)) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
     if (originalAppImage === undefined) delete process.env.APPIMAGE
     else process.env.APPIMAGE = originalAppImage
     rmSync(directory, { recursive: true, force: true })

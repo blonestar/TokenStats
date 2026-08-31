@@ -99,7 +99,24 @@ button { font: inherit; }
 .source-status > span { display: block; margin-top: 4px; line-height: 1.3; }
 .source-status small { display: block; margin-top: 5px; color: #aebdce; font-size: 10px; line-height: 1.35; }
 .warnings { display: grid; gap: 2px; margin-top: 5px; color: #e8c18a; line-height: 1.3; }
-.loading { display: grid; min-height: 100vh; place-items: center; color: #c7d5e5; }
+.loading, .initial-loading { display: grid; min-height: 100vh; place-items: center; color: #c7d5e5; }
+.initial-loading { background: radial-gradient(circle at 50% 35%, #17283c 0, #0a1019 58%); }
+.scan-overlay { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(5, 10, 17, .38); backdrop-filter: blur(11px); -webkit-backdrop-filter: blur(11px); }
+.scan-overlay-card { width: min(430px, calc(100vw - 48px)); padding: 32px 30px 28px; border: 1px solid rgba(112, 170, 222, .42); border-radius: 18px; background: rgba(16, 26, 39, .94); box-shadow: 0 24px 80px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .06); text-align: center; }
+.scan-overlay-card .section-kicker { margin-bottom: 8px; }
+.scan-overlay-card h2 { margin: 0; color: #f2f7fd; font-size: 24px; letter-spacing: -.04em; }
+.scan-overlay-card p:not(.section-kicker) { max-width: 330px; margin: 10px auto 0; color: #b6c5d6; font-size: 13px; line-height: 1.5; }
+.scan-loader { position: relative; display: grid; width: 78px; height: 78px; margin: 0 auto 20px; place-items: center; }
+.scan-loader:before, .scan-loader:after { position: absolute; content: ""; border: 2px solid transparent; border-radius: 50%; }
+.scan-loader:before { inset: 2px; border-top-color: #68aef1; border-right-color: rgba(104, 174, 241, .35); animation: scan-spin 1.05s linear infinite; }
+.scan-loader:after { inset: 10px; border-bottom-color: #63d3a1; border-left-color: rgba(99, 211, 161, .3); animation: scan-spin-reverse 1.55s linear infinite; }
+.scan-loader img { position: relative; z-index: 1; width: 46px; height: 46px; border-radius: 12px; box-shadow: 0 0 26px rgba(103, 183, 255, .24); animation: scan-pulse 1.8s ease-in-out infinite; }
+.scan-progress { height: 4px; margin-top: 24px; overflow: hidden; border-radius: 99px; background: #1d2d40; }
+.scan-progress span { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #68aef1, #63d3a1); animation: scan-progress 1.7s ease-in-out infinite; }
+@keyframes scan-spin { to { transform: rotate(360deg); } }
+@keyframes scan-spin-reverse { to { transform: rotate(-360deg); } }
+@keyframes scan-pulse { 0%, 100% { transform: scale(.94); opacity: .82; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes scan-progress { 0% { transform: translateX(-120%); } 50%, 100% { transform: translateX(260%); } }
 .empty-state { max-width: 620px; margin: 80px auto; padding: 34px; border: 1px solid #233247; background: #101a27; text-align: center; }
 .empty-state h2 { margin: 0; font-size: 27px; letter-spacing: -.04em; }
 .empty-state p:not(.section-kicker) { max-width: 480px; margin: 12px auto 20px; color: #aebdce; line-height: 1.55; }
@@ -132,6 +149,7 @@ button { font: inherit; }
 .danger-button:hover:not(:disabled) { background: #a74650; }
 .danger-button:disabled { cursor: wait; opacity: .65; }
 button:focus-visible { outline: 3px solid #e9f4ff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .scan-loader:before, .scan-loader:after, .scan-loader img, .scan-progress span { animation: none; } .scan-progress span { width: 55%; transform: none; } }
 @media (max-width: 1080px) { .app-shell { padding: 12px 18px; } .analytics-grid { grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); } .token-breakdown { grid-template-columns: 140px 1fr; } .token-breakdown > p { grid-column: 2; } }
 @media (max-width: 940px) { .app-shell { padding: 12px; } .summary dl { grid-template-columns: repeat(2, minmax(86px, 1fr)); gap: 14px; } .analytics-grid { grid-template-columns: minmax(0, 1.25fr) minmax(270px, .85fr); } .chart-frame { height: 218px; } .category-list { grid-template-columns: repeat(2, 1fr); } .source-status-list { grid-template-columns: 1fr; } .settings-card { align-items: stretch; flex-direction: column; } .settings-actions { align-items: flex-start; flex-wrap: wrap; } .danger-button { align-self: flex-start; } }
 @media (max-height: 760px) {

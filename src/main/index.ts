@@ -1,10 +1,12 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
-import { DEFAULT_UPDATE_SETTINGS, type ResetDatabaseResult, type ScanResult, type ScanSourceResult, type UpdateState } from '../shared/contracts'
+import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
 import { TokenDatabase } from './database'
 import { backupAndClearDatabase } from './database-reset'
 import type { ProviderSource } from './ingestion/contracts'
 import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
+import { loadRefreshSettings, parseRefreshSettings, saveRefreshSettings } from './refresh-settings'
+import { RefreshScheduler } from './refresh-scheduler'
 import { loadUpdateSettings, parseUpdateSettings, saveUpdateSettings } from './update-settings'
 import { createUpdateController, initialUpdateState, isLinuxAppImageUpdateSupported, type UpdateController } from './updater'
 export { sourceRoot } from './providers/discovery'
@@ -16,6 +18,10 @@ let mainWindow: BrowserWindow | undefined
 let tray: Tray | undefined
 let updateController: UpdateController | undefined
 let updateSettings = DEFAULT_UPDATE_SETTINGS
+let refreshScheduler: RefreshScheduler | undefined
+let refreshSettings: RefreshSettings = DEFAULT_REFRESH_SETTINGS
+let scanState: ScanState = IDLE_SCAN_STATE
+let startupScanStarted = false
 let isQuitting = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
@@ -62,6 +68,7 @@ function hideWindow(): void {
 function quitApplication(): void {
   if (isQuitting) return
   isQuitting = true
+  refreshScheduler?.stop()
   tray?.destroy()
   tray = undefined
   app.quit()
@@ -79,6 +86,15 @@ function updateMenuItem(state: UpdateState): { label: string; enabled?: boolean;
 function publishUpdateState(state: UpdateState): void {
   updateTrayMenu()
   mainWindow?.webContents.send('tokenstats:updateState', state)
+}
+
+function publishScanState(nextState: ScanState): void {
+  scanState = { ...nextState }
+  mainWindow?.webContents.send('tokenstats:scanState', scanState)
+}
+
+function publishScanComplete(result: ScanResult): void {
+  mainWindow?.webContents.send('tokenstats:scanComplete', result)
 }
 
 function updateTrayMenu(): void {
@@ -160,7 +176,7 @@ function createWindow(): void {
   }
 }
 
-function runAllScan(): ScanResult {
+function runAllScan(reason: ScanReason = 'manual'): ScanResult {
   if (!database) {
     return {
       ok: false,
@@ -192,12 +208,35 @@ function runAllScan(): ScanResult {
   }
 
   scanRunning = true
+  publishScanState({ status: 'scanning', reason })
   updateController?.syncInstallability()
   try {
-    return scanAllSources(database)
+    const result = scanAllSources(database)
+    publishScanComplete(result)
+    return result
   } finally {
     scanRunning = false
+    publishScanState(IDLE_SCAN_STATE)
     updateController?.syncInstallability()
+  }
+}
+
+function runScheduledScan(): void {
+  if (isQuitting || scanRunning || resetRunning) return
+  try {
+    runAllScan('automatic')
+  } catch {
+    publishScanComplete({ ok: false, filesScanned: 0, eventsImported: 0, warnings: 1, sources: [], error: 'Automatic refresh failed. Existing dashboard data was kept.' })
+  }
+}
+
+function startStartupScan(): void {
+  if (startupScanStarted || isQuitting || !database) return
+  startupScanStarted = true
+  try {
+    runAllScan('startup')
+  } finally {
+    refreshScheduler?.start(refreshSettings)
   }
 }
 
@@ -207,6 +246,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
   if (resetRunning) return { ok: false, error: 'The database is already being reset.' }
 
   resetRunning = true
+  publishScanState({ status: 'scanning', reason: 'reset' })
   updateController?.syncInstallability()
   try {
     const confirmation = await dialog.showMessageBox({
@@ -224,6 +264,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
     if (!reset.ok) return reset
     try {
       const reimport = scanAllSources(database)
+      publishScanComplete(reimport)
       return { ...reset, ok: reimport.ok, reimport, ...(reimport.ok ? {} : { error: 'Database reset succeeded, but re-import reported an error.' }) }
     } catch {
       const reimport: ScanResult = { ok: false, filesScanned: 0, eventsImported: 0, warnings: 1, sources: [], error: 'Re-import failed before a source result was recorded.' }
@@ -233,6 +274,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
     return { ok: false, error: 'The database could not be reset. Existing data was kept.' }
   } finally {
     resetRunning = false
+    publishScanState(IDLE_SCAN_STATE)
     updateController?.syncInstallability()
   }
 }
@@ -240,6 +282,8 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
 app.whenReady().then(() => {
   const userDataPath = app.getPath('userData')
   updateSettings = loadUpdateSettings(userDataPath)
+  refreshSettings = loadRefreshSettings(userDataPath)
+  scanState = { status: 'scanning', reason: 'startup' }
   database = new TokenDatabase(
     join(userDataPath, 'tokenstats.sqlite'),
     sourceDefinitions,
@@ -248,7 +292,18 @@ app.whenReady().then(() => {
 
   ipcMain.handle('tokenstats:getDashboard', (_event, period: unknown) => database?.dashboard(period))
   ipcMain.handle('tokenstats:getVersion', () => app.getVersion())
-  ipcMain.handle('tokenstats:scanAll', runAllScan)
+  ipcMain.handle('tokenstats:scanAll', () => runAllScan('manual'))
+  ipcMain.handle('tokenstats:rendererReady', startStartupScan)
+  ipcMain.handle('tokenstats:getScanState', () => ({ ...scanState }))
+  ipcMain.handle('tokenstats:getRefreshSettings', () => ({ ...refreshSettings }))
+  ipcMain.handle('tokenstats:setRefreshSettings', (_event, value: unknown) => {
+    const nextSettings = parseRefreshSettings(value)
+    if (!nextSettings) return { ...refreshSettings }
+    saveRefreshSettings(userDataPath, nextSettings)
+    refreshSettings = nextSettings
+    if (startupScanStarted) refreshScheduler?.setSettings(nextSettings)
+    return { ...refreshSettings }
+  })
   ipcMain.handle('tokenstats:resetDatabase', resetDatabase)
   ipcMain.handle('tokenstats:getUpdateState', () => updateController?.getState() ?? initialUpdateState)
   ipcMain.handle('tokenstats:setUpdateSettings', (_event, value: unknown) => {
@@ -269,6 +324,7 @@ app.whenReady().then(() => {
     onStateChange: publishUpdateState,
     canInstall: () => !scanRunning && !resetRunning
   })
+  refreshScheduler = new RefreshScheduler(runScheduledScan)
   createTray()
   createWindow()
   updateTrayMenu()
@@ -286,6 +342,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   isQuitting = true
+  refreshScheduler?.stop()
   updateController?.stop()
   tray?.destroy()
   tray = undefined

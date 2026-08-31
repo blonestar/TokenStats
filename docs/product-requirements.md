@@ -1,10 +1,10 @@
-Status: Implemented Fedora slice and Linux AppImage update action; remaining requirements proposed
+Status: Implemented Fedora slice, startup collection, local-data auto-refresh, and Linux AppImage update action; remaining requirements proposed
 
 Audience: product owners, contributors, UX reviewers, and users evaluating the MVP
 
 Source of truth: this document for official product requirements; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-13
+Last reviewed: 2026-08-14
 
 # TokenStats product requirements
 
@@ -47,8 +47,10 @@ session/event/day counts, category totals, source scan health, and estimated
 API-equivalent USD cost for Codex and complete Copilot snapshots with
 snapshot/date and coverage. The packaged Linux AppImage also checks for Stable
 updates, downloads only after an explicit click, and requires a separate
-install-and-restart click. Project drilldown, budgets, export/import, and
-broader platform update paths remain open.
+install-and-restart click. Every app start runs the shared local-source scan,
+and Settings can enable background refresh with a persisted 1-minute minimum
+interval. Project drilldown, budgets, export/import, and broader platform update
+paths remain open.
 
 ## Target users
 
@@ -71,7 +73,7 @@ and cloud analytics users are not the primary v0.1 audience.
 | Understand usage | See observed tokens over time and by source. | Provide daily trends, token-category totals, active days, sessions, events, and harness/model/project breakdowns. |
 | Check data quality | Know whether the dashboard is complete enough to trust. | Show last successful scan, new events, parser warnings, source health, gaps, and unknown fields. |
 | Monitor a personal budget | Receive a useful warning before observed usage becomes surprising. | Evaluate user-defined personal-usage budget rules after committed imports and notify once per threshold and period. |
-| Work in the background | Keep monitoring active without keeping the dashboard open. | Close to the tray when enabled, refresh every 60 seconds by default, and provide `Refresh now` and an explicit `Exit TokenStats`. |
+| Work in the background | Keep monitoring active without keeping the dashboard open. | Close to the tray when enabled, collect local data at startup, refresh every 1 minute by default, allow a validated interval of 1, 5, 10, 15, 30, or 60 minutes in Settings, and provide `Refresh local sources` plus an explicit `Exit TokenStats`. |
 | Move history | Continue with the same usage history on another machine. | Export and import a versioned `.tokenstats` archive, with preview, deduplication, conflict handling, and checksums. |
 | Update safely | Know what will change and retain control of installation. | Check the Stable AppImage feed, show a visible update action, download only after user action, validate the feed checksum, and restart explicitly. |
 
@@ -103,13 +105,17 @@ matrix:
 - a Sources/diagnostics surface for path status, parser version, scan age,
   permissions, warnings, and data gaps; manual source selection is not a
   v0.1 requirement;
+- startup collection and a main-process background refresh scheduler with a
+  persisted Settings toggle and a 1-minute minimum interval; the renderer
+  shows a full-screen progress overlay with a blurred dashboard while local
+  sources are being refreshed;
 - a local SQLite database with explicit migrations and recoverable backup rules;
 - `.tokenstats`, CSV, and JSON export/import paths as described in the data
   and portability document;
 - personal daily, weekly, and monthly token-budget alerts with configurable
   80%, 100%, and 120% thresholds, subject to the alert-scope questions;
 - native desktop notifications, tray status, close-to-tray behavior, and a
-  60-second reconciliation refresh;
+  configurable local-data reconciliation refresh with a 1-minute minimum;
 - a visible Stable update action for packaged Linux AppImages; Nightly and
   cross-platform channels remain subject to packaging and signing validation;
 - offline operation for local data import and dashboard use.
@@ -119,7 +125,7 @@ notification is available on every machine. Unsupported or incomplete data
 must remain visible instead of being silently converted into a precise-looking
 number.
 
-The first scan imports safely available supported history. Canonical usage facts
+The first startup scan imports safely available supported history. Canonical usage facts
 are retained cumulatively; current source rescans are idempotent, and no
 deletion UI exists yet. Disabling or forgetting a source must not silently
 delete retained history. Copilot is the exception to append-style ingestion:
@@ -202,7 +208,7 @@ The first version should provide:
   percentage when configured, alert state, and last successful scan time;
 - left-click activation that opens or focuses the dashboard, subject to Linux
   desktop conventions;
-- a right-click menu with Open, Restore/Maximize, Minimize, Refresh now,
+- a right-click menu with Open, Restore/Maximize, Minimize, Refresh local sources,
   Alerts, Settings, Check for updates, Pause monitoring, and Exit;
 - separate `Start automatically`, `Start minimized to tray`, and `Keep running
   when the window is closed` settings;
@@ -239,21 +245,22 @@ support questions in [Q-021](../ideas/00-open-questions.md),
 
 ## Acceptance criteria
 
-These remain the full product acceptance criteria. The close-to-tray and basic
-Show/Hide/Exit tray behavior in PRD-AC-07 is implemented and covered by a
-main-process lifecycle test; scheduled background scanning and the richer tray
-status surface remain proposed.
+These remain the full product acceptance criteria. The close-to-tray,
+startup-scan, refresh-settings, and basic Show/Hide/Exit tray behavior are now
+implemented in the local slice and covered by focused main-process or scheduler
+tests; broader platform smoke evidence and the richer tray status surface remain
+open.
 
 | ID | Criterion | Verification target |
 | --- | --- | --- |
-| PRD-AC-01 | The first scan shows what was found, what was not found, and why. | Discovery and onboarding test. |
+| PRD-AC-01 | The startup scan shows what was found, what was not found, and why, while the UI communicates that work is in progress. | Startup scan-state IPC and source-result tests plus renderer build; automated visual overlay coverage remains open. |
 | PRD-AC-02 | Current-user Codex, Claude Code, and experimental Copilot adapters import anonymized fixtures without prompt/response content; Claude also persists no project/file path. | Adapter fixture and privacy tests; platform claims need their own runtime evidence. |
 | PRD-AC-03 | Repeated scans and rotated files do not duplicate canonical events. | Cursor, fingerprint, and migration tests. |
 | PRD-AC-04 | After the first usage slice, the dashboard labels every Codex and complete Copilot estimated cost with its pricing snapshot/date and coverage, while incomplete provider estimates remain unknown. | Pricing, dashboard, and accessibility tests. |
 | PRD-AC-05 | Unavailable, stale, permission-denied, unsupported, and disabled sources are distinguishable and actionable. | Source-health test. |
 | PRD-AC-06 | Daily, weekly, and monthly threshold crossings notify at most once per period and threshold, with last-scan caveats. | Alert boundary and notification test. |
-| PRD-AC-07 | The app continues a configured background scan while the window is hidden, and `Exit TokenStats` fully stops it. | Tray and lifecycle test on each target platform. |
-| PRD-AC-08 | `Refresh now` and the scheduled refresh share the same ingest, deduplication, transaction, and alert-evaluation path. | Integration test. |
+| PRD-AC-07 | The app continues a configured background scan while the window is hidden, and `Exit TokenStats` fully stops it. | Main-process scheduler/lifecycle tests; platform smoke test remains required. |
+| PRD-AC-08 | `Refresh local sources` and the scheduled refresh share the same ingest, deduplication, transaction, and alert-evaluation path. | Shared main-process scan path plus scheduler and IPC tests. |
 | PRD-AC-09 | A `.tokenstats` export/import round trip preserves events, provenance, pricing snapshots, and selected portable settings. | Cross-profile portability test. |
 | PRD-AC-10 | A failed update download, verification, migration, or installation preserves the previous usable installation and data. | Packaged failure and rollback test. |
 | PRD-AC-11 | The targeted Fedora x64 artifact starts on a clean test machine before the first slice is called verified; later targets require their own evidence. | Platform smoke tests and release evidence. |
