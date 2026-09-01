@@ -1,4 +1,4 @@
-Status: Implemented Fedora minimum and Linux AppImage update action; richer behavior proposed
+Status: Implemented Fedora minimum, startup collection, local-data auto-refresh, and Linux AppImage update action; richer behavior proposed
 
 Audience: users, UX reviewers, accessibility reviewers, and contributors implementing the desktop shell
 
@@ -11,11 +11,12 @@ Last reviewed: 2026-08-14
 This document describes both the implemented Codex dashboard slice and the
 broader proposed desktop experience. The current screen has selected-period or
 custom-calendar token totals, model-separated Chart.js Line/Bar/Pie trends, exact model totals,
-token-category totals, source health, and a manual scan action. Custom window
+token-category totals, source health, and a `Refresh local sources` action. Custom window
 chrome, detailed tray status, alerts, and notifications remain proposed. The
 current Fedora slice implements close-to-tray behavior, a minimal tray menu,
-and a basic Settings view for the local database reset/re-import flow. A
-Linux AppImage update action is implemented: the header icon starts a user-led
+startup collection, a full-screen blurred progress overlay, and Settings
+controls for local-data auto-refresh plus database reset/re-import. A Linux
+AppImage update action is implemented: the header icon starts a user-led
 download and changes to an install/restart icon when the download completes.
 
 ## Dashboard information architecture
@@ -38,7 +39,7 @@ navigation is:
 
 The first-run and empty states should explain what was found, what was not
 found, what permission or format issue exists, and what the user can do next.
-The main actions are proposed as `Scan now`, `Add source` only when a later
+The current scan action is `Refresh local sources`; `Add source` only when a later
 manual-source decision enables it, and `Import backup`.
 
 ## Primary metric: observed tokens
@@ -205,7 +206,7 @@ Status: OK · scanned 14:32
 Open dashboard
 Restore / Maximize
 Minimize
-Refresh now
+Refresh local sources
 Alerts
 Settings
 Check for updates
@@ -234,8 +235,11 @@ hidden. A first-run explanation is appropriate after a user enables an alert.
 
 ## Automatic and manual refresh
 
-The MVP refresh proposal is a 60-second reconciliation loop while monitoring is
-active, with `Refresh now` always available.
+The current Fedora slice runs the shared local-source scan once at every app
+startup, including the first launch. Settings persist an `Automatic refresh`
+toggle and a validated interval of 1, 5, 10, 15, 30, or 60 minutes; the default
+is enabled at 1 minute. `Refresh local sources` is always available when no
+other local operation is active.
 
 The UI should show:
 
@@ -243,18 +247,21 @@ The UI should show:
 - new event count;
 - skipped, stale, or failed sources;
 - `Data may be delayed` when freshness or coverage is insufficient;
-- progress for slow sources;
+- a full-screen status overlay with a branded animated loader and blurred UI
+  while startup, manual, automatic, or reset work is active;
 - per-source errors instead of failing the entire refresh.
 
-Manual and automatic refresh must coalesce with an already running scan and use
-the same adapter, ingestion, transaction, deduplication, rollup, and alert
-evaluation path. A source failure preserves the last good aggregate and marks
-the result as stale or incomplete.
+Manual and automatic refresh use the same main-process adapter, ingestion,
+transaction, deduplication, and rollup path. A running scan or reset owns the
+main-process lock; a scheduled tick is skipped rather than starting a second
+operation. A source failure preserves the last good aggregate and marks the
+result as stale or incomplete.
 
 Filesystem watchers may later accelerate refreshes, but the one-minute scan
 remains the reconciliation fallback for rotation, sleep/resume, application
 restart, and missed watcher events. The UI must not promise sub-second
-accuracy.
+accuracy. Hidden windows continue to be eligible for background refresh until
+the explicit tray Exit action stops the scheduler.
 
 ## Alerts
 

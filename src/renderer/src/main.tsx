@@ -14,7 +14,7 @@ import {
   type ChartOptions
 } from 'chart.js'
 import { Bar, Line, Pie } from 'react-chartjs-2'
-import { DEFAULT_UPDATE_SETTINGS, UPDATE_INTERVAL_HOURS, type CostEstimate, type CustomDateRange, type Dashboard, type DashboardPreset, type DashboardPeriod, type DashboardQuery, type UpdateSettings, type UpdateState } from '../../shared/contracts'
+import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, REFRESH_INTERVAL_MINUTES, UPDATE_INTERVAL_HOURS, type CostEstimate, type CustomDateRange, type Dashboard, type DashboardPreset, type DashboardPeriod, type DashboardQuery, type RefreshSettings, type ScanState, type UpdateSettings, type UpdateState } from '../../shared/contracts'
 import tokenStatsIcon from '../../../assets/icons/64x64.png'
 import { isCustomRange, loadDashboardPreferences, saveDashboardPreferences, type DashboardChartType } from './dashboard-preferences'
 import './styles.css'
@@ -79,6 +79,17 @@ function updateStatusText(state: UpdateState): string {
   return 'No compatible update is available.'
 }
 
+function refreshIntervalLabel(minutes: RefreshSettings['intervalMinutes']): string {
+  return minutes === 1 ? 'Every 1 minute' : `Every ${minutes} minutes`
+}
+
+function scanOverlayCopy(reason: ScanState['reason']): { title: string; detail: string } {
+  if (reason === 'startup') return { title: 'Preparing your local dashboard', detail: 'Collecting token metadata from supported local sources…' }
+  if (reason === 'automatic') return { title: 'Refreshing local data', detail: 'Checking supported local sources for new usage…' }
+  if (reason === 'reset') return { title: 'Rebuilding your local dashboard', detail: 'Re-importing token metadata from the local source logs…' }
+  return { title: 'Refreshing local data', detail: 'Collecting the latest token metadata…' }
+}
+
 function UpdateIcon({ status }: { status: UpdateState['status'] }): React.JSX.Element {
   if (status === 'downloaded' || status === 'installing') return <svg className="update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-14.8-4.3L3 9" /><path d="M3 4v5h5" /><path d="M4 13a8.1 8.1 0 0 0 14.8 4.3L21 15" /><path d="M21 20v-5h-5" /></svg>
   return <svg className="update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>
@@ -141,7 +152,8 @@ function App(): React.JSX.Element {
   const [draftCustomRange, setDraftCustomRange] = useState<CustomDateRange>(initialCustomRange)
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
   const [data, setData] = useState<Dashboard | null>(null)
-  const [scanning, setScanning] = useState(false)
+  const [scanState, setScanState] = useState<ScanState>({ status: 'scanning', reason: 'startup' })
+  const [refreshSettings, setRefreshSettings] = useState<RefreshSettings>(DEFAULT_REFRESH_SETTINGS)
   const [resetting, setResetting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -150,6 +162,7 @@ function App(): React.JSX.Element {
   const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', version: null, progress: null, message: null, canInstall: false, settings: DEFAULT_UPDATE_SETTINGS, lastCheckedAt: null, nextCheckAt: null })
   const requestSequence = useRef(0)
   const [notice, setNotice] = useState<string | null>(null)
+  const scanning = scanState.status === 'scanning'
 
   useEffect(() => { saveDashboardPreferences({ period, chartType, customRange }) }, [period, chartType, customRange])
   useEffect(() => { void window.tokenStats.getVersion().then(setVersion).catch(() => setVersion(null)) }, [])
@@ -157,6 +170,9 @@ function App(): React.JSX.Element {
     const unsubscribe = window.tokenStats.onUpdateState(setUpdateState)
     void window.tokenStats.getUpdateState().then(setUpdateState).catch(() => undefined)
     return unsubscribe
+  }, [])
+  useEffect(() => {
+    void window.tokenStats.getRefreshSettings().then(setRefreshSettings).catch(() => undefined)
   }, [])
 
   const queryFor = (nextPeriod = period, nextRange = customRange): DashboardQuery => nextPeriod === 'custom' ? { period: 'custom', ...nextRange } : nextPeriod
@@ -175,6 +191,23 @@ function App(): React.JSX.Element {
   }
 
   useEffect(() => { void load(queryFor()) }, [period, customRange.startDate, customRange.endDate])
+  useEffect(() => {
+    const unsubscribe = window.tokenStats.onScanComplete((result) => {
+      void load(queryFor()).then(() => {
+        if (!result.ok) setError(result.error ?? 'Scan failed.')
+      })
+    })
+    return unsubscribe
+  }, [period, customRange.startDate, customRange.endDate])
+  useEffect(() => {
+    const unsubscribe = window.tokenStats.onScanState(setScanState)
+    void window.tokenStats.getScanState().then((nextState) => {
+      setScanState(nextState)
+      if (nextState.status === 'idle') void load(queryFor())
+    }).catch(() => undefined)
+    void window.tokenStats.notifyRendererReady().catch(() => undefined)
+    return unsubscribe
+  }, [])
 
   const choosePeriod = (nextPeriod: DashboardPreset): void => {
     setError(null)
@@ -201,17 +234,17 @@ function App(): React.JSX.Element {
   }
 
   const scan = async (): Promise<void> => {
-    setScanning(true)
+    setScanState({ status: 'scanning', reason: 'manual' })
     setError(null)
     setNotice(null)
     try {
       const result = await window.tokenStats.scanAll()
-      if (!result.ok) setError(result.error ?? 'Scan failed.')
       await load(queryFor())
+      if (!result.ok) setError(result.error ?? 'Scan failed.')
     } catch {
       setError('Scan failed. Check source availability and try again.')
     } finally {
-      setScanning(false)
+      void window.tokenStats.getScanState().then(setScanState).catch(() => setScanState(IDLE_SCAN_STATE))
     }
   }
 
@@ -235,6 +268,7 @@ function App(): React.JSX.Element {
     } catch {
       setError('The database reset or re-import failed. Existing source files were not changed.')
     } finally {
+      void window.tokenStats.getScanState().then(setScanState).catch(() => setScanState(IDLE_SCAN_STATE))
       setResetting(false)
     }
   }
@@ -265,10 +299,19 @@ function App(): React.JSX.Element {
     }
   }
 
-  if (!data && loading) return <main className="loading">Loading local usage data…</main>
+  const refreshSettingsAction = async (changes: Partial<RefreshSettings>): Promise<void> => {
+    try {
+      setRefreshSettings(await window.tokenStats.setRefreshSettings({ ...refreshSettings, ...changes }))
+    } catch {
+      setError('Refresh settings could not be saved.')
+    }
+  }
+
+  if (!data && loading) return <InitialLoadingScreen reason={scanState.reason} />
   if (!data) return <main className="loading" role="alert">Dashboard data is unavailable.</main>
 
-  return <main className="app-shell">
+  const busy = scanning || resetting
+  return <main className="app-shell" aria-busy={busy}>
     <header className="topbar">
       <div className="brand">
         <img src={tokenStatsIcon} alt="" width="40" height="40" />
@@ -277,13 +320,13 @@ function App(): React.JSX.Element {
       <div className="header-actions">
         <span className="source-summary">{data.sources.filter((source) => sourceReady(source.status)).length} of {data.sources.length} sources ready</span>
         <nav className="segmented-control view-nav" aria-label="Application view"><button onClick={() => setView('dashboard')} aria-current={view === 'dashboard' ? 'page' : undefined}>Dashboard</button><button onClick={() => setView('settings')} aria-current={view === 'settings' ? 'page' : undefined}>Settings</button></nav>
-        <button className="scan-button" onClick={() => void scan()} disabled={scanning} aria-busy={scanning}>{scanning ? 'Scanning local sources…' : 'Scan local sources'}</button>
+        <button className="scan-button" onClick={() => void scan()} disabled={busy} aria-busy={busy}>{busy ? 'Refreshing local data…' : 'Refresh local sources'}</button>
       </div>
     </header>
 
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
-    {view === 'settings' ? <SettingsView resetting={resetting} scanning={scanning} onReset={resetAndReimport} updateState={updateState} onUpdateAction={updateAction} onCheckForUpdates={checkForUpdates} onUpdateSettings={updateSettingsAction} /> : <>
+    {view === 'settings' ? <SettingsView resetting={resetting} scanning={scanning} onScan={scan} refreshSettings={refreshSettings} onRefreshSettings={refreshSettingsAction} onReset={resetAndReimport} updateState={updateState} onUpdateAction={updateAction} onCheckForUpdates={checkForUpdates} onUpdateSettings={updateSettingsAction} /> : <>
     <section className="period-row" aria-label="Usage period">
       <div className="period-controls">
         <div className="segmented-control">
@@ -300,17 +343,35 @@ function App(): React.JSX.Element {
       {loading && <span className="refreshing" aria-live="polite">Refreshing data…</span>}
     </section>
 
-    {data.eventCount === 0 ? <EmptyState data={data} scanning={scanning} onScan={scan} /> : <DashboardView data={data} chartType={chartType} setChartType={setChartType} />}
+    {data.eventCount === 0 ? <EmptyState data={data} scanning={busy} onScan={scan} /> : <DashboardView data={data} chartType={chartType} setChartType={setChartType} />}
     </>}
     <SourceFooter data={data} />
+    {busy && <ScanOverlay reason={scanning ? scanState.reason : 'reset'} />}
   </main>
+}
+
+function ScanOverlay({ reason }: { reason: ScanState['reason'] }): React.JSX.Element {
+  const copy = scanOverlayCopy(reason)
+  return <div className="scan-overlay" role="status" aria-live="polite">
+    <div className="scan-overlay-card">
+      <div className="scan-loader" aria-hidden="true"><img src={tokenStatsIcon} alt="" width="46" height="46" /><span /></div>
+      <p className="section-kicker">TokenStats is working</p>
+      <h2>{copy.title}</h2>
+      <p>{copy.detail}</p>
+      <div className="scan-progress" aria-hidden="true"><span /></div>
+    </div>
+  </div>
+}
+
+function InitialLoadingScreen({ reason }: { reason: ScanState['reason'] }): React.JSX.Element {
+  return <main className="initial-loading" aria-busy="true"><ScanOverlay reason={reason} /></main>
 }
 
 function EmptyState({ data, scanning, onScan }: { data: Dashboard; scanning: boolean; onScan: () => Promise<void> }): React.JSX.Element {
   const hasScanned = data.sources.some((source) => source.status !== 'not scanned' || source.lastSuccessfulScan !== null)
   const title = hasScanned ? 'No usage in this date range' : 'Ready for a first private scan'
-  const description = hasScanned ? `No recorded token usage was found for ${humanRange(data)}. Try another period or scan local sources for newly available history. TokenStats never stores prompt or response content.` : 'Scan local Codex, Claude Code, and GitHub Copilot/local assistant histories to import token metadata. TokenStats never stores prompt or response content.'
-  return <section className="empty-state"><p className="section-kicker">{hasScanned ? 'No usage recorded for this period' : 'No usage data yet'}</p><h2>{title}</h2><p>{description}</p><button className="scan-button" onClick={() => void onScan()} disabled={scanning}>{scanning ? 'Scanning local sources…' : 'Scan local sources'}</button></section>
+  const description = hasScanned ? `No recorded token usage was found for ${humanRange(data)}. Try another period or refresh local sources for newly available history. TokenStats never stores prompt or response content.` : 'Refresh local Codex, Claude Code, and GitHub Copilot/local assistant histories to import token metadata. TokenStats never stores prompt or response content.'
+  return <section className="empty-state"><p className="section-kicker">{hasScanned ? 'No usage recorded for this period' : 'No usage data yet'}</p><h2>{title}</h2><p>{description}</p><button className="scan-button" onClick={() => void onScan()} disabled={scanning} aria-busy={scanning}>{scanning ? 'Refreshing local data…' : 'Refresh local sources'}</button></section>
 }
 function updateIntervalLabel(hours: UpdateSettings['intervalHours']): string {
   return hours === 1 ? 'Every hour' : `Every ${hours} hours`
@@ -322,11 +383,30 @@ function updateDateLabel(value: string | null): string {
   return Number.isNaN(date.getTime()) ? 'Not checked yet' : scanDate.format(date)
 }
 
-function SettingsView({ resetting, scanning, onReset, updateState, onUpdateAction, onCheckForUpdates, onUpdateSettings }: { resetting: boolean; scanning: boolean; onReset: () => Promise<void>; updateState: UpdateState; onUpdateAction: () => Promise<void>; onCheckForUpdates: () => Promise<void>; onUpdateSettings: (changes: Partial<UpdateSettings>) => Promise<void> }): React.JSX.Element {
+function SettingsView({ resetting, scanning, onScan, refreshSettings, onRefreshSettings, onReset, updateState, onUpdateAction, onCheckForUpdates, onUpdateSettings }: { resetting: boolean; scanning: boolean; onScan: () => Promise<void>; refreshSettings: RefreshSettings; onRefreshSettings: (changes: Partial<RefreshSettings>) => Promise<void>; onReset: () => Promise<void>; updateState: UpdateState; onUpdateAction: () => Promise<void>; onCheckForUpdates: () => Promise<void>; onUpdateSettings: (changes: Partial<UpdateSettings>) => Promise<void> }): React.JSX.Element {
   const checkDisabled = ['unsupported', 'checking', 'available', 'downloading', 'downloaded', 'installing'].includes(updateState.status)
   const supported = updateState.status !== 'unsupported'
   const settings = updateState.settings
-  return <section className="settings-page" aria-labelledby="settings-title"><p className="section-kicker">Settings</p><h2 id="settings-title">Application settings</h2><article className="settings-card update-settings-card"><div className="settings-card-content"><h3>Application updates</h3><p className={`update-status${updateState.status === 'error' ? ' is-error' : ''}`} role="status">{updateStatusText(updateState)}</p><div className="update-preferences"><label className="settings-option"><span><strong>Check on startup</strong><small>Run an update check when TokenStats opens.</small></span><input type="checkbox" checked={settings.checkOnStartup} disabled={!supported || !settings.enabled} onChange={(event) => void onUpdateSettings({ checkOnStartup: event.target.checked })} /></label><label className="settings-option"><span><strong>Automatic update checks</strong><small>Check GitHub for a new version without downloading it.</small></span><input type="checkbox" checked={settings.enabled} disabled={!supported} onChange={(event) => void onUpdateSettings({ enabled: event.target.checked })} /></label>{supported && settings.enabled ? <label className="settings-option"><span><strong>Check interval</strong><small>{`${updateIntervalLabel(settings.intervalHours)} after the previous scheduled check.`}</small></span><select value={settings.intervalHours} onChange={(event) => void onUpdateSettings({ intervalHours: Number(event.target.value) as UpdateSettings['intervalHours'] })} aria-label="Automatic update check interval">{UPDATE_INTERVAL_HOURS.map((hours) => <option key={hours} value={hours}>{updateIntervalLabel(hours)}</option>)}</select></label> : null}</div><p className="settings-meta">On startup: <strong>{supported ? settings.enabled && settings.checkOnStartup ? 'Yes' : 'No' : 'Unavailable in this build'}</strong> · Interval: <strong>{supported ? settings.enabled ? updateIntervalLabel(settings.intervalHours) : 'Disabled' : 'Unavailable in this build'}</strong> · Last checked: <strong>{updateDateLabel(updateState.lastCheckedAt)}</strong>{supported && settings.enabled && updateState.nextCheckAt ? <> · Next check: <strong>{updateDateLabel(updateState.nextCheckAt)}</strong></> : null}</p></div><div className="settings-actions"><UpdateAction state={updateState} onAction={onUpdateAction} /><button className="secondary-button" type="button" onClick={() => void onCheckForUpdates()} disabled={checkDisabled} aria-busy={updateState.status === 'checking'}>{updateState.status === 'checking' ? 'Checking…' : updateState.status === 'error' ? 'Try again' : 'Check for updates'}</button></div></article><article className="settings-card"><div><h3>Reset imported data</h3><p>Creates and verifies a local SQLite backup, then clears imported events, cursors, scan history, and source status. Codex, Claude Code, and GitHub Copilot source files are never changed.</p><p className="settings-note">After the reset, TokenStats scans the local sources again so the dashboard can be rebuilt from the source logs.</p></div><button className="danger-button" onClick={() => void onReset()} disabled={resetting || scanning} aria-busy={resetting}>{resetting ? 'Resetting and re-importing…' : 'Reset database & re-import'}</button></article></section>
+  return <section className="settings-page" aria-labelledby="settings-title">
+    <p className="section-kicker">Settings</p>
+    <h2 id="settings-title">Application settings</h2>
+    <article className="settings-card refresh-settings-card">
+      <div className="settings-card-content">
+        <h3>Local data refresh</h3>
+        <p>TokenStats collects usage metadata from supported local source logs when it starts and keeps the dashboard current in the background. Source content is never stored.</p>
+        <div className="update-preferences">
+          <label className="settings-option"><span><strong>Automatic refresh</strong><small>Refresh local sources while TokenStats is running.</small></span><input type="checkbox" checked={refreshSettings.enabled} onChange={(event) => void onRefreshSettings({ enabled: event.target.checked })} /></label>
+          {refreshSettings.enabled && <label className="settings-option"><span><strong>Refresh interval</strong><small>{`${refreshIntervalLabel(refreshSettings.intervalMinutes)} after the previous refresh.`}</small></span><select value={refreshSettings.intervalMinutes} onChange={(event) => void onRefreshSettings({ intervalMinutes: Number(event.target.value) as RefreshSettings['intervalMinutes'] })} aria-label="Automatic local data refresh interval">{REFRESH_INTERVAL_MINUTES.map((minutes) => <option key={minutes} value={minutes}>{refreshIntervalLabel(minutes)}</option>)}</select></label>}
+        </div>
+        <p className="settings-meta">Automatic refresh: <strong>{refreshSettings.enabled ? 'On' : 'Off'}</strong> · Interval: <strong>{refreshSettings.enabled ? refreshIntervalLabel(refreshSettings.intervalMinutes) : 'Disabled'}</strong></p>
+      </div>
+      <div className="settings-actions"><button className="secondary-button" type="button" onClick={() => void onScan()} disabled={resetting || scanning} aria-busy={scanning}>{scanning ? 'Refreshing local data…' : 'Refresh local sources'}</button></div>
+    </article>
+    <article className="settings-card update-settings-card">
+      <div className="settings-card-content"><h3>Application updates</h3><p className={`update-status${updateState.status === 'error' ? ' is-error' : ''}`} role="status">{updateStatusText(updateState)}</p><div className="update-preferences"><label className="settings-option"><span><strong>Check on startup</strong><small>Run an update check when TokenStats opens.</small></span><input type="checkbox" checked={settings.checkOnStartup} disabled={!supported || !settings.enabled} onChange={(event) => void onUpdateSettings({ checkOnStartup: event.target.checked })} /></label><label className="settings-option"><span><strong>Automatic update checks</strong><small>Check GitHub for a new version without downloading it.</small></span><input type="checkbox" checked={settings.enabled} disabled={!supported} onChange={(event) => void onUpdateSettings({ enabled: event.target.checked })} /></label>{supported && settings.enabled ? <label className="settings-option"><span><strong>Check interval</strong><small>{`${updateIntervalLabel(settings.intervalHours)} after the previous scheduled check.`}</small></span><select value={settings.intervalHours} onChange={(event) => void onUpdateSettings({ intervalHours: Number(event.target.value) as UpdateSettings['intervalHours'] })} aria-label="Automatic update check interval">{UPDATE_INTERVAL_HOURS.map((hours) => <option key={hours} value={hours}>{updateIntervalLabel(hours)}</option>)}</select></label> : null}</div><p className="settings-meta">On startup: <strong>{supported ? settings.enabled && settings.checkOnStartup ? 'Yes' : 'No' : 'Unavailable in this build'}</strong> · Interval: <strong>{supported ? settings.enabled ? updateIntervalLabel(settings.intervalHours) : 'Disabled' : 'Unavailable in this build'}</strong> · Last checked: <strong>{updateDateLabel(updateState.lastCheckedAt)}</strong>{supported && settings.enabled && updateState.nextCheckAt ? <> · Next check: <strong>{updateDateLabel(updateState.nextCheckAt)}</strong></> : null}</p></div><div className="settings-actions"><UpdateAction state={updateState} onAction={onUpdateAction} /><button className="secondary-button" type="button" onClick={() => void onCheckForUpdates()} disabled={checkDisabled} aria-busy={updateState.status === 'checking'}>{updateState.status === 'checking' ? 'Checking…' : updateState.status === 'error' ? 'Try again' : 'Check for updates'}</button></div>
+    </article>
+    <article className="settings-card"><div><h3>Reset imported data</h3><p>Creates and verifies a local SQLite backup, then clears imported events, cursors, scan history, and source status. Codex, Claude Code, and GitHub Copilot source files are never changed.</p><p className="settings-note">After the reset, TokenStats scans the local sources again so the dashboard can be rebuilt from the source logs.</p></div><button className="danger-button" onClick={() => void onReset()} disabled={resetting || scanning} aria-busy={resetting}>{resetting ? 'Resetting and re-importing…' : 'Reset database & re-import'}</button></article>
+  </section>
 }
 
 function DashboardView({ data, chartType, setChartType }: { data: Dashboard; chartType: DashboardChartType; setChartType: (type: DashboardChartType) => void }): React.JSX.Element {

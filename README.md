@@ -22,6 +22,10 @@ credentials, and raw logs are not stored.
 - Usage breakdown by source and model, with session counts.
 - Estimated API-equivalent costs where pricing data is complete.
 - Incremental imports and Settings reset with a verified SQLite backup.
+- Startup collection with a full-screen progress overlay, plus persisted local
+  data auto-refresh in Settings (enabled by default at one minute; supported
+  intervals are 1, 5, 10, 15, 30, and 60 minutes).
+- Manual `Refresh local sources` action shared with the background scan path.
 - Closing the window hides TokenStats to the system tray; the tray menu provides
   Show/Hide window and Exit.
 - A Fedora RPM package with a standard application launcher and menu entry.

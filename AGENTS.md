@@ -82,8 +82,14 @@
   hides it to the tray; the tray menu exposes Show/Hide window and an explicit
   Exit action that fully quits the app. The Fedora RPM target supplies the
   standard desktop launcher and Utilities menu registration; automatic login
-  startup is not enabled. The renderer also has a basic Settings view with the
-  guarded local-database reset/re-import action.
+  startup is not enabled. Every app start runs a source scan, and the renderer
+  shows a full-screen blurred progress overlay while startup, manual,
+  automatic, or reset work is active. Settings persist automatic local-data
+  refresh (enabled by default at 1 minute; supported intervals are 1, 5, 10,
+  15, 30, and 60 minutes), expose `Refresh local sources`, and retain the
+  guarded local-database reset/re-import action. Manual and scheduled refresh
+  share the main-process scan path; hidden windows remain eligible until the
+  explicit tray Exit action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
   provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
   Standard API list prices for Codex-relevant OpenAI models and a reviewed
@@ -158,9 +164,11 @@ implemented only for packaged Linux AppImages: automatic checks are enabled by
 default, run at startup and every six hours, and can be disabled or changed to
 1, 6, 12, or 24 hours from Settings; downloads happen only after the visible
 update action and require a second install-and-restart action. The main process
-blocks installation while a scan or reset is active. The versioned archive, import/export,
-detailed tray status, scheduled background monitoring, RPM/macOS update paths,
-and broader platform behavior remain proposals or unverified; published
+blocks installation while a scan or reset is active. Startup collection and
+scheduled background monitoring are implemented in the local slice, with
+validated refresh settings and scan-state IPC. The versioned archive,
+import/export, detailed tray status, RPM/macOS update paths, and broader
+platform behavior remain proposals or unverified; published
 preview artifacts do not establish clean-machine or production distribution
 readiness.
 
@@ -196,6 +204,8 @@ readiness.
   idempotency/snapshot replacement, OTel complete/partial spans and fallback
   reconciliation, malformed records, privacy columns, database backup/reset
   behavior, and main-process reset IPC guards.
+- Refresh-settings persistence/validation, one-minute scheduler behavior,
+  startup scan state, and main-process refresh IPC are covered by focused tests.
 - A controlled current-host Copilot CLI OTel smoke session produced a JSONL
   file with a complete chat span; the adapter imported it with input/output
   fields and no capture fields. This is not clean-machine, cross-platform, or

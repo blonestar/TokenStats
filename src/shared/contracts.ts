@@ -31,6 +31,13 @@ export type Dashboard = {
 export type ScanSourceResult = { sourceId: string; providerId: string; label: string; kind: string; status: SourceStatus | 'success'; filesScanned: number; eventsImported: number; warnings: number; error?: string }
 export type ScanResult = { ok: boolean; filesScanned: number; eventsImported: number; warnings: number; sources: ScanSourceResult[]; error?: string }
 export type ResetDatabaseResult = { ok: boolean; cancelled?: boolean; backupName?: string; eventsBackedUp?: number; reimport?: ScanResult; error?: string }
+export type ScanReason = 'startup' | 'manual' | 'automatic' | 'reset'
+export type ScanState = { status: 'idle' | 'scanning'; reason: ScanReason | null }
+export const IDLE_SCAN_STATE: ScanState = { status: 'idle', reason: null }
+export const REFRESH_INTERVAL_MINUTES = [1, 5, 10, 15, 30, 60] as const
+export type RefreshIntervalMinutes = typeof REFRESH_INTERVAL_MINUTES[number]
+export type RefreshSettings = { enabled: boolean; intervalMinutes: RefreshIntervalMinutes }
+export const DEFAULT_REFRESH_SETTINGS: RefreshSettings = { enabled: true, intervalMinutes: 1 }
 export type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'error' | 'unsupported'
 export const UPDATE_INTERVAL_HOURS = [1, 6, 12, 24] as const
 export type UpdateIntervalHours = typeof UPDATE_INTERVAL_HOURS[number]
@@ -41,11 +48,17 @@ export interface TokenStatsApi {
   getDashboard(query?: DashboardQuery): Promise<Dashboard>
   getVersion(): Promise<string>
   scanAll(): Promise<ScanResult>
+  notifyRendererReady(): Promise<void>
+  getScanState(): Promise<ScanState>
+  getRefreshSettings(): Promise<RefreshSettings>
+  setRefreshSettings(settings: RefreshSettings): Promise<RefreshSettings>
   resetDatabase(): Promise<ResetDatabaseResult>
   getUpdateState(): Promise<UpdateState>
   setUpdateSettings(settings: UpdateSettings): Promise<UpdateState>
   checkForUpdates(): Promise<UpdateState>
   downloadUpdate(): Promise<UpdateState>
   installUpdate(): Promise<UpdateState>
+  onScanState(listener: (state: ScanState) => void): () => void
+  onScanComplete(listener: (result: ScanResult) => void): () => void
   onUpdateState(listener: (state: UpdateState) => void): () => void
 }

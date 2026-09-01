@@ -1,16 +1,16 @@
-Status: Implemented Fedora slice and Linux AppImage update path; remaining architecture proposed
+Status: Implemented Fedora slice, startup collection, local-data refresh scheduler, and Linux AppImage update path; remaining architecture proposed
 
 Audience: contributors, architecture reviewers, security reviewers, and maintainers
 
 Source of truth: this document for the proposed system boundaries; unresolved alternatives are tracked in ../ideas/00-open-questions.md and the numbered idea notes
 
-Last reviewed: 2026-08-13
+Last reviewed: 2026-08-14
 
 # TokenStats architecture overview
 
 This document describes the proposed architecture for a local-first Electron
 application. The implemented Fedora slice has application code, package
-manifest, typed three-operation IPC, SQLite migrations, and current-user Codex,
+manifest, typed IPC, SQLite migrations, and current-user Codex,
 Claude Code, and experimental GitHub Copilot provider modules. It also has a
 provider registry, generic canonical-event/ingestion-store boundary,
 model-aware schema/parser support, allowlisted preset/custom date queries, and a
@@ -76,9 +76,11 @@ calendar-date queries. It uses hourly buckets for single-day ranges, daily
 buckets for shorter ranges, and monthly buckets for longer ranges, with
 source-and-model-separated totals and Chart.js Line/Bar/Pie views. Hovering or
 focusing a model breakdown row isolates its color in the active chart and mutes
-the other series/segments. The current slice also includes a basic Settings
-view for a confirmed, backup-first local database reset and re-import; the
-other navigation and settings surfaces listed below remain proposed.
+the other series/segments. The current slice also includes a Settings view for
+persisted local-data refresh preferences, a confirmed backup-first database
+reset/re-import action, startup scan-state IPC, and a full-screen blurred scan
+overlay; the other navigation and settings surfaces listed below remain
+proposed.
 
 The initial UI information model is proposed as:
 
@@ -242,10 +244,12 @@ example:
 - check, download, verify, and install an update after explicit user action;
 - show, hide, minimize, maximize, restore, and exit the application.
 
-The exact channel names are not decided. Each request must validate its input,
-apply authorization based on the local app state, and return structured errors
-that cannot leak raw log content. IPC tests should prove that arbitrary paths,
-commands, and channels are rejected.
+The current slice exposes typed dashboard, scan, scan-state, refresh-settings,
+reset, and updater operations through preload; future channels remain subject
+to the same boundary. Each request must validate its input, apply authorization
+based on the local app state, and return structured errors that cannot leak raw
+log content. IPC tests should prove that arbitrary paths, commands, and channels
+are rejected.
 
 ## Tray and background process
 
@@ -259,10 +263,13 @@ environment, so left-click behavior must have a context-menu fallback and
 cannot be treated as identical across Fedora and Ubuntu desktops. See the
 [Electron Tray API](https://www.electronjs.org/docs/latest/api/tray).
 
-The scheduler should coalesce manual and periodic refreshes, avoid concurrent
-imports, and reconcile after startup, wake, and file rotation. A watcher may be
-added later as an acceleration layer; the 60-second scan remains the correctness
-fallback in the proposed MVP.
+The implemented scheduler persists its enabled state and a 1, 5, 10, 15, 30,
+or 60-minute interval under Electron `userData`, defaults to enabled at one
+minute, and starts after the startup scan completes. Manual and automatic
+refresh share the main-process scan path; the scan/reset locks skip concurrent
+work, and the scheduler is stopped on explicit application exit. A watcher may
+be added later as an acceleration layer; the one-minute scan remains the
+correctness fallback.
 
 ## Update service
 

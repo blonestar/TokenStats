@@ -51,6 +51,10 @@ describe('main-process reset IPC', () => {
   let reset: (...args: never[]) => Promise<{ ok: boolean; cancelled?: boolean; backupName?: string; error?: string }>
   let scan: (...args: never[]) => Promise<{ ok: boolean; error?: string }>
   let setUpdateSettings: (event: unknown, settings: unknown) => Promise<{ settings: { enabled: boolean; checkOnStartup: boolean; intervalHours: number } }>
+  let getScanState: () => { status: string; reason: string | null }
+  let getRefreshSettings: () => { enabled: boolean; intervalMinutes: number }
+  let setRefreshSettings: (event: unknown, settings: unknown) => { enabled: boolean; intervalMinutes: number }
+  let notifyRendererReady: () => void
   let install: () => { status: string; canInstall: boolean }
 
   beforeAll(async () => {
@@ -69,7 +73,13 @@ describe('main-process reset IPC', () => {
     reset = mocks.handlers.get('tokenstats:resetDatabase') as typeof reset
     scan = mocks.handlers.get('tokenstats:scanAll') as typeof scan
     setUpdateSettings = mocks.handlers.get('tokenstats:setUpdateSettings') as typeof setUpdateSettings
+    getScanState = mocks.handlers.get('tokenstats:getScanState') as typeof getScanState
+    getRefreshSettings = mocks.handlers.get('tokenstats:getRefreshSettings') as typeof getRefreshSettings
+    setRefreshSettings = mocks.handlers.get('tokenstats:setRefreshSettings') as typeof setRefreshSettings
+    notifyRendererReady = mocks.handlers.get('tokenstats:rendererReady') as typeof notifyRendererReady
     install = mocks.handlers.get('tokenstats:installUpdate') as typeof install
+    notifyRendererReady()
+    await new Promise<void>((resolve) => setImmediate(resolve))
   })
 
   afterAll(() => {
@@ -124,5 +134,17 @@ describe('main-process reset IPC', () => {
     expect(readFileSync(join(directory, 'update-settings.json'), 'utf8')).toContain('"intervalHours": 24')
 
     await setUpdateSettings(undefined, { enabled: true, checkOnStartup: true, intervalHours: 6 })
+  })
+
+  it('runs the startup scan and persists validated refresh preferences through the main-process IPC', () => {
+    expect(getScanState()).toEqual({ status: 'idle', reason: null })
+    expect(getRefreshSettings()).toEqual({ enabled: true, intervalMinutes: 1 })
+
+    const result = setRefreshSettings(undefined, { enabled: false, intervalMinutes: 15 })
+    expect(result).toEqual({ enabled: false, intervalMinutes: 15 })
+    expect(readFileSync(join(directory, 'refresh-settings.json'), 'utf8')).toContain('"intervalMinutes": 15')
+
+    expect(setRefreshSettings(undefined, { enabled: true, intervalMinutes: 0 })).toEqual({ enabled: false, intervalMinutes: 15 })
+    expect(setRefreshSettings(undefined, { enabled: true, intervalMinutes: 1 })).toEqual({ enabled: true, intervalMinutes: 1 })
   })
 })
