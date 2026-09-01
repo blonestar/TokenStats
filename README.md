@@ -45,7 +45,7 @@ pnpm dev
 pnpm test
 pnpm typecheck
 pnpm build
-pnpm release:check-version --stable-only -- v0.1.0
+pnpm release:check-version --stable-only -- v0.1.1
 pnpm package:linux
 pnpm package:linux:rpm
 ```
@@ -54,7 +54,7 @@ pnpm package:linux:rpm
 creates a normal system-installable package:
 
 ```bash
-sudo dnf install ./dist/TokenStats-0.1.0-linux-x86_64.rpm
+sudo dnf install ./dist/TokenStats-0.1.1-linux-x86_64.rpm
 ```
 
 After installation, TokenStats appears in the desktop application menu under
