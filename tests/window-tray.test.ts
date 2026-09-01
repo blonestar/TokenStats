@@ -7,6 +7,7 @@ type Listener = (...args: any[]) => void
 
 const mocks = vi.hoisted(() => {
   let beforeQuit: (() => void) | undefined
+  const handlers = new Map<string, (...args: never[]) => unknown>()
 
   const app = {
     whenReady: vi.fn(() => Promise.resolve()),
@@ -97,11 +98,11 @@ const mocks = vi.hoisted(() => {
   }
   const nativeImage = { createFromPath: vi.fn((path: string) => ({ path })) }
   const dialog = { showMessageBox: vi.fn() }
-  const ipcMain = { handle: vi.fn() }
+  const ipcMain = { handle: vi.fn((channel: string, handler: (...args: never[]) => unknown) => handlers.set(channel, handler)) }
   const updateListeners = new Map<string, (...args: unknown[]) => void>()
   const autoUpdater = { autoDownload: true, autoInstallOnAppQuit: true, on: vi.fn((event: string, listener: (...args: unknown[]) => void) => { updateListeners.set(event, listener); return autoUpdater }), checkForUpdates: vi.fn(async () => undefined), downloadUpdate: vi.fn(async () => undefined), quitAndInstall: vi.fn(), emit: (event: string, ...args: unknown[]) => updateListeners.get(event)?.(...args) }
 
-  return { app, beforeQuit: () => beforeQuit?.(), BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, dialog, ipcMain, autoUpdater }
+  return { app, beforeQuit: () => beforeQuit?.(), BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, dialog, ipcMain, autoUpdater, handlers }
 })
 
 vi.mock('electron', () => ({
@@ -155,6 +156,10 @@ describe('window and tray lifecycle', () => {
     rmSync(directory, { recursive: true, force: true })
   })
 
+  it('starts the tray tooltip with the app name before usage is imported', () => {
+    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats')
+  })
+
   it('hides the window on close and updates the tray action', () => {
     expect(menuLabels()).toEqual(['Hide window', 'Exit TokenStats'])
 
@@ -194,6 +199,21 @@ describe('window and tray lifecycle', () => {
 
     mocks.autoUpdater.emit('update-not-available')
     expect(menuLabels()).toEqual(['Show window', 'Exit TokenStats'])
+  })
+
+  it('updates the tray tooltip with the observed token summary after a scan', async () => {
+    const { TokenDatabase } = await import('../src/main/database')
+    const db = new TokenDatabase(join(directory, 'tokenstats.sqlite'))
+    const now = new Date().toISOString()
+    db.db.prepare(`INSERT INTO usage_events (event_id,source_id,session_id,occurred_at,input_tokens,output_tokens,total_tokens,relative_file,byte_offset,parser_version,inserted_at,included) VALUES ('tray-stats-tooltip','tray-stats-test','tray-stats-session',?,1000,500,1500,'tray-stats.jsonl',0,'tray-stats-v1',?,1)`).run(now, now)
+    db.close()
+    ;(TokenDatabase.prototype.close as unknown as { mockClear: () => void }).mockClear()
+
+    const scanAll = mocks.handlers.get('tokenstats:scanAll')
+    expect(scanAll).toBeTypeOf('function')
+    await (scanAll as () => Promise<unknown>)()
+
+    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats — 1,500 tokens today · 1,500 this month')
   })
 
   it('exits only through the explicit tray Exit action', async () => {

@@ -26,8 +26,9 @@ credentials, and raw logs are not stored.
   data auto-refresh in Settings (enabled by default at one minute; supported
   intervals are 1, 5, 10, 15, 30, and 60 minutes).
 - Manual `Refresh local sources` action shared with the background scan path.
-- Closing the window hides TokenStats to the system tray; the tray menu provides
-  Show/Hide window and Exit.
+- Closing the window hides TokenStats to the system tray; the tray hover
+  tooltip shows the observed token totals for today and the current month, and
+  the tray menu provides Show/Hide window and Exit.
 - A Fedora RPM package with a standard application launcher and menu entry.
 - Packaged Linux AppImage update checks with Settings controls for enablement,
   startup checks, and a 1/6/12/24-hour interval; download, then install and

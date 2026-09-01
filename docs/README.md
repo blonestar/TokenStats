@@ -4,7 +4,7 @@ Audience: contributors, product reviewers, architecture reviewers, and users eva
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-08-13
+Last reviewed: 2026-09-02
 
 # TokenStats documentation
 
@@ -24,9 +24,11 @@ runtime-surface-specific; most
 behavior described by these documents remains proposed rather than implemented.
 
 The Fedora Electron slice now also implements close-to-tray behavior, a basic
-tray menu with Show/Hide window and Exit, and an electron-builder RPM target
-that registers a standard desktop launcher. These are local implementation
-facts; clean-machine installation and broader platform support still require
+tray menu with Show/Hide window and Exit, a tray hover tooltip that shows the
+app name and, once usage is imported, the observed token totals for today and
+the current month, and an electron-builder RPM target that registers a
+standard desktop launcher. These are local implementation facts;
+clean-machine installation and broader platform support still require
 separate evidence.
 
 The packaged Linux AppImage slice now also checks the Stable GitHub feed at

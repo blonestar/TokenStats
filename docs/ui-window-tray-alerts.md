@@ -157,7 +157,17 @@ monitor cannot leave the window entirely off-screen.
 
 ## Tray tooltip
 
-The fixed v0.1 tooltip proposal is:
+The current slice shows a compact observed summary in the tray hover tooltip.
+Before any usage is imported it shows the app name only; after a scan imports
+usage it shows the observed total tokens for today and for the current month,
+and it is refreshed whenever a scan completes or a database reset re-imports
+data:
+
+```text
+TokenStats — 1,234,567 tokens today · 8,765,432 this month
+```
+
+The fixed v0.1 tooltip proposal extends that with budget and alert state:
 
 ```text
 TokenStats · Today 42.1M / 100M tokens · 42% · OK · scanned 14:32
@@ -180,6 +190,7 @@ The current Fedora slice implements the minimum tray contract:
 
 - the tray icon uses the committed TokenStats icon;
 - left click shows and focuses the main window;
+- hover shows the compact tooltip described above;
 - right click exposes `Show window` or `Hide window`, followed by `Exit TokenStats`;
 - closing the window does not quit the process;
 - `Exit TokenStats` destroys the tray item and fully quits the process.

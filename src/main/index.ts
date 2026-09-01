@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
 import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
-import { TokenDatabase } from './database'
+import { TokenDatabase, type TraySummary } from './database'
 import { backupAndClearDatabase } from './database-reset'
 import type { ProviderSource } from './ingestion/contracts'
 import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
@@ -95,6 +95,27 @@ function publishScanState(nextState: ScanState): void {
 
 function publishScanComplete(result: ScanResult): void {
   mainWindow?.webContents.send('tokenstats:scanComplete', result)
+  updateTrayTooltip()
+}
+
+function formatTokens(value: number): string {
+  return value.toLocaleString('en-US')
+}
+
+function trayTooltipText(summary: TraySummary | undefined): string {
+  if (!summary || summary.eventCount === 0) return 'TokenStats'
+  return `TokenStats — ${formatTokens(summary.todayTokens)} tokens today · ${formatTokens(summary.monthTokens)} this month`
+}
+
+function updateTrayTooltip(): void {
+  if (!tray) return
+  let summary: TraySummary | undefined
+  try {
+    summary = database?.traySummary()
+  } catch {
+    summary = undefined
+  }
+  tray.setToolTip(trayTooltipText(summary))
 }
 
 function updateTrayMenu(): void {
@@ -115,7 +136,7 @@ function updateTrayMenu(): void {
 function createTray(): void {
   if (tray) return
   tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), 'assets/icons/64x64.png')))
-  tray.setToolTip('TokenStats')
+  updateTrayTooltip()
   tray.on('click', showWindow)
   tray.on('right-click', updateTrayMenu)
   updateTrayMenu()

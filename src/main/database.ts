@@ -16,6 +16,12 @@ export type DatabaseDataCounts = {
   sources: number
 }
 
+export type TraySummary = {
+  todayTokens: number
+  monthTokens: number
+  eventCount: number
+}
+
 const dataTables = ['usage_events', 'source_cursors', 'source_file_signatures', 'scan_runs', 'sources'] as const
 
 function dataCounts(database: Database.Database): DatabaseDataCounts {
@@ -218,6 +224,14 @@ INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, datetime(
     const categories = this.db.prepare(`SELECT 'Input' category,coalesce(sum(input_tokens),0) tokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Output',coalesce(sum(output_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Cached input',coalesce(sum(cached_input_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? UNION ALL SELECT 'Reasoning',coalesce(sum(reasoning_output_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?`).all(...params, ...params, ...params, ...params) as Dashboard['categories']
     const sources = this.sourceDefinitions.map(({ sourceId, providerId, label }) => { const source = this.db.prepare('SELECT status,last_successful_scan lastSuccessfulScan FROM sources WHERE id=?').get(sourceId) as { status: SourceStatus; lastSuccessfulScan: string | null } | undefined; const recent = this.db.prepare('SELECT files_scanned filesScanned,events_imported eventsImported,warnings_json FROM scan_runs WHERE source_id=? ORDER BY id DESC LIMIT 1').get(sourceId) as { filesScanned: number; eventsImported: number; warnings_json: string } | undefined; return { sourceId, providerId, label, status: source?.status ?? 'not scanned', lastSuccessfulScan: source?.lastSuccessfulScan ?? null, filesScanned: recent?.filesScanned ?? 0, eventsImported: recent?.eventsImported ?? 0, warnings: recent ? JSON.parse(recent.warnings_json) : [] } })
     return { period, range, totals: { inputTokens: row.inputTokens, outputTokens: row.outputTokens, cachedInputTokens: row.cachedInputTokens, cacheWriteInputTokens: row.cacheWriteInputTokens, reasoningOutputTokens: row.reasoningOutputTokens, totalTokens: row.totalTokens }, estimatedCost: costs.total, pricingSnapshots: costs.snapshots, eventCount: row.eventCount, sessionCount: row.sessionCount, activeDayCount: row.activeDayCount, daily, trend, modelTotals, categories, sources }
+  }
+  traySummary(now = new Date()): TraySummary {
+    const totalIn = (range: DashboardRange): number => Number(this.db.prepare('SELECT coalesce(sum(total_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?').pluck().get(range.start, range.end) ?? 0)
+    return {
+      todayTokens: totalIn(rangeFor('today', now).range),
+      monthTokens: totalIn(rangeFor('thisMonth', now).range),
+      eventCount: Number(this.db.prepare('SELECT count(*) FROM usage_events WHERE included=1').pluck().get() ?? 0)
+    }
   }
   getDataCounts(): DatabaseDataCounts { return dataCounts(this.db) }
   schemaVersion(): number { return Number(this.db.prepare('SELECT max(version) FROM schema_migrations').pluck().get() ?? 0) }
