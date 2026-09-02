@@ -201,11 +201,13 @@ describe('window and tray lifecycle', () => {
     expect(menuLabels()).toEqual(['Show window', 'Exit TokenStats'])
   })
 
-  it('updates the tray tooltip with the observed token summary after a scan', async () => {
+  it('updates the tray tooltip with tokens, estimated cost, and top models after a scan', async () => {
     const { TokenDatabase } = await import('../src/main/database')
     const db = new TokenDatabase(join(directory, 'tokenstats.sqlite'))
     const now = new Date().toISOString()
-    db.db.prepare(`INSERT INTO usage_events (event_id,source_id,session_id,occurred_at,input_tokens,output_tokens,total_tokens,relative_file,byte_offset,parser_version,inserted_at,included) VALUES ('tray-stats-tooltip','tray-stats-test','tray-stats-session',?,1000,500,1500,'tray-stats.jsonl',0,'tray-stats-v1',?,1)`).run(now, now)
+    const insert = db.db.prepare(`INSERT INTO usage_events (event_id,source_id,session_id,occurred_at,input_tokens,output_tokens,cached_input_tokens,cache_write_input_tokens,reasoning_output_tokens,total_tokens,relative_file,byte_offset,parser_version,inserted_at,model,included) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)`)
+    insert.run('tray-stats-priced', 'copilot-current-user', 'tray-stats-priced-session', now, 1000000, 500000, 0, 0, 0, 1500000, 'tray-stats.jsonl', 0, 'copilot-events-v1', now, 'gpt-5-mini')
+    insert.run('tray-stats-unpriced', 'copilot-current-user', 'tray-stats-unpriced-session', now, 1000000, 500000, 0, 0, 0, 1500000, 'tray-stats.jsonl', 0, 'copilot-events-v1', now, 'unknown-model-x')
     db.close()
     ;(TokenDatabase.prototype.close as unknown as { mockClear: () => void }).mockClear()
 
@@ -213,7 +215,7 @@ describe('window and tray lifecycle', () => {
     expect(scanAll).toBeTypeOf('function')
     await (scanAll as () => Promise<unknown>)()
 
-    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats — 1,500 tokens today · 1,500 this month')
+    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats\nToday: 3,000,000 tokens · est. $1.25\nThis month: 3,000,000 tokens · est. $1.25\nTop models this month: gpt-5-mini (50%) · unknown-model-x (50%)')
   })
 
   it('exits only through the explicit tray Exit action', async () => {

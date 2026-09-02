@@ -4,7 +4,7 @@ import { dirname } from 'node:path'
 import type { IngestionStore, ProviderMigration, SourceDefinition, UsageEvent } from './ingestion/contracts'
 import { costKey, summarizeCosts, unknownCost } from './pricing'
 import { providerMigrations as registeredProviderMigrations, sourceDefinitions as registeredSourceDefinitions } from './providers/registry'
-import type { Dashboard, DashboardBucket, DashboardPeriod, DashboardRange, SourceStatus, TokenUsage, Warning } from '../shared/contracts'
+import type { CostEstimate, Dashboard, DashboardBucket, DashboardPeriod, DashboardRange, SourceStatus, TokenUsage, Warning } from '../shared/contracts'
 
 export type { UsageEvent } from './ingestion/contracts'
 
@@ -16,10 +16,14 @@ export type DatabaseDataCounts = {
   sources: number
 }
 
+export type TrayModelShare = { model: string; totalTokens: number; sharePercent: number }
 export type TraySummary = {
   todayTokens: number
   monthTokens: number
   eventCount: number
+  todayCost: CostEstimate
+  monthCost: CostEstimate
+  topModels: TrayModelShare[]
 }
 
 const dataTables = ['usage_events', 'source_cursors', 'source_file_signatures', 'scan_runs', 'sources'] as const
@@ -226,11 +230,22 @@ INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, datetime(
     return { period, range, totals: { inputTokens: row.inputTokens, outputTokens: row.outputTokens, cachedInputTokens: row.cachedInputTokens, cacheWriteInputTokens: row.cacheWriteInputTokens, reasoningOutputTokens: row.reasoningOutputTokens, totalTokens: row.totalTokens }, estimatedCost: costs.total, pricingSnapshots: costs.snapshots, eventCount: row.eventCount, sessionCount: row.sessionCount, activeDayCount: row.activeDayCount, daily, trend, modelTotals, categories, sources }
   }
   traySummary(now = new Date()): TraySummary {
+    const today = rangeFor('today', now).range
+    const month = rangeFor('thisMonth', now).range
     const totalIn = (range: DashboardRange): number => Number(this.db.prepare('SELECT coalesce(sum(total_tokens),0) FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?').pluck().get(range.start, range.end) ?? 0)
+    const costIn = (range: DashboardRange): CostEstimate => {
+      const events = this.db.prepare('SELECT source_id sourceId,coalesce(model,\'Unknown\') model,input_tokens inputTokens,output_tokens outputTokens,cached_input_tokens cachedInputTokens,cache_write_input_tokens cacheWriteInputTokens,reasoning_output_tokens reasoningOutputTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?').all(range.start, range.end) as Array<Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens'>>
+      return summarizeCosts(events).total
+    }
+    const monthTokens = totalIn(month)
+    const modelRows = this.db.prepare('SELECT coalesce(model,\'Unknown\') model,coalesce(sum(total_tokens),0) totalTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? GROUP BY model ORDER BY totalTokens DESC,model LIMIT 3').all(month.start, month.end) as Array<{ model: string; totalTokens: number }>
     return {
-      todayTokens: totalIn(rangeFor('today', now).range),
-      monthTokens: totalIn(rangeFor('thisMonth', now).range),
-      eventCount: Number(this.db.prepare('SELECT count(*) FROM usage_events WHERE included=1').pluck().get() ?? 0)
+      todayTokens: totalIn(today),
+      monthTokens,
+      eventCount: Number(this.db.prepare('SELECT count(*) FROM usage_events WHERE included=1').pluck().get() ?? 0),
+      todayCost: costIn(today),
+      monthCost: costIn(month),
+      topModels: monthTokens > 0 ? modelRows.map((row) => ({ model: row.model, totalTokens: row.totalTokens, sharePercent: Math.round((row.totalTokens / monthTokens) * 100) })) : []
     }
   }
   getDataCounts(): DatabaseDataCounts { return dataCounts(this.db) }

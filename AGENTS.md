@@ -81,8 +81,9 @@
   the runtime asset is included in the packaged app. Closing the main window
   hides it to the tray; the tray hover tooltip shows the app name and, once
   usage is imported, the observed token totals for today and the current
-  month, refreshed when a scan or reset completes. The tray menu exposes
-  Show/Hide window and an explicit Exit action that fully quits the app. The Fedora RPM target supplies the
+  month, an estimated API-equivalent cost, and the top models, refreshed when
+  a scan or reset completes. The tray menu exposes Show/Hide window and an
+  explicit Exit action that fully quits the app. The Fedora RPM target supplies the
   standard desktop launcher and Utilities menu registration; automatic login
   startup is not enabled. Every app start runs a source scan, and the renderer
   shows a full-screen blurred progress overlay while startup, manual,
@@ -161,9 +162,9 @@ The provider registry, canonical event boundary, and current three-provider
 modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
 version gate, and `v0.1.0` is published with Linux and macOS arm64 artifacts.
-Close-to-tray, the basic tray menu, and the tray tooltip token summary are
-implemented locally, and the Fedora RPM packaging target provides the
-installable launcher path. The updater is
+Close-to-tray, the basic tray menu, and the tray tooltip summary of token
+totals, estimated cost, and top models are implemented locally, and the Fedora
+RPM packaging target provides the installable launcher path. The updater is
 implemented only for packaged Linux AppImages: automatic checks are enabled by
 default, run at startup and every six hours, and can be disabled or changed to
 1, 6, 12, or 24 hours from Settings; downloads happen only after the visible
@@ -210,7 +211,8 @@ readiness.
   behavior, and main-process reset IPC guards.
 - Refresh-settings persistence/validation, one-minute scheduler behavior,
   startup scan state, main-process refresh IPC, and window/tray lifecycle
-  including the tray tooltip token summary refresh are covered by focused tests.
+  including the tray tooltip token/cost/model summary refresh are covered by
+  focused tests.
 - A controlled current-host Copilot CLI OTel smoke session produced a JSONL
   file with a complete chat span; the adapter imported it with input/output
   fields and no capture fields. This is not clean-machine, cross-platform, or

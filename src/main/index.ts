@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
-import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
+import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type CostEstimate, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
 import { TokenDatabase, type TraySummary } from './database'
 import { backupAndClearDatabase } from './database-reset'
 import type { ProviderSource } from './ingestion/contracts'
@@ -102,9 +102,25 @@ function formatTokens(value: number): string {
   return value.toLocaleString('en-US')
 }
 
+function formatUsd(value: number): string {
+  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function costSuffix(estimate: CostEstimate): string {
+  return estimate.amountUsd === null ? '' : ` · est. ${formatUsd(estimate.amountUsd)}`
+}
+
 function trayTooltipText(summary: TraySummary | undefined): string {
   if (!summary || summary.eventCount === 0) return 'TokenStats'
-  return `TokenStats — ${formatTokens(summary.todayTokens)} tokens today · ${formatTokens(summary.monthTokens)} this month`
+  const lines = [
+    'TokenStats',
+    `Today: ${formatTokens(summary.todayTokens)} tokens${costSuffix(summary.todayCost)}`,
+    `This month: ${formatTokens(summary.monthTokens)} tokens${costSuffix(summary.monthCost)}`
+  ]
+  if (summary.topModels.length > 0) {
+    lines.push(`Top models this month: ${summary.topModels.map((model) => `${model.model} (${model.sharePercent}%)`).join(' · ')}`)
+  }
+  return lines.join('\n')
 }
 
 function updateTrayTooltip(): void {

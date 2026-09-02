@@ -88,7 +88,9 @@ Cost is secondary derived data. Every cost surface must identify:
 Estimated values must expose their pricing snapshot date/source and confidence.
 Subscription usage without a defensible API equivalent must remain unknown. The
 default tray tooltip and alert metric should prefer observed tokens and should
-not imply that an estimate is an invoice.
+not imply that an estimate is an invoice. The tray tooltip shows the
+API-equivalent estimate only as a secondary `est.`-labeled value after the
+observed token count.
 
 ## Custom frameless window
 
@@ -159,12 +161,17 @@ monitor cannot leave the window entirely off-screen.
 
 The current slice shows a compact observed summary in the tray hover tooltip.
 Before any usage is imported it shows the app name only; after a scan imports
-usage it shows the observed total tokens for today and for the current month,
-and it is refreshed whenever a scan completes or a database reset re-imports
-data:
+usage it shows, on separate lines, the observed total tokens for today and for
+the current month, an estimated API-equivalent cost labeled `est.` (omitted
+when no priced catalog entry matches, so it is never presented as an
+observed bill), and the top models by current-month token share. The tooltip
+is refreshed whenever a scan completes or a database reset re-imports data:
 
 ```text
-TokenStats — 1,234,567 tokens today · 8,765,432 this month
+TokenStats
+Today: 1,234,567 tokens · est. $3.42
+This month: 8,765,432 tokens · est. $21.07
+Top models this month: gpt-5.6-sol (71%) · claude-sonnet-5 (29%)
 ```
 
 The fixed v0.1 tooltip proposal extends that with budget and alert state:
@@ -180,9 +187,12 @@ It should show:
 - current alert state;
 - last successful scan time.
 
-Do not put estimated cost in the default tooltip. It can be unavailable,
-ambiguous, and harder to scan. Later versions may add tested presets, but not an
-arbitrary field picker in the first release.
+The estimated API-equivalent cost stays secondary in the default tooltip: it
+appears only after the observed token count, is labeled `est.`, and is omitted
+whenever it is unavailable or only partially covered, so it can never be read
+as an observed bill. It can still be unavailable or ambiguous, and later
+versions may add tested presets, but not an arbitrary field picker in the
+first release.
 
 ## Tray interaction and menu
 
