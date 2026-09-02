@@ -26,8 +26,8 @@ behavior described by these documents remains proposed rather than implemented.
 The Fedora Electron slice now also implements close-to-tray behavior, a basic
 tray menu with Show/Hide window and Exit, a tray hover tooltip that shows the
 app name and, once usage is imported, the observed token totals for today and
-the current month, an estimated API-equivalent cost, and the top models, and
-an electron-builder RPM target that registers a
+the current month with estimated API-equivalent costs, and an electron-builder
+RPM target that registers a
 standard desktop launcher. These are local implementation facts;
 clean-machine installation and broader platform support still require
 separate evidence.

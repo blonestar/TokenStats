@@ -112,15 +112,11 @@ function costSuffix(estimate: CostEstimate): string {
 
 function trayTooltipText(summary: TraySummary | undefined): string {
   if (!summary || summary.eventCount === 0) return 'TokenStats'
-  const lines = [
+  return [
     'TokenStats',
     `Today: ${formatTokens(summary.todayTokens)} tokens${costSuffix(summary.todayCost)}`,
     `This month: ${formatTokens(summary.monthTokens)} tokens${costSuffix(summary.monthCost)}`
-  ]
-  if (summary.topModels.length > 0) {
-    lines.push(`Top models this month: ${summary.topModels.map((model) => `${model.model} (${model.sharePercent}%)`).join(' · ')}`)
-  }
-  return lines.join('\n')
+  ].join('\n')
 }
 
 function updateTrayTooltip(): void {

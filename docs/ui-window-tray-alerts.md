@@ -162,16 +162,15 @@ monitor cannot leave the window entirely off-screen.
 The current slice shows a compact observed summary in the tray hover tooltip.
 Before any usage is imported it shows the app name only; after a scan imports
 usage it shows, on separate lines, the observed total tokens for today and for
-the current month, an estimated API-equivalent cost labeled `est.` (omitted
-when no priced catalog entry matches, so it is never presented as an
-observed bill), and the top models by current-month token share. The tooltip
-is refreshed whenever a scan completes or a database reset re-imports data:
+the current month, each with an estimated API-equivalent cost labeled `est.`
+(omitted when no priced catalog entry matches, so it is never presented as an
+observed bill). The tooltip is refreshed whenever a scan completes or a
+database reset re-imports data:
 
 ```text
 TokenStats
 Today: 1,234,567 tokens · est. $3.42
 This month: 8,765,432 tokens · est. $21.07
-Top models this month: gpt-5.6-sol (71%) · claude-sonnet-5 (29%)
 ```
 
 The fixed v0.1 tooltip proposal extends that with budget and alert state:

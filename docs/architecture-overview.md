@@ -258,8 +258,8 @@ not mean the app is stopped. The tray is a compact status surface with observed
 daily usage, personal-budget state, last scan time, refresh, settings, pause, update, and
 explicit exit actions. The implemented slice exposes a hover tooltip with the
 app name and, once usage is imported, the observed token totals for today and
-the current month, an estimated API-equivalent cost, and the top models,
-refreshed when a scan or reset completes.
+the current month with an estimated API-equivalent cost, refreshed when a scan
+or reset completes.
 
 Electron documents that Linux tray activation can differ by desktop
 environment, so left-click behavior must have a context-menu fallback and

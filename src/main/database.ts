@@ -16,14 +16,12 @@ export type DatabaseDataCounts = {
   sources: number
 }
 
-export type TrayModelShare = { model: string; totalTokens: number; sharePercent: number }
 export type TraySummary = {
   todayTokens: number
   monthTokens: number
   eventCount: number
   todayCost: CostEstimate
   monthCost: CostEstimate
-  topModels: TrayModelShare[]
 }
 
 const dataTables = ['usage_events', 'source_cursors', 'source_file_signatures', 'scan_runs', 'sources'] as const
@@ -237,15 +235,12 @@ INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, datetime(
       const events = this.db.prepare('SELECT source_id sourceId,coalesce(model,\'Unknown\') model,input_tokens inputTokens,output_tokens outputTokens,cached_input_tokens cachedInputTokens,cache_write_input_tokens cacheWriteInputTokens,reasoning_output_tokens reasoningOutputTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<?').all(range.start, range.end) as Array<Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens'>>
       return summarizeCosts(events).total
     }
-    const monthTokens = totalIn(month)
-    const modelRows = this.db.prepare('SELECT coalesce(model,\'Unknown\') model,coalesce(sum(total_tokens),0) totalTokens FROM usage_events WHERE included=1 AND occurred_at>=? AND occurred_at<? GROUP BY model ORDER BY totalTokens DESC,model LIMIT 3').all(month.start, month.end) as Array<{ model: string; totalTokens: number }>
     return {
       todayTokens: totalIn(today),
-      monthTokens,
+      monthTokens: totalIn(month),
       eventCount: Number(this.db.prepare('SELECT count(*) FROM usage_events WHERE included=1').pluck().get() ?? 0),
       todayCost: costIn(today),
-      monthCost: costIn(month),
-      topModels: monthTokens > 0 ? modelRows.map((row) => ({ model: row.model, totalTokens: row.totalTokens, sharePercent: Math.round((row.totalTokens / monthTokens) * 100) })) : []
+      monthCost: costIn(month)
     }
   }
   getDataCounts(): DatabaseDataCounts { return dataCounts(this.db) }

@@ -201,7 +201,7 @@ describe('window and tray lifecycle', () => {
     expect(menuLabels()).toEqual(['Show window', 'Exit TokenStats'])
   })
 
-  it('updates the tray tooltip with tokens, estimated cost, and top models after a scan', async () => {
+  it('updates the tray tooltip with token totals and estimated cost after a scan', async () => {
     const { TokenDatabase } = await import('../src/main/database')
     const db = new TokenDatabase(join(directory, 'tokenstats.sqlite'))
     const now = new Date().toISOString()
@@ -215,7 +215,7 @@ describe('window and tray lifecycle', () => {
     expect(scanAll).toBeTypeOf('function')
     await (scanAll as () => Promise<unknown>)()
 
-    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats\nToday: 3,000,000 tokens · est. $1.25\nThis month: 3,000,000 tokens · est. $1.25\nTop models this month: gpt-5-mini (50%) · unknown-model-x (50%)')
+    expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats\nToday: 3,000,000 tokens · est. $1.25\nThis month: 3,000,000 tokens · est. $1.25')
   })
 
   it('exits only through the explicit tray Exit action', async () => {
