@@ -4,7 +4,7 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-08-11
+Last reviewed: 2026-09-08
 
 # API pricing catalog
 
@@ -13,6 +13,9 @@ looking them up at runtime. The catalog contains OpenAI models relevant to
 Codex and GitHub Copilot per-token reference rates. Later snapshots can add
 additional provider or plan-specific rates without changing the version 1
 structure.
+
+Historical snapshots remain in the catalog so previously reviewed rates are not
+rewritten; the latest snapshot for each source is selected for new estimates.
 
 The Electron main process bundles and reads the catalog for the Codex and
 GitHub Copilot dashboards. The current slice calculates a query-time estimated
@@ -73,20 +76,22 @@ token relationship is unavailable, the cost remains `unknown`.
 
 ## Current OpenAI/Codex snapshot
 
-The `openai-codex-2026-08-11` snapshot was checked on 2026-08-11 against the
+The `openai-codex-2026-09-08` snapshot was checked on 2026-09-08 against the
 [official OpenAI API pricing page](https://developers.openai.com/api/docs/pricing)
-and the linked official model pages recorded in the catalog. It includes the
-GPT-5.6 Sol, Terra, and Luna family, GPT-5.5, GPT-5.4, and GPT-5.3-Codex. For
-models whose official documentation applies long-context pricing above 272,000
-input tokens, the catalog stores separate short- and long-context rates.
+and the linked official model pages recorded in the catalog. It includes GPT-6
+Astra, the GPT-5.6 Sol/Terra/Luna family, GPT-5.5, GPT-5.4, and GPT-5.3-Codex.
+GPT-5.6 Sol is recorded at the current promotional Standard API rate, noted by
+OpenAI as available at least through 2026-11-21. For models whose official
+documentation applies long-context pricing above 272,000 input tokens, the
+catalog stores separate short- and long-context rates.
 
 ## Current GitHub Copilot snapshot
 
-The `github-copilot-2026-08-11` snapshot was checked on 2026-08-11 against
-the [official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
-It stores the OpenAI, Anthropic, Google, GitHub fine-tuned, Microsoft, xAI,
-and Moonshot model tables shown there, including their long-context tiers.
-Claude Sonnet 5 is recorded with the promotional rate and its stated
-2026-08-31 end date in the tier note. Copilot code completions and next-edit
-suggestions are excluded because GitHub documents a separate counting
-mechanism for them.
+The `github-copilot-2026-09-08` snapshot was checked on 2026-09-08 against the
+[official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
+It stores the current OpenAI, Anthropic, Google, Microsoft, xAI, and Moonshot
+tables shown there, including GPT-6 Astra, the new Gemini 3.7/3.8 Flash,
+MAI-Code-1.1-Flash, Grok 4.6, and Claude Fable 5.1 entries. GitHub's Gemini
+3.6/3.7/3.8 Flash promotional rate is recorded through 2026-12-31. Copilot
+code completions and next-edit suggestions are excluded because GitHub
+documents a separate counting mechanism for them.
