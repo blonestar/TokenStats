@@ -91,9 +91,10 @@
   share the main-process scan path; hidden windows remain eligible until the
   explicit tray Exit action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
-  provider/model pricing catalog. The 2026-08-11 snapshot contains reviewed
-  Standard API list prices for Codex-relevant OpenAI models and a reviewed
-  GitHub Copilot provider-reference snapshot. The dashboard calculates and
+  provider/model pricing catalog. The latest 2026-09-08 snapshots contain
+  reviewed Standard API list prices for Codex-relevant OpenAI models and a
+  reviewed GitHub Copilot provider-reference snapshot; older snapshots remain
+  immutable for historical provenance. The dashboard calculates and
   labels query-time API-equivalent estimates for complete Codex/Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription
   usage must remain unknown and must not be presented as an observed bill.

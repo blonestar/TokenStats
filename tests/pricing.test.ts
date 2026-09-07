@@ -41,16 +41,25 @@ describe('pricing estimates', () => {
   })
 
   it('prices a Codex event without double-counting cached or reasoning tokens', () => {
-    expect(estimateEventCost(event())).toEqual({ amountUsd: 0.0012275, snapshotId: 'openai-codex-2026-08-11' })
+    expect(estimateEventCost(event())).toEqual({ amountUsd: 0.000882, snapshotId: 'openai-codex-2026-09-08' })
   })
 
   it('prices a complete Copilot provider-model event from the GitHub reference catalog', () => {
-    expect(estimateEventCost(event({ sourceId: 'copilot-current-user', model: 'claude-sonnet-5', inputTokens: 100, cachedInputTokens: 5, outputTokens: 25, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000441, snapshotId: 'github-copilot-2026-08-11' })
+    expect(estimateEventCost(event({ sourceId: 'copilot-current-user', model: 'claude-sonnet-5', inputTokens: 100, cachedInputTokens: 5, outputTokens: 25, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000441, snapshotId: 'github-copilot-2026-09-08' })
+  })
+
+  it('prices the current Astra model and refreshed Sol rate', () => {
+    expect(estimateEventCost(event({ model: 'gpt-6-astra', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.00191, snapshotId: 'openai-codex-2026-09-08' })
+    expect(estimateEventCost(event({ inputTokens: 100, cachedInputTokens: 5, outputTokens: 25, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000882, snapshotId: 'openai-codex-2026-09-08' })
+  })
+
+  it('prices the current Copilot Gemini promotional rate', () => {
+    expect(estimateEventCost(event({ sourceId: 'copilot-current-user', model: 'gemini-3.6-flash', inputTokens: 100, cachedInputTokens: 0, outputTokens: 10, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.0001125, snapshotId: 'github-copilot-2026-09-08' })
   })
 
   it('selects the long-context tier at 272001 input tokens', () => {
-    expect(estimateEventCost(event({ inputTokens: 272000, cachedInputTokens: 0, outputTokens: 0, reasoningOutputTokens: 0 }))?.amountUsd).toBe(1.36)
-    expect(estimateEventCost(event({ inputTokens: 272001, cachedInputTokens: 0, outputTokens: 0, reasoningOutputTokens: 0 }))?.amountUsd).toBe(2.72001)
+    expect(estimateEventCost(event({ inputTokens: 272000, cachedInputTokens: 0, outputTokens: 0, reasoningOutputTokens: 0 }))?.amountUsd).toBe(1.088)
+    expect(estimateEventCost(event({ inputTokens: 272001, cachedInputTokens: 0, outputTokens: 0, reasoningOutputTokens: 0 }))?.amountUsd).toBe(2.176008)
   })
 
   it('fails closed for ambiguous token relationships and non-Codex sources', () => {
@@ -62,8 +71,8 @@ describe('pricing estimates', () => {
 
   it('exposes a matching Copilot price when the active snapshot is incomplete', () => {
     const summary = summarizeCosts([event({ sourceId: 'copilot-current-user', model: 'claude-sonnet-5', inputTokens: null, cachedInputTokens: null, outputTokens: 25, reasoningOutputTokens: null })])
-    expect(summary.total).toMatchObject({ amountUsd: null, kind: 'unknown', coverage: 'none', pricedEvents: 0, totalEvents: 1, snapshotIds: [], pricingSnapshotIds: ['github-copilot-2026-08-11'] })
-    expect(summary.snapshots).toEqual([{ id: 'github-copilot-2026-08-11', provider: 'github', product: 'copilot', verifiedAt: '2026-08-11', currency: 'USD', billingMode: 'standard' }])
+    expect(summary.total).toMatchObject({ amountUsd: null, kind: 'unknown', coverage: 'none', pricedEvents: 0, totalEvents: 1, snapshotIds: [], pricingSnapshotIds: ['github-copilot-2026-09-08'] })
+    expect(summary.snapshots).toEqual([{ id: 'github-copilot-2026-09-08', provider: 'github', product: 'copilot', verifiedAt: '2026-09-08', currency: 'USD', billingMode: 'standard' }])
   })
 
   it('reports partial coverage when a period includes unpriced events', () => {
@@ -72,7 +81,7 @@ describe('pricing estimates', () => {
       event({ model: 'gpt-5.6-luna', inputTokens: 30, outputTokens: 10, cachedInputTokens: null, reasoningOutputTokens: null }),
       event({ sourceId: 'copilot-current-user', model: 'gpt-5.6' })
     ])
-    expect(summary.total).toMatchObject({ amountUsd: 0.0012455, kind: 'estimated', coverage: 'partial', pricedEvents: 2, totalEvents: 3, snapshotIds: ['openai-codex-2026-08-11'] })
+    expect(summary.total).toMatchObject({ amountUsd: 0.0009, kind: 'estimated', coverage: 'partial', pricedEvents: 2, totalEvents: 3, snapshotIds: ['openai-codex-2026-09-08'] })
     expect(summary.bySeries.get(`${CODEX_SOURCE_ID}\u0000gpt-5.6-sol`)).toMatchObject({ coverage: 'complete', pricedEvents: 1, totalEvents: 1 })
     expect(summary.bySeries.get('copilot-current-user\u0000gpt-5.6')?.kind).toBe('unknown')
   })
