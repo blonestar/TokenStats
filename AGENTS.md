@@ -186,7 +186,7 @@ readiness.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
-   `pnpm release:check-version --stable-only -- v0.1.1`,
+   `pnpm release:check-version --stable-only -- v0.1.2`,
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until
