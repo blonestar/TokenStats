@@ -4,7 +4,7 @@ Audience: contributors, product reviewers, architecture reviewers, and users eva
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-09-02
+Last reviewed: 2026-09-08
 
 # TokenStats documentation
 

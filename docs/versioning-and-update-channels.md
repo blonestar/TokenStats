@@ -4,15 +4,15 @@ Audience: maintainers, release reviewers, contributors, and users evaluating upd
 
 Source of truth: this document for version semantics and update-channel behavior; release mechanics are detailed in platform-packaging-and-release.md and unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-14
+Last reviewed: 2026-09-08
 
 # TokenStats versioning and update channels
 
 This document defines the version and update policy. Local application version
 metadata and the packaged Fedora build exist. The Linux AppImage slice now has
-an `electron-updater` feed integration; the existing `v0.1.0` release predates
-the generated updater manifest, so the next published Stable release is the
-first release eligible for this path.
+an `electron-updater` feed integration; the published `v0.1.2` release includes
+the generated updater manifest and is eligible for this path. Future published
+Stable releases must keep the same metadata and publish flow.
 
 ## Starting version and readiness meaning
 

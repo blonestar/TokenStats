@@ -47,7 +47,7 @@ pnpm dev
 pnpm test
 pnpm typecheck
 pnpm build
-pnpm release:check-version --stable-only -- v0.1.2
+pnpm release:check-version --stable-only -- v0.1.3
 pnpm package:linux
 pnpm package:linux:rpm
 ```
@@ -56,16 +56,17 @@ pnpm package:linux:rpm
 creates a normal system-installable package:
 
 ```bash
-sudo dnf install ./dist/TokenStats-0.1.2-linux-x86_64.rpm
+sudo dnf install ./dist/TokenStats-0.1.3-linux-x86_64.rpm
 ```
 
 After installation, TokenStats appears in the desktop application menu under
 Utilities with the packaged icon. It does not add an automatic-login entry by
 default. Remove it with `sudo dnf remove tokenstats`.
 
-Tray status metrics, alerts, exports, and public distribution remain follow-on
-work. The updater is currently scoped to the packaged Linux AppImage release
-feed.
+Detailed tray status, alerts, exports, and public distribution remain follow-on
+work. The implemented tooltip is currently limited to observed token totals
+and secondary API-equivalent estimates. The updater is scoped to the packaged
+Linux AppImage release feed.
 
 See the [documentation](docs/README.md) for details and [open questions](ideas/README.md)
 for planned work.
