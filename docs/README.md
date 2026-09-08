@@ -41,12 +41,13 @@ and the current macOS ZIP are not covered by this updater path.
 
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
-tracked in the open-question matrix. Linux GitHub CI, the tag-driven `v0.1.0`
+tracked in the open-question matrix. Linux GitHub CI, the tag-driven `v0.1.3`
 release run, and native macOS arm64 workflow run `31606807111` passed; the
-resulting GitHub Release is published with Linux and macOS arm64 artifacts plus
-a combined checksum manifest. The macOS package is ad-hoc-signed and
-unnotarized, so this is internal preview evidence, not clean-machine or
-production distribution evidence.
+published `v0.1.3` release contains the Linux AppImage, updater metadata, and
+checksum manifest. The earlier internal `v0.1.0` release contains the macOS
+arm64 artifact. The macOS package is ad-hoc-signed and unnotarized, so this is
+internal preview evidence, not clean-machine or production distribution
+evidence.
 
 The [GitHub Copilot OTel ingestion](copilot-otel.md) note documents the opt-in
 file exporter, privacy allowlist, cursor behavior, and fallback reconciliation.

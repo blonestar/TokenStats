@@ -13,13 +13,13 @@ and a Linux AppImage updater slice. The repository has a package manifest,
 version gate, Linux CI workflow, a tag-driven Linux draft-release workflow, and
 a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
 have passed; the published internal `v0.1.0` release contains both platform
-artifacts plus a combined checksum manifest, while published `v0.1.2` contains
+artifacts plus a combined checksum manifest, while published `v0.1.3` contains
 the Linux AppImage, updater manifest, and checksum manifest. The updater is wired to
 the Stable GitHub feed for packaged Linux AppImages: automatic checks are
 enabled at startup and every six hours by default, with enablement, startup,
 and 1/6/12/24-hour interval controls in Settings. It downloads only after an
 explicit user action and installs only after a separate install-and-restart
-action. The published `v0.1.2` release exposes `latest-linux.yml`; future
+action. The published `v0.1.3` release exposes `latest-linux.yml`; future
 releases must use the same publish path. RPM and the current macOS ZIP are not updater
 targets. Signing configuration, clean-machine validation, and broader
 distribution readiness remain open. The unpacked build starts and scans on the
@@ -209,7 +209,7 @@ No separate `build.yml` exists yet. A future preview workflow may:
 
 ### `release.yml`
 
-The current tag-driven flow, verified by the published `v0.1.2` run, is:
+The current tag-driven flow, verified by the published `v0.1.3` run, is:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
 2. The workflow verifies that the tag exactly matches `package.json`.

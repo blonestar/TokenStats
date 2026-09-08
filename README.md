@@ -9,9 +9,10 @@ credentials, and raw logs are not stored.
 ![TokenStats dashboard](docs/images/tokenstats-dashboard.png)
 
 > **Status:** An internal Fedora/Electron slice, tested on the current
-> Fedora/KDE host. GitHub CI, the tag-driven `v0.1.0` release, and native
-> macOS arm64 validation have passed; the published release contains Linux
-> and macOS arm64 artifacts. Clean-machine and production distribution
+> Fedora/KDE host. GitHub CI, the tag-driven `v0.1.3` release, and native
+> macOS arm64 validation have passed; `v0.1.3` publishes the Linux AppImage,
+> updater metadata, and checksum manifest, while the internal `v0.1.0` release
+> contains the macOS arm64 artifact. Clean-machine and production distribution
 > readiness remain open.
 
 ## Current features

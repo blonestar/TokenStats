@@ -10,7 +10,7 @@ Last reviewed: 2026-09-08
 
 This document defines the version and update policy. Local application version
 metadata and the packaged Fedora build exist. The Linux AppImage slice now has
-an `electron-updater` feed integration; the published `v0.1.2` release includes
+an `electron-updater` feed integration; the published `v0.1.3` release includes
 the generated updater manifest and is eligible for this path. Future published
 Stable releases must keep the same metadata and publish flow.
 
