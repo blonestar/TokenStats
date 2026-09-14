@@ -13,18 +13,18 @@ and a Linux AppImage updater slice. The repository has a package manifest,
 version gate, Linux CI workflow, a tag-driven Linux draft-release workflow, and
 a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
 have passed; the published internal `v0.1.0` release contains both platform
-artifacts plus a combined checksum manifest, while published `v0.1.3` contains
+artifacts plus a combined checksum manifest, while published `v0.1.4` contains
 the Linux AppImage, updater manifest, and checksum manifest. The updater is wired to
 the Stable GitHub feed for packaged Linux AppImages: automatic checks are
 enabled at startup and every six hours by default, with enablement, startup,
 and 1/6/12/24-hour interval controls in Settings. It downloads only after an
 explicit user action and installs only after a separate install-and-restart
-action. The published `v0.1.3` release exposes `latest-linux.yml`; future
+action. The published `v0.1.4` release exposes `latest-linux.yml`; future
 releases must use the same publish path. RPM and the current macOS ZIP are not updater
 targets. Signing configuration, clean-machine validation, and broader
 distribution readiness remain open. The unpacked build starts and scans on the
-current Fedora/KDE host, which is not clean-machine verification. The next patch
-release uses a stable local AppImage filename and keeps the existing click-to-
+current Fedora/KDE host, which is not clean-machine verification. Published
+`v0.1.4` uses a stable local AppImage filename and keeps the existing click-to-
 download/install/restart flow.
 
 ## Platform targets
@@ -72,7 +72,7 @@ The proposed artifact set is:
 
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
-| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.3` AppImage and checksum were verified by GitHub Actions. The installed local filename is stable: `TokenStats-linux-x86_64.AppImage`. |
+| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.4` AppImage and checksum were verified by GitHub Actions. The installed local filename is stable: `TokenStats-linux-x86_64.AppImage`. |
 | Fedora x64 | `.rpm` | System-installable target with desktop-menu registration; clean-machine install and package-manager update evidence remain pending. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
@@ -218,7 +218,8 @@ No separate `build.yml` exists yet. A future preview workflow may:
 
 ### `release.yml`
 
-The current tag-driven flow, verified by the published `v0.1.3` run, is:
+The current tag-driven flow, verified by the published `v0.1.4` run
+(`34857918122`), is:
 
 1. A maintainer creates and pushes a `vA.B.C` tag.
 2. The workflow verifies that the tag exactly matches `package.json`.

@@ -23,12 +23,12 @@
   release run have passed; `v0.1.0` is published with the Linux AppImage,
   macOS arm64 ZIP, and combined SHA-256 manifest. `electron-updater` now
   implements explicit check, download, and install/restart behavior for
-  packaged Linux AppImages; the published `v0.1.3` release includes the tray
+  packaged Linux AppImages; the published `v0.1.4` release includes the tray
   tooltip implementation, updater metadata, and checksum manifest, and was
   created through the release publish path. Future published releases must use
-  the same path. The next patch release uses a stable local AppImage filename
-  and synchronizes existing user desktop launchers when the updater changes the
-  AppImage path; RPM launcher integration remains package-manager-owned.
+  the same path. `v0.1.4` uses a stable local AppImage filename and synchronizes
+  existing user desktop launchers when the updater changes the AppImage path;
+  RPM launcher integration remains package-manager-owned.
   RPM, macOS ZIP, clean-machine validation, and broader distribution readiness
   remain unverified; publication does not establish those claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
@@ -166,7 +166,7 @@ The provider registry, canonical event boundary, and current three-provider
 modules are implemented in the Fedora multi-source slice. CI and tag-driven
 draft-release workflows now have verified GitHub runs with a package/tag
 version gate. `v0.1.0` is published with Linux and macOS arm64 artifacts, and
-`v0.1.3` is published with the Linux AppImage, updater metadata, and checksum
+  `v0.1.4` is published with the Linux AppImage, updater metadata, and checksum
 manifest. Close-to-tray, the basic tray menu, and the tray tooltip token and
 cost summary are implemented in the packaged Linux slice, and the Fedora RPM
 packaging target provides the installable launcher path. The updater is
@@ -199,13 +199,13 @@ readiness.
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until
-  actually run. The published `v0.1.3` AppImage has been checksum-verified and
+  actually run. The published `v0.1.4` AppImage has been checksum-verified and
   started on the current Fedora/KDE host; its KDE StatusNotifier tooltip
   exposed the observed today/month token totals and secondary estimate. Its
   multi-source scan was exercised: Codex usage was imported, the current Claude
   root was discovered but yielded no usage events, and Copilot was not found.
   That is not clean-machine evidence; GitHub PR CI, the successful `v0.1.0`
-  release run, `v0.1.3` release run `34176246869`, native Apple Silicon
+  release run, `v0.1.4` release run `34857918122`, native Apple Silicon
   workflow run `31606807111`, and the published releases are separately
   verified. The Mac
   artifact is ad-hoc-signed and unnotarized, so this internal validation is not

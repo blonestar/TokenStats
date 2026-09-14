@@ -47,9 +47,9 @@ changing the RPM launcher.
 
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain
-tracked in the open-question matrix. Linux GitHub CI, the tag-driven `v0.1.3`
-release run, and native macOS arm64 workflow run `31606807111` passed; the
-published `v0.1.3` release contains the Linux AppImage, updater metadata, and
+tracked in the open-question matrix. Linux GitHub CI, the tag-driven `v0.1.4`
+release run `34857918122`, and native macOS arm64 workflow run `31606807111`
+passed; the published `v0.1.4` release contains the Linux AppImage, updater metadata, and
 checksum manifest. The earlier internal `v0.1.0` release contains the macOS
 arm64 artifact. The macOS package is ad-hoc-signed and unnotarized, so this is
 internal preview evidence, not clean-machine or production distribution

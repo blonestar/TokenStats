@@ -10,11 +10,11 @@ Last reviewed: 2026-09-14
 
 This document defines the version and update policy. Local application version
 metadata and the packaged Fedora build exist. The Linux AppImage slice now has
-an `electron-updater` feed integration; the published `v0.1.3` release includes
+an `electron-updater` feed integration; the published `v0.1.4` release includes
 the generated updater manifest and is eligible for this path. Future published
 Stable releases must keep the same metadata and publish flow.
 
-The next patch release uses `TokenStats-linux-x86_64.AppImage` as the stable
+The `v0.1.4` patch release uses `TokenStats-linux-x86_64.AppImage` as the stable
 installed AppImage filename. The application version remains semver-versioned;
 only the local AppImage path is stable so the desktop launcher survives an
 update.
