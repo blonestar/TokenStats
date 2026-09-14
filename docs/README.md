@@ -4,7 +4,7 @@ Audience: contributors, product reviewers, architecture reviewers, and users eva
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-09-08
+Last reviewed: 2026-09-14
 
 # TokenStats documentation
 
@@ -38,6 +38,12 @@ startup-check behavior, and a 1/6/12/24-hour interval; a visible update action
 appears near the version/author when a release is found. Downloads happen only
 after the user clicks, followed by a separate install-and-restart action. RPM
 and the current macOS ZIP are not covered by this updater path.
+
+The AppImage release uses the stable local filename
+`TokenStats-linux-x86_64.AppImage`. The main process synchronizes an existing
+user desktop launcher at startup and when the AppImage updater reports a renamed
+file, so legacy versioned launchers follow the installed AppImage without
+changing the RPM launcher.
 
 The implemented current-user source set is Codex, Claude Code, and experimental
 GitHub Copilot on Fedora. Exact supported OS versions and later platforms remain

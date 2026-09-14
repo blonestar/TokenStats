@@ -4,7 +4,7 @@ Audience: maintainers, release reviewers, contributors, and users evaluating upd
 
 Source of truth: this document for version semantics and update-channel behavior; release mechanics are detailed in platform-packaging-and-release.md and unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-09-08
+Last reviewed: 2026-09-14
 
 # TokenStats versioning and update channels
 
@@ -13,6 +13,11 @@ metadata and the packaged Fedora build exist. The Linux AppImage slice now has
 an `electron-updater` feed integration; the published `v0.1.3` release includes
 the generated updater manifest and is eligible for this path. Future published
 Stable releases must keep the same metadata and publish flow.
+
+The next patch release uses `TokenStats-linux-x86_64.AppImage` as the stable
+installed AppImage filename. The application version remains semver-versioned;
+only the local AppImage path is stable so the desktop launcher survives an
+update.
 
 ## Starting version and readiness meaning
 
@@ -154,6 +159,10 @@ The implemented defaults and Settings options for packaged Linux AppImages are:
 - no automatic download by default;
 - no automatic installation or silent restart.
 
+The packaged AppImage is expected to remain at a persistent writable local path.
+The main process repairs an existing user launcher when the current AppImage
+path changes, including legacy versioned installations.
+
 Nightly, RPM, and the current macOS ZIP do not yet use this updater path.
 
 The current Linux slice exposes the current/available version, download
@@ -209,7 +218,8 @@ The proposed sequence is:
 8. The app presents `Install and restart` or equivalent explicit confirmation.
 9. The app gracefully closes its windows and background process.
 10. The Linux AppImage updater installs the already verified artifact.
-11. TokenStats restarts and selects the same channel/profile.
+11. TokenStats restarts, synchronizes the user launcher, and selects the same
+    channel/profile.
 12. The new process runs database migrations before ingestion.
 13. The app validates key invariants, restores monitoring state, and reports
     success or failure.

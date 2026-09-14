@@ -36,6 +36,8 @@ credentials, and raw logs are not stored.
   startup checks, and a 1/6/12/24-hour interval; download, then install and
   restart remain explicit actions. RPM and the current macOS ZIP remain manual
   update paths.
+- The Linux AppImage uses a stable local filename so an update keeps the
+  existing desktop launcher on the same path.
 
 ## Run
 
@@ -48,16 +50,18 @@ pnpm dev
 pnpm test
 pnpm typecheck
 pnpm build
-pnpm release:check-version --stable-only -- v0.1.3
+pnpm release:check-version --stable-only -- v0.1.4
 pnpm package:linux
 pnpm package:linux:rpm
 ```
 
-`pnpm package:linux` creates the portable AppImage. On Fedora, the RPM build
-creates a normal system-installable package:
+`pnpm package:linux` creates the portable `TokenStats-linux-x86_64.AppImage`.
+Keep that AppImage at a persistent writable path when using the packaged
+click-to-update flow. On Fedora, the RPM build creates a normal
+system-installable package:
 
 ```bash
-sudo dnf install ./dist/TokenStats-0.1.3-linux-x86_64.rpm
+sudo dnf install ./dist/TokenStats-0.1.4-linux-x86_64.rpm
 ```
 
 After installation, TokenStats appears in the desktop application menu under

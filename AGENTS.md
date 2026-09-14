@@ -26,7 +26,9 @@
   packaged Linux AppImages; the published `v0.1.3` release includes the tray
   tooltip implementation, updater metadata, and checksum manifest, and was
   created through the release publish path. Future published releases must use
-  the same path.
+  the same path. The next patch release uses a stable local AppImage filename
+  and synchronizes existing user desktop launchers when the updater changes the
+  AppImage path; RPM launcher integration remains package-manager-owned.
   RPM, macOS ZIP, clean-machine validation, and broader distribution readiness
   remain unverified; publication does not establish those claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
@@ -193,7 +195,7 @@ readiness.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
-   `pnpm release:check-version --stable-only -- v0.1.3`,
+   `pnpm release:check-version --stable-only -- v0.1.4`,
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until

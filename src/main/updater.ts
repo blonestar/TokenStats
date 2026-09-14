@@ -66,6 +66,7 @@ export class UpdateController {
       settings?: UpdateSettings
       intervalMs?: number
       canInstall?: () => boolean
+      onAppImagePathChange?: (appImagePath: string) => void
     }
   ) {
     this.settings = { ...(options.settings ?? DEFAULT_UPDATE_SETTINGS) }
@@ -86,6 +87,9 @@ export class UpdateController {
     })
     options.driver.on('update-downloaded', (info) => {
       this.transition('downloaded', versionFrom(info) ?? this.state.version, 100)
+    })
+    options.driver.on('appimage-filename-updated', (appImagePath) => {
+      if (typeof appImagePath === 'string' && appImagePath.length > 0) options.onAppImagePathChange?.(appImagePath)
     })
     options.driver.on('error', () => {
       if (this.state.status !== 'idle' && this.state.status !== 'unsupported') this.transition('error', this.state.version, null, this.errorMessage(this.state.status))
@@ -219,6 +223,6 @@ export class UpdateController {
   }
 }
 
-export function createUpdateController(options: { enabled: boolean; onStateChange: (state: UpdateState) => void; settings?: UpdateSettings; intervalMs?: number; canInstall?: () => boolean }): UpdateController {
+export function createUpdateController(options: { enabled: boolean; onStateChange: (state: UpdateState) => void; settings?: UpdateSettings; intervalMs?: number; canInstall?: () => boolean; onAppImagePathChange?: (appImagePath: string) => void }): UpdateController {
   return new UpdateController({ ...options, driver: autoUpdater as unknown as UpdateDriver })
 }
