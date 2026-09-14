@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -120,7 +120,7 @@ describe('window and tray lifecycle', () => {
   let directory: string
   let window: InstanceType<typeof mocks.BrowserWindow>
   let tray: InstanceType<typeof mocks.Tray>
-  const originalEnvironment = { HOME: process.env.HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR, COPILOT_HOME: process.env.COPILOT_HOME, COPILOT_OTEL_FILE_EXPORTER_PATH: process.env.COPILOT_OTEL_FILE_EXPORTER_PATH }
+  const originalEnvironment = { HOME: process.env.HOME, XDG_DATA_HOME: process.env.XDG_DATA_HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR, COPILOT_HOME: process.env.COPILOT_HOME, COPILOT_OTEL_FILE_EXPORTER_PATH: process.env.COPILOT_OTEL_FILE_EXPORTER_PATH }
   const originalAppImage = process.env.APPIMAGE
 
   const menuLabels = (): string[] => tray.contextMenu?.template
@@ -130,12 +130,17 @@ describe('window and tray lifecycle', () => {
   beforeAll(async () => {
     directory = mkdtempSync(join(tmpdir(), 'tokenstats-window-tray-'))
     process.env.HOME = directory
+    process.env.XDG_DATA_HOME = join(directory, '.local', 'share')
     process.env.CLAUDE_CONFIG_DIR = join(directory, '.claude')
     process.env.COPILOT_HOME = join(directory, '.copilot')
     process.env.COPILOT_OTEL_FILE_EXPORTER_PATH = join(directory, 'copilot-otel.jsonl')
     const appImagePath = join(directory, 'TokenStats.AppImage')
     writeFileSync(appImagePath, 'test appimage')
     chmodSync(appImagePath, 0o755)
+    const dataHome = process.env.XDG_DATA_HOME as string
+    const applications = join(dataHome, 'applications')
+    mkdirSync(applications, { recursive: true })
+    writeFileSync(join(applications, 'local.tokenstats.app.desktop'), '[Desktop Entry]\nName=TokenStats\nExec=/tmp/TokenStats-0.1.3-linux-x86_64.AppImage %U\n')
     process.env.APPIMAGE = appImagePath
     mocks.app.getPath.mockReturnValue(directory)
     const { TokenDatabase } = await import('../src/main/database')
@@ -158,6 +163,11 @@ describe('window and tray lifecycle', () => {
 
   it('starts the tray tooltip with the app name before usage is imported', () => {
     expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats')
+  })
+
+  it('keeps the user desktop launcher on the current AppImage path', () => {
+    const desktopPath = join(process.env.XDG_DATA_HOME as string, 'applications', 'local.tokenstats.app.desktop')
+    expect(readFileSync(desktopPath, 'utf8')).toContain(`Exec="${join(directory, 'TokenStats.AppImage')}" %U`)
   })
 
   it('hides the window on close and updates the tray action', () => {

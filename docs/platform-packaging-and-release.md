@@ -4,7 +4,7 @@ Audience: maintainers, release engineers, platform testers, security reviewers, 
 
 Source of truth: this document for target platforms, packaging, release, signing, and update policy; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-09-08
+Last reviewed: 2026-09-14
 
 # TokenStats platform, packaging, and release
 
@@ -23,7 +23,9 @@ action. The published `v0.1.3` release exposes `latest-linux.yml`; future
 releases must use the same publish path. RPM and the current macOS ZIP are not updater
 targets. Signing configuration, clean-machine validation, and broader
 distribution readiness remain open. The unpacked build starts and scans on the
-current Fedora/KDE host, which is not clean-machine verification.
+current Fedora/KDE host, which is not clean-machine verification. The next patch
+release uses a stable local AppImage filename and keeps the existing click-to-
+download/install/restart flow.
 
 ## Platform targets
 
@@ -70,16 +72,18 @@ The proposed artifact set is:
 
 | Platform | Candidate artifact | Release policy |
 | --- | --- | --- |
-| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.0` AppImage and checksum were verified by GitHub Actions. |
+| Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.3` AppImage and checksum were verified by GitHub Actions. The installed local filename is stable: `TokenStats-linux-x86_64.AppImage`. |
 | Fedora x64 | `.rpm` | System-installable target with desktop-menu registration; clean-machine install and package-manager update evidence remain pending. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
 | Windows later | `.exe` installer and/or `.msix` | Add only after the Windows installer, identity, notifications, signing, and update path are tested. |
 
-Every artifact should include version, platform, and architecture in its name.
-Each published artifact gets a matching SHA-256 checksum entry. Do not rely on
-an unversioned `latest` file as the only download reference.
+Release metadata and checksums must identify the version, platform, and
+architecture. The AppImage's installed local filename is intentionally stable
+so `electron-updater` replaces the same file and a desktop launcher remains
+valid; the GitHub tag and `latest-linux.yml` still identify the release. Do not
+rely on an unversioned `latest` file as the only download reference.
 
 ## electron-builder implementation and electron-updater
 
@@ -93,7 +97,10 @@ automatic install-on-quit, and exposes typed IPC state to the renderer. The
 renderer and tray show the available/downloaded state; the first user action
 starts download and the second action calls install-and-restart. The updater
 does not run for development builds, RPM installs without an AppImage runtime,
-or the current macOS ZIP validation artifact.
+or the current macOS ZIP validation artifact. The main process keeps an existing
+user AppImage launcher synchronized at startup and on the updater's
+`appimage-filename-updated` event; RPM desktop integration remains package
+manager-owned.
 
 Electron's built-in [`autoUpdater`](https://www.electronjs.org/docs/latest/api/auto-updater/)
 documents macOS and Windows support and does not provide a built-in Linux
@@ -117,7 +124,7 @@ electron-builder desktop entry and packaged TokenStats icons. Installing it
 through Fedora's package manager is the normal system integration path:
 
 ```bash
-sudo dnf install ./dist/TokenStats-0.1.0-linux-x86_64.rpm
+sudo dnf install ./dist/TokenStats-0.1.4-linux-x86_64.rpm
 ```
 
 The launcher is placed in the desktop application menu under the `Utility`
@@ -130,7 +137,9 @@ sudo dnf remove tokenstats
 ```
 
 The AppImage remains a portable download and is not treated as a system
-installation by this project.
+installation by this project. A packaged AppImage should nevertheless be kept
+at a persistent writable local path, with the stable filename documented above,
+when using its self-update flow.
 
 ## Signing and notarization
 
@@ -215,6 +224,8 @@ The current tag-driven flow, verified by the published `v0.1.3` run, is:
 2. The workflow verifies that the tag exactly matches `package.json`.
 3. Linux tests and typecheck run, then `package:linux:release` publishes the
    AppImage and `latest-linux.yml` into a draft GitHub Release.
+   The AppImage manifest uses `TokenStats-linux-x86_64.AppImage`; RPM artifact
+   names remain versioned.
 4. The workflow creates and verifies a SHA-256 manifest and uploads it to the
    same draft release.
 5. A maintainer reviews the artifact, notes, channel, and evidence.

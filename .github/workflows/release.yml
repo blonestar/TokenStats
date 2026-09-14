@@ -66,7 +66,6 @@ jobs:
       - name: Verify Linux updater manifest
         run: |
           test -s dist/latest-linux.yml
-          grep -Fq "TokenStats-${GITHUB_REF_NAME#v}-linux-x86_64.AppImage" dist/latest-linux.yml
           node --input-type=module <<'NODE'
           import { createHash } from 'node:crypto'
           import { readFileSync } from 'node:fs'
@@ -75,6 +74,7 @@ jobs:
           const manifest = readFileSync('dist/latest-linux.yml', 'utf8')
           const match = manifest.match(/files:\n\s+- url: (\S+)\n\s+sha512: (\S+)/)
           if (!match) throw new Error('latest-linux.yml has no file SHA-512 entry')
+          if (match[1] !== 'TokenStats-linux-x86_64.AppImage') throw new Error(`latest-linux.yml points to unexpected artifact: ${match[1]}`)
           const actual = createHash('sha512').update(readFileSync(join('dist', match[1]))).digest('base64')
           if (actual !== match[2]) throw new Error('latest-linux.yml SHA-512 does not match the AppImage')
           NODE

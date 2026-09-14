@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type CostEstimate, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
 import { TokenDatabase, type TraySummary } from './database'
 import { backupAndClearDatabase } from './database-reset'
+import { syncAppImageDesktopEntry } from './appimage-launcher'
 import type { ProviderSource } from './ingestion/contracts'
 import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
 import { loadRefreshSettings, parseRefreshSettings, saveRefreshSettings } from './refresh-settings'
@@ -96,6 +97,11 @@ function publishScanState(nextState: ScanState): void {
 function publishScanComplete(result: ScanResult): void {
   mainWindow?.webContents.send('tokenstats:scanComplete', result)
   updateTrayTooltip()
+}
+
+function syncAppImageLauncher(appImagePath: string | undefined): void {
+  if (!appImagePath) return
+  syncAppImageDesktopEntry({ appImagePath, home: app.getPath('home'), xdgDataHome: process.env.XDG_DATA_HOME })
 }
 
 function formatTokens(value: number): string {
@@ -314,6 +320,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
 
 app.whenReady().then(() => {
   const userDataPath = app.getPath('userData')
+  syncAppImageLauncher(process.env.APPIMAGE)
   updateSettings = loadUpdateSettings(userDataPath)
   refreshSettings = loadRefreshSettings(userDataPath)
   scanState = { status: 'scanning', reason: 'startup' }
@@ -355,7 +362,8 @@ app.whenReady().then(() => {
     enabled: isLinuxAppImageUpdateSupported({ platform: process.platform, isPackaged: app.isPackaged, appImagePath: process.env.APPIMAGE }),
     settings: updateSettings,
     onStateChange: publishUpdateState,
-    canInstall: () => !scanRunning && !resetRunning
+    canInstall: () => !scanRunning && !resetRunning,
+    onAppImagePathChange: syncAppImageLauncher
   })
   refreshScheduler = new RefreshScheduler(runScheduledScan)
   createTray()

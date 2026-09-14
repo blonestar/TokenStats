@@ -96,6 +96,18 @@ describe('update controller', () => {
     expect(controller.getState()).toMatchObject({ status: 'error', message: 'Update installation failed. Try again.' })
   })
 
+  it('reports a renamed AppImage so the desktop launcher can follow it', () => {
+    const { driver, emit } = fakeDriver()
+    const onAppImagePathChange = vi.fn()
+    new UpdateController({ driver, enabled: true, onStateChange: () => undefined, onAppImagePathChange })
+
+    emit('appimage-filename-updated', '/tmp/TokenStats-linux-x86_64.AppImage')
+    emit('appimage-filename-updated', { path: '/tmp/not-a-path.AppImage' })
+
+    expect(onAppImagePathChange).toHaveBeenCalledTimes(1)
+    expect(onAppImagePathChange).toHaveBeenCalledWith('/tmp/TokenStats-linux-x86_64.AppImage')
+  })
+
   it('only enables the updater for packaged Linux AppImages', () => {
     const directory = mkdtempSync(join(tmpdir(), 'tokenstats-updater-'))
     const appImagePath = join(directory, 'TokenStats.AppImage')
