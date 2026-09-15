@@ -10,10 +10,11 @@ credentials, and raw logs are not stored.
 
 > **Status:** An internal Fedora/Electron slice, tested on the current
 > Fedora/KDE host. GitHub CI, the tag-driven `v0.1.4` release, and native
-> macOS arm64 validation have passed; `v0.1.4` publishes the Linux AppImage,
-> updater metadata, and checksum manifest, while the internal `v0.1.0` release
-> contains the macOS arm64 artifact. Clean-machine and production distribution
-> readiness remain open.
+> macOS arm64 validation have passed; the Windows x64 NSIS build and release
+> jobs are configured but Windows runtime evidence is still pending. `v0.1.4`
+> publishes the Linux AppImage, updater metadata, and checksum manifest, while
+> the internal `v0.1.0` release contains the macOS arm64 artifact.
+> Clean-machine and production distribution readiness remain open.
 
 ## Current features
 
@@ -32,6 +33,9 @@ credentials, and raw logs are not stored.
   estimated API-equivalent costs, and the tray menu provides Show/Hide window
   and Exit.
 - A Fedora RPM package with a standard application launcher and menu entry.
+- A Windows x64 NSIS installer build in CI and the tag-driven release pipeline;
+  Windows support remains unverified until the Windows jobs pass and clean-machine
+  evidence is collected.
 - Packaged Linux AppImage update checks with Settings controls for enablement,
   startup checks, and a 1/6/12/24-hour interval; download, then install and
   restart remain explicit actions. RPM and the current macOS ZIP remain manual
@@ -53,6 +57,8 @@ pnpm build
 pnpm release:check-version --stable-only -- v0.1.4
 pnpm package:linux
 pnpm package:linux:rpm
+# Run on a Windows runner for the NSIS installer:
+pnpm package:win
 ```
 
 `pnpm package:linux` creates the portable `TokenStats-linux-x86_64.AppImage`.
@@ -71,7 +77,8 @@ default. Remove it with `sudo dnf remove tokenstats`.
 Detailed tray status, alerts, exports, and public distribution remain follow-on
 work. The implemented tooltip is currently limited to observed token totals
 and secondary API-equivalent estimates. The updater is scoped to the packaged
-Linux AppImage release feed.
+Linux AppImage release feed; the Windows release pipeline does not establish
+Windows updater support.
 
 See the [documentation](docs/README.md) for details and [open questions](ideas/README.md)
 for planned work.

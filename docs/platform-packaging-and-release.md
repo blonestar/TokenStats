@@ -1,20 +1,24 @@
-Status: Implemented Linux AppImage update slice; remaining platform and release requirements proposed
+Status: Implemented Linux AppImage update slice and Windows release-pipeline configuration; Windows runtime and distribution validation remain pending
 
 Audience: maintainers, release engineers, platform testers, security reviewers, and contributors working on packaging
 
 Source of truth: this document for target platforms, packaging, release, signing, and update policy; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-15
 
 # TokenStats platform, packaging, and release
 
-This remains a release-engineering proposal with an implemented Fedora slice
-and a Linux AppImage updater slice. The repository has a package manifest,
-version gate, Linux CI workflow, a tag-driven Linux draft-release workflow, and
+This remains a release-engineering proposal with an implemented Fedora slice,
+a Linux AppImage updater slice, and a configured Windows x64 NSIS release path.
+The repository has a package manifest, version gate, Linux and Windows CI jobs,
+a tag-driven Linux draft-release workflow followed by a Windows release job, and
 a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
 have passed; the published internal `v0.1.0` release contains both platform
 artifacts plus a combined checksum manifest, while published `v0.1.4` contains
-the Linux AppImage, updater manifest, and checksum manifest. The updater is wired to
+the Linux AppImage, updater manifest, and checksum manifest. The Windows
+workflow is configured to build, install, and launch-smoke-test the NSIS
+installer on `windows-2022`, but that workflow has not yet supplied runtime
+evidence in this change. The updater is wired to
 the Stable GitHub feed for packaged Linux AppImages: automatic checks are
 enabled at startup and every six hours by default, with enablement, startup,
 and 1/6/12/24-hour interval controls in Settings. It downloads only after an
@@ -43,10 +47,12 @@ is:
 Ubuntu timing and exact OS versions remain open; they are not first-slice
 support claims.
 
-Windows is a later target. Shared path, filesystem, adapter, and update
-abstractions should avoid making Windows impossible, but Windows support is not
-part of the first platform promise unless [Q-026](../ideas/00-open-questions.md)
-changes.
+Windows x64 is now a release-pipeline preview target. The workflow produces a
+versioned NSIS installer and runs a disposable packaged-launch smoke test on a
+Windows runner. This does not make Windows a supported platform promise: clean
+machine discovery, SQLite migration, tray behavior, signing, update recovery,
+and exact supported OS versions remain unverified and stay subject to
+[Q-026](../ideas/00-open-questions.md).
 
 Platform support means more than an artifact that launches. It requires clean
 machine evidence for discovery, SQLite, migrations, notifications, login
@@ -77,7 +83,7 @@ The proposed artifact set is:
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
-| Windows later | `.exe` installer and/or `.msix` | Add only after the Windows installer, identity, notifications, signing, and update path are tested. |
+| Windows x64 preview | versioned NSIS `.exe` installer | Built and smoke-tested by the Windows CI/release jobs when they run; clean-machine support, signing, and Windows updater behavior remain unverified. |
 
 Release metadata and checksums must identify the version, platform, and
 architecture. The AppImage's installed local filename is intentionally stable
@@ -87,17 +93,20 @@ rely on an unversioned `latest` file as the only download reference.
 
 ## electron-builder implementation and electron-updater
 
-`electron-builder` is the pinned packaging dependency and currently produces
-the Linux AppImage, Fedora RPM, and internal macOS arm64 ZIP validation artifact.
+`electron-builder` is the pinned packaging dependency and is configured to
+produce the Linux AppImage, Fedora RPM, Windows x64 NSIS installer, and internal
+macOS arm64 ZIP validation artifact.
 Target-specific file filters keep only the matching `better-sqlite3` prebuild in
-each artifact (`linux-x64.node` for Fedora and `darwin-arm64.node` for macOS).
+each artifact (`linux-x64.node` for Fedora, `win32-x64.node` for Windows, and
+`darwin-arm64.node` for macOS).
 `electron-updater` is now a runtime dependency for the packaged Linux AppImage
 path. The main process owns the updater, disables automatic download and
 automatic install-on-quit, and exposes typed IPC state to the renderer. The
 renderer and tray show the available/downloaded state; the first user action
 starts download and the second action calls install-and-restart. The updater
-does not run for development builds, RPM installs without an AppImage runtime,
-or the current macOS ZIP validation artifact. The main process keeps an existing
+does not run for development builds, Windows builds, RPM installs without an
+AppImage runtime, or the current macOS ZIP validation artifact. The main
+process keeps an existing
 user AppImage launcher synchronized at startup and on the updater's
 `appimage-filename-updated` event; RPM desktop integration remains package
 manager-owned.
@@ -209,7 +218,9 @@ Run on pull requests and pushes to `main`:
 
 ### Future preview build workflow
 
-No separate `build.yml` exists yet. A future preview workflow may:
+No separate `build.yml` exists yet. The current CI workflow already runs a
+Windows x64 package and disposable packaged-launch smoke test. A future preview
+workflow may still:
 
 - build on the appropriate OS/architecture matrix;
 - keep preview artifacts separate from Stable releases;
@@ -227,14 +238,19 @@ The current tag-driven flow, verified by the published `v0.1.4` run
    AppImage and `latest-linux.yml` into a draft GitHub Release.
    The AppImage manifest uses `TokenStats-linux-x86_64.AppImage`; RPM artifact
    names remain versioned.
-4. The workflow creates and verifies a SHA-256 manifest and uploads it to the
+4. After the Linux draft exists, the Windows release job runs on `windows-2022`,
+   validates the tag again, runs `package:win:release`, verifies `latest.yml`,
+   installs and launches the packaged NSIS app, and uploads the versioned
+   Windows installer and a Windows checksum manifest to the same draft release.
+5. The Linux workflow creates and verifies a SHA-256 manifest and uploads it to the
    same draft release.
-5. A maintainer reviews the artifact, notes, channel, and evidence.
-6. The release is published manually; only then should the Stable feed expose
+6. A maintainer reviews the artifacts, notes, channel, and evidence.
+7. The release is published manually; only then should the Stable feed expose
    it to the updater.
 
-Ubuntu-specific packaging, Windows artifacts, SBOM/provenance, production
-signing, and clean-machine smoke tests remain separate follow-up work. The
+Ubuntu-specific packaging, Windows clean-machine support, SBOM/provenance,
+production signing, and Windows updater validation remain separate follow-up
+work. The
 manual macOS arm64 validation workflow remains separate from the automated
 Linux tag-release job.
 

@@ -1,10 +1,10 @@
-Status: Implemented Fedora slice; remaining direction proposed
+Status: Implemented Fedora slice and Windows release-pipeline configuration; broader platform direction remains proposed
 
 Audience: contributors, product reviewers, architecture reviewers, and users evaluating project direction
 
 Source of truth: accepted project documentation in /docs, with unresolved questions in /ideas
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-15
 
 # TokenStats documentation
 
@@ -38,6 +38,12 @@ startup-check behavior, and a 1/6/12/24-hour interval; a visible update action
 appears near the version/author when a release is found. Downloads happen only
 after the user clicks, followed by a separate install-and-restart action. RPM
 and the current macOS ZIP are not covered by this updater path.
+
+The repository also configures a Windows x64 NSIS package in CI and the
+tag-driven release pipeline. The Windows job is configured to install the
+generated installer and launch the packaged app with isolated user data on a
+`windows-2022` runner. This is pipeline configuration and pending workflow
+evidence, not yet a Windows support or production-distribution claim.
 
 The AppImage release uses the stable local filename
 `TokenStats-linux-x86_64.AppImage`. The main process synchronizes an existing

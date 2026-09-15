@@ -25,6 +25,8 @@
     "package:linux": "pnpm build && electron-builder --linux AppImage --publish never",
     "package:linux:release": "pnpm build && electron-builder --linux AppImage --publish always",
     "package:linux:rpm": "pnpm build && electron-builder --linux rpm --publish never",
+    "package:win": "pnpm build && electron-builder --win nsis --x64 --publish never",
+    "package:win:release": "pnpm build && electron-builder --win nsis --x64 --publish always",
     "package:mac:arm64": "bash scripts/create-macos-icon.sh && pnpm build && electron-builder --mac zip --arm64 --publish never",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -64,7 +66,8 @@
     "files": [
       "out/**",
       "package.json",
-      "assets/icons/64x64.png"
+      "assets/icons/64x64.png",
+      "assets/icons/TokenStats.ico"
     ],
     "linux": {
       "target": [
@@ -101,6 +104,21 @@
       "identity": "-",
       "files": [
         "!node_modules/better-sqlite3/prebuilds/{darwin-x64,linux-arm64,linux-x64,linuxmusl-arm64,linuxmusl-x64,win32-arm64,win32-x64}.node"
+      ],
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icons/TokenStats.ico",
+      "files": [
+        "!node_modules/better-sqlite3/prebuilds/{darwin-arm64,darwin-x64,linux-arm64,linux-x64,linuxmusl-arm64,linuxmusl-x64,win32-arm64}.node"
       ],
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     }
