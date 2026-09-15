@@ -2,7 +2,8 @@
 
 ## Current repository state
 
-- The workspace is initialized as a Git repository on the `main` branch.
+- The repository uses `main` as its default branch; feature work is performed
+  on dedicated branches.
 - The implemented Fedora/Electron slice uses `src/main/`, `src/preload/`,
   `src/renderer/`, `src/shared/`, and `tests/`; official documentation remains
   in `docs/`, while `ideas/` remains exploratory.
@@ -12,14 +13,19 @@
   `pnpm release:check-version` (with `--stable-only` for Stable tags),
   `pnpm package:unpacked`, `pnpm package:linux` (portable AppImage),
   `pnpm package:linux:release` (AppImage plus GitHub updater metadata),
-  `pnpm package:linux:rpm` (Fedora installable RPM), and the macOS-only
+  `pnpm package:linux:rpm` (Fedora installable RPM),
+  `pnpm package:win` (Windows x64 NSIS installer),
+  `pnpm package:win:release` (Windows installer plus GitHub release metadata),
+  and the macOS-only
   `pnpm package:mac:arm64` ad-hoc-signed, unnotarized ZIP validation command. The manual
   `.github/workflows/macos-arm64-validation.yml` workflow targets `macos-15`
   arm64 runner validates the host, binaries/native module, ad-hoc signature, and
   isolated launch before uploading an internal ZIP plus SHA-256 manifest; run
   `31606807111` passed on GitHub. Local `.github/workflows/ci.yml` and
-  `.github/workflows/release.yml` workflows now run Linux verification and
-  tag-driven draft-release preparation. GitHub CI and the tag-driven `v0.1.0`
+  `.github/workflows/release.yml` workflows now define Linux verification and
+  tag-driven draft-release preparation, including Windows x64 package and
+  installer smoke jobs; Windows CI run `34980761042` passed the Windows test,
+  packaging, and isolated launch smoke path. GitHub CI and the tag-driven `v0.1.0`
   release run have passed; `v0.1.0` is published with the Linux AppImage,
   macOS arm64 ZIP, and combined SHA-256 manifest. `electron-updater` now
   implements explicit check, download, and install/restart behavior for
@@ -29,8 +35,9 @@
   the same path. `v0.1.4` uses a stable local AppImage filename and synchronizes
   existing user desktop launchers when the updater changes the AppImage path;
   RPM launcher integration remains package-manager-owned.
-  RPM, macOS ZIP, clean-machine validation, and broader distribution readiness
-  remain unverified; publication does not establish those claims.
+  RPM, Windows clean-machine/support, macOS ZIP, clean-machine validation, and broader
+  distribution readiness remain unverified; publication does not establish those
+  claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
   `turn_context.payload.model` and Codex thread settings,
@@ -80,8 +87,9 @@
   selected period, custom range, and chart type are persisted in renderer
   `localStorage` across refreshes and application restarts. The renderer also
   displays the live Electron application version beside the logo.
-- The BrowserWindow and Linux packaged application use the committed
-  `assets/icons/64x64.png` T-and-graph icon for the window/taskbar identity;
+- The BrowserWindow and packaged application use the committed
+  `assets/icons/64x64.png` T-and-graph icon for the runtime window/tray identity;
+  Windows packaging also uses the generated `assets/icons/TokenStats.ico`;
   the runtime asset is included in the packaged app. Closing the main window
   hides it to the tray; the tray hover tooltip shows the app name and, once
   usage is imported, the observed token totals for today and the current
@@ -195,8 +203,11 @@ readiness.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
-   `pnpm release:check-version --stable-only -- v0.1.4`,
-  `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
+  `pnpm release:check-version --stable-only -- v0.1.4`,
+  `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:win`
+  and `scripts/validate-windows-package.ps1` on a Windows runner; the current
+  Fedora host cannot execute that validation. Windows CI run `34980761042`
+  passed these Windows checks. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until
   actually run. The published `v0.1.4` AppImage has been checksum-verified and

@@ -120,7 +120,8 @@ describe('window and tray lifecycle', () => {
   let directory: string
   let window: InstanceType<typeof mocks.BrowserWindow>
   let tray: InstanceType<typeof mocks.Tray>
-  const originalEnvironment = { HOME: process.env.HOME, XDG_DATA_HOME: process.env.XDG_DATA_HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR, COPILOT_HOME: process.env.COPILOT_HOME, COPILOT_OTEL_FILE_EXPORTER_PATH: process.env.COPILOT_OTEL_FILE_EXPORTER_PATH }
+  const isLinux = process.platform === 'linux'
+  const originalEnvironment = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE, XDG_DATA_HOME: process.env.XDG_DATA_HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR, COPILOT_HOME: process.env.COPILOT_HOME, COPILOT_OTEL_FILE_EXPORTER_PATH: process.env.COPILOT_OTEL_FILE_EXPORTER_PATH }
   const originalAppImage = process.env.APPIMAGE
 
   const menuLabels = (): string[] => tray.contextMenu?.template
@@ -130,18 +131,23 @@ describe('window and tray lifecycle', () => {
   beforeAll(async () => {
     directory = mkdtempSync(join(tmpdir(), 'tokenstats-window-tray-'))
     process.env.HOME = directory
+    if (process.platform === 'win32') process.env.USERPROFILE = directory
     process.env.XDG_DATA_HOME = join(directory, '.local', 'share')
     process.env.CLAUDE_CONFIG_DIR = join(directory, '.claude')
     process.env.COPILOT_HOME = join(directory, '.copilot')
     process.env.COPILOT_OTEL_FILE_EXPORTER_PATH = join(directory, 'copilot-otel.jsonl')
-    const appImagePath = join(directory, 'TokenStats.AppImage')
-    writeFileSync(appImagePath, 'test appimage')
-    chmodSync(appImagePath, 0o755)
-    const dataHome = process.env.XDG_DATA_HOME as string
-    const applications = join(dataHome, 'applications')
-    mkdirSync(applications, { recursive: true })
-    writeFileSync(join(applications, 'local.tokenstats.app.desktop'), '[Desktop Entry]\nName=TokenStats\nExec=/tmp/TokenStats-0.1.3-linux-x86_64.AppImage %U\n')
-    process.env.APPIMAGE = appImagePath
+    if (isLinux) {
+      const appImagePath = join(directory, 'TokenStats.AppImage')
+      writeFileSync(appImagePath, 'test appimage')
+      chmodSync(appImagePath, 0o755)
+      const dataHome = process.env.XDG_DATA_HOME as string
+      const applications = join(dataHome, 'applications')
+      mkdirSync(applications, { recursive: true })
+      writeFileSync(join(applications, 'local.tokenstats.app.desktop'), '[Desktop Entry]\nName=TokenStats\nExec=/tmp/TokenStats-0.1.3-linux-x86_64.AppImage %U\n')
+      process.env.APPIMAGE = appImagePath
+    } else {
+      delete process.env.APPIMAGE
+    }
     mocks.app.getPath.mockReturnValue(directory)
     const { TokenDatabase } = await import('../src/main/database')
     vi.spyOn(TokenDatabase.prototype, 'close')
@@ -152,6 +158,7 @@ describe('window and tray lifecycle', () => {
   })
 
   afterAll(() => {
+    mocks.app.quit()
     for (const [key, value] of Object.entries(originalEnvironment)) {
       if (value === undefined) delete process.env[key]
       else process.env[key] = value
@@ -165,7 +172,7 @@ describe('window and tray lifecycle', () => {
     expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats')
   })
 
-  it('keeps the user desktop launcher on the current AppImage path', () => {
+  it.skipIf(!isLinux)('keeps the user desktop launcher on the current AppImage path', () => {
     const desktopPath = join(process.env.XDG_DATA_HOME as string, 'applications', 'local.tokenstats.app.desktop')
     expect(readFileSync(desktopPath, 'utf8')).toContain(`Exec="${join(directory, 'TokenStats.AppImage')}" %U`)
   })
@@ -190,7 +197,7 @@ describe('window and tray lifecycle', () => {
     expect(menuLabels()).toEqual(['Hide window', 'Exit TokenStats'])
   })
 
-  it('changes the tray action from download to install and restart', async () => {
+  it.skipIf(!isLinux)('changes the tray action from download to install and restart', async () => {
     mocks.autoUpdater.emit('update-available', { version: '0.1.1' })
     expect(menuLabels()).toContain('Update available — v0.1.1')
 

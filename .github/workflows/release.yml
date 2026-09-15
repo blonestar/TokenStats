@@ -87,3 +87,85 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber
+
+  windows-release:
+    needs: draft-release
+    runs-on: windows-2022
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install pnpm
+        shell: pwsh
+        run: npm install --global pnpm@11.7.0
+      - name: Install dependencies from lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Validate tag version
+        shell: pwsh
+        run: pnpm release:check-version --stable-only -- "$env:GITHUB_REF_NAME"
+      - name: Package and publish Windows x64 NSIS installer
+        run: pnpm package:win:release
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Verify Windows updater manifest
+        shell: pwsh
+        run: |
+          $manifestPath = Join-Path $env:GITHUB_WORKSPACE 'dist/latest.yml'
+          if (-not (Test-Path -LiteralPath $manifestPath)) {
+            throw 'latest.yml was not produced for the Windows release.'
+          }
+          $manifest = Get-Content -LiteralPath $manifestPath -Raw
+          $match = [regex]::Match($manifest, 'files:\s*-\s*url:\s*(\S+)\s+sha512:\s*(\S+)', [Text.RegularExpressions.RegexOptions]::Singleline)
+          if (-not $match.Success) {
+            throw 'latest.yml has no Windows file SHA-512 entry.'
+          }
+          $artifactPath = Join-Path (Split-Path -Parent $manifestPath) $match.Groups[1].Value
+          if (-not (Test-Path -LiteralPath $artifactPath)) {
+            throw "latest.yml points to a missing artifact: $artifactPath"
+          }
+          $sha512 = [Security.Cryptography.SHA512]::Create()
+          try {
+            $actual = [Convert]::ToBase64String($sha512.ComputeHash([IO.File]::ReadAllBytes($artifactPath)))
+          }
+          finally {
+            $sha512.Dispose()
+          }
+          if ($actual -ne $match.Groups[2].Value) {
+            throw 'latest.yml SHA-512 does not match the Windows installer.'
+          }
+      - name: Install and smoke-test Windows package
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path dist -Filter 'TokenStats-*-win-x64.exe' -File | Select-Object -First 1
+          if ($null -eq $installer) {
+            throw 'Windows x64 NSIS installer was not produced.'
+          }
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/validate-windows-package.ps1') -InstallerPath $installer.FullName
+      - name: Create and verify Windows checksum manifest
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path dist -Filter 'TokenStats-*-win-x64.exe' -File | Select-Object -First 1
+          if ($null -eq $installer) {
+            throw 'Windows installer is missing for checksum generation.'
+          }
+          $hash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $manifestPath = Join-Path $env:GITHUB_WORKSPACE 'dist/SHA256SUMS-windows.txt'
+          "$hash  $($installer.Name)" | Set-Content -LiteralPath $manifestPath -Encoding ascii
+          $check = Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256
+          if ($check.Hash.ToLowerInvariant() -ne $hash) {
+            throw 'Windows checksum verification failed.'
+          }
+      - name: Add Windows checksum manifest to draft GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$env:GITHUB_REF_NAME" dist/SHA256SUMS-windows.txt --clobber

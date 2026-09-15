@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { currentSources, providerModules, sourceDefinitions } from '../src/main/providers/registry'
+import { join } from 'node:path'
 
 describe('provider registry', () => {
   it('keeps module, source, and provider identities unique', () => {
@@ -23,9 +24,9 @@ describe('provider registry', () => {
       { providerId: 'copilot', sourceId: 'copilot-current-user', parserVersion: 'copilot-events-v3-otel' }
     ])
     expect(sources.map((source) => source.root)).toEqual([
-      '/current-user/.codex/sessions',
-      '/claude-config/projects',
-      '/copilot-home/session-state'
+      join('/current-user', '.codex', 'sessions'),
+      join('/claude-config', 'projects'),
+      join('/copilot-home', 'session-state')
     ])
     expect(sources.every((source) => typeof source.scan === 'function')).toBe(true)
   })
