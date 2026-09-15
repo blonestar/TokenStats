@@ -40,10 +40,10 @@ after the user clicks, followed by a separate install-and-restart action. RPM
 and the current macOS ZIP are not covered by this updater path.
 
 The repository also configures a Windows x64 NSIS package in CI and the
-tag-driven release pipeline. The Windows job is configured to install the
-generated installer and launch the packaged app with isolated user data on a
-`windows-2022` runner. This is pipeline configuration and pending workflow
-evidence, not yet a Windows support or production-distribution claim.
+tag-driven release pipeline. Windows CI run `34980761042` installed the
+generated installer and launched the packaged app with isolated user data on a
+`windows-2022` runner. This is packaged pipeline evidence, not yet a full
+Windows support or production-distribution claim.
 
 The AppImage release uses the stable local filename
 `TokenStats-linux-x86_64.AppImage`. The main process synchronizes an existing

@@ -1,4 +1,4 @@
-Status: Implemented Linux AppImage update slice and Windows release-pipeline configuration; Windows runtime and distribution validation remain pending
+Status: Implemented Linux AppImage update slice and verified Windows release-pipeline smoke path; Windows clean-machine and distribution validation remain pending
 
 Audience: maintainers, release engineers, platform testers, security reviewers, and contributors working on packaging
 
@@ -16,9 +16,9 @@ a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
 have passed; the published internal `v0.1.0` release contains both platform
 artifacts plus a combined checksum manifest, while published `v0.1.4` contains
 the Linux AppImage, updater manifest, and checksum manifest. The Windows
-workflow is configured to build, install, and launch-smoke-test the NSIS
-installer on `windows-2022`, but that workflow has not yet supplied runtime
-evidence in this change. The updater is wired to
+workflow builds, installs, and launch-smoke-tests the NSIS installer on
+`windows-2022`; CI run `34980761042` passed that packaged smoke path.
+Clean-machine support and distribution evidence remain separate. The updater is wired to
 the Stable GitHub feed for packaged Linux AppImages: automatic checks are
 enabled at startup and every six hours by default, with enablement, startup,
 and 1/6/12/24-hour interval controls in Settings. It downloads only after an
@@ -83,7 +83,7 @@ The proposed artifact set is:
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
-| Windows x64 preview | versioned NSIS `.exe` installer | Built and smoke-tested by the Windows CI/release jobs when they run; clean-machine support, signing, and Windows updater behavior remain unverified. |
+| Windows x64 preview | versioned NSIS `.exe` installer | Windows CI run `34980761042` built, installed, and launch-smoke-tested it; clean-machine support, signing, and Windows updater behavior remain unverified. |
 
 Release metadata and checksums must identify the version, platform, and
 architecture. The AppImage's installed local filename is intentionally stable
