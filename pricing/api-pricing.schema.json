@@ -41,6 +41,7 @@
         "inputTokens": { "type": "number", "minimum": 0 },
         "cachedInputTokens": { "type": "number", "minimum": 0 },
         "cacheWriteInputTokens": { "type": "number", "minimum": 0 },
+        "cacheWriteOneHourInputTokens": { "type": "number", "minimum": 0 },
         "outputTokens": { "type": "number", "minimum": 0 },
         "reasoningOutputTokens": { "type": "number", "minimum": 0 }
       }

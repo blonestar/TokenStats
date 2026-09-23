@@ -6,6 +6,7 @@ type PricingRates = {
   inputTokens?: number
   cachedInputTokens?: number
   cacheWriteInputTokens?: number
+  cacheWriteOneHourInputTokens?: number
   outputTokens?: number
   reasoningOutputTokens?: number
 }
@@ -24,7 +25,7 @@ type PricingSnapshot = {
   models: PricingModel[]
 }
 type PricingCatalog = { format: string; formatVersion: number; snapshots: PricingSnapshot[] }
-type PricingEvent = Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens'>
+type PricingEvent = Pick<UsageEvent, 'sourceId' | 'model' | 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'cacheWriteOneHourInputTokens' | 'reasoningOutputTokens'>
 type MutableCost = { amountUsd: number; pricedEvents: number; totalEvents: number; snapshotIds: Set<string>; pricingSnapshotIds: Set<string> }
 
 const pricingCatalog = catalog as PricingCatalog
@@ -77,18 +78,22 @@ export function estimateEventCost(event: PricingEvent): EventCost | null {
   const outputTokens = validCount(event.outputTokens, true)
   const cachedInputTokens = validCount(event.cachedInputTokens, false)
   const cacheWriteInputTokens = validCount(event.cacheWriteInputTokens, false)
+  const detailedOneHourInputTokens = event.cacheWriteOneHourInputTokens == null ? null : validCount(event.cacheWriteOneHourInputTokens, true)
   const reasoningOutputTokens = validCount(event.reasoningOutputTokens, false)
   if (!model || inputTokens === null || outputTokens === null || cachedInputTokens === null || cacheWriteInputTokens === null || reasoningOutputTokens === null) return null
-  if (cachedInputTokens + cacheWriteInputTokens > inputTokens || reasoningOutputTokens > outputTokens) return null
+  if ((event.cacheWriteOneHourInputTokens != null && detailedOneHourInputTokens === null) || (detailedOneHourInputTokens !== null && detailedOneHourInputTokens > cacheWriteInputTokens) || cachedInputTokens + cacheWriteInputTokens > inputTokens || reasoningOutputTokens > outputTokens) return null
   const tier = tierFor(model, inputTokens)
   if (!tier || snapshot.unit.metric !== 'tokens' || snapshot.unit.quantity <= 0) return null
   const uncachedInputTokens = inputTokens - cachedInputTokens - cacheWriteInputTokens
+  const cacheWriteOneHourTokens = detailedOneHourInputTokens ?? 0
+  const cacheWriteStandardTokens = cacheWriteInputTokens - cacheWriteOneHourTokens
   const inputRate = rateValue(tier.rates.inputTokens, uncachedInputTokens)
   const cachedRate = rateValue(tier.rates.cachedInputTokens, cachedInputTokens)
-  const cacheWriteRate = rateValue(tier.rates.cacheWriteInputTokens, cacheWriteInputTokens)
+  const cacheWriteRate = rateValue(tier.rates.cacheWriteInputTokens, cacheWriteStandardTokens)
+  const cacheWriteOneHourRate = rateValue(tier.rates.cacheWriteOneHourInputTokens, cacheWriteOneHourTokens)
   const outputRate = rateValue(tier.rates.outputTokens, outputTokens)
-  if (inputRate === null || cachedRate === null || cacheWriteRate === null || outputRate === null) return null
-  const amountUsd = (uncachedInputTokens * inputRate + cachedInputTokens * cachedRate + cacheWriteInputTokens * cacheWriteRate + outputTokens * outputRate) / snapshot.unit.quantity
+  if (inputRate === null || cachedRate === null || cacheWriteRate === null || cacheWriteOneHourRate === null || outputRate === null) return null
+  const amountUsd = (uncachedInputTokens * inputRate + cachedInputTokens * cachedRate + cacheWriteStandardTokens * cacheWriteRate + cacheWriteOneHourTokens * cacheWriteOneHourRate + outputTokens * outputRate) / snapshot.unit.quantity
   return Number.isFinite(amountUsd) ? { amountUsd, snapshotId: snapshot.id } : null
 }
 

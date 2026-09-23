@@ -20,7 +20,7 @@ describe('provider registry', () => {
 
     expect(sources.map((source) => ({ providerId: source.providerId, sourceId: source.sourceId, parserVersion: source.parserVersion }))).toEqual([
       { providerId: 'codex', sourceId: 'codex-current-user', parserVersion: 'codex-jsonl-v3' },
-      { providerId: 'claude', sourceId: 'claude-current-user', parserVersion: 'claude-jsonl-v2' },
+      { providerId: 'claude', sourceId: 'claude-current-user', parserVersion: 'claude-jsonl-v4' },
       { providerId: 'copilot', sourceId: 'copilot-current-user', parserVersion: 'copilot-events-v3-otel' }
     ])
     expect(sources.map((source) => source.root)).toEqual([

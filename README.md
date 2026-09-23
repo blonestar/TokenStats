@@ -54,7 +54,7 @@ pnpm dev
 pnpm test
 pnpm typecheck
 pnpm build
-pnpm release:check-version --stable-only -- v0.1.5
+pnpm release:check-version --stable-only -- v0.1.6
 pnpm package:linux
 pnpm package:linux:rpm
 # Run on a Windows runner for the NSIS installer:
