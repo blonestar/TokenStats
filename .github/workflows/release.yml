@@ -169,3 +169,72 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$env:GITHUB_REF_NAME" dist/SHA256SUMS-windows.txt --clobber
+
+  macos-release:
+    needs: draft-release
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install pnpm
+        run: npm install --global pnpm@11.7.0
+      - name: Assert native Apple Silicon runner
+        run: test "$(uname -m)" = arm64
+      - name: Install dependencies from lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Validate tag version
+        run: pnpm release:check-version --stable-only -- "$GITHUB_REF_NAME"
+      - name: Package macOS arm64 ZIP
+        run: pnpm package:mac:arm64
+      - name: Validate packaged macOS arm64 app
+        run: bash scripts/validate-macos-arm64.sh
+      - name: Create and verify macOS checksum manifest
+        run: |
+          cd dist
+          shasum -a 256 TokenStats-*-mac-arm64.zip > SHA256SUMS-mac-arm64.txt
+          shasum -a 256 --check SHA256SUMS-mac-arm64.txt
+      - name: Add macOS arm64 artifact to draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/TokenStats-*-mac-arm64.zip dist/SHA256SUMS-mac-arm64.txt --clobber
+
+  release-ready:
+    needs: [draft-release, windows-release, macos-release]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Verify all three platform release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          assets="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')"
+          required_assets=(
+            "TokenStats-linux-x86_64.AppImage"
+            "latest-linux.yml"
+            "SHA256SUMS.txt"
+            "TokenStats-${version}-win-x64.exe"
+            "latest.yml"
+            "SHA256SUMS-windows.txt"
+            "TokenStats-${version}-mac-arm64.zip"
+            "SHA256SUMS-mac-arm64.txt"
+          )
+          for asset in "${required_assets[@]}"; do
+            if ! grep -Fxq "$asset" <<<"$assets"; then
+              echo "Missing required release asset: $asset" >&2
+              exit 1
+            fi
+          done
+          echo "All Linux, Windows, and macOS arm64 release assets are present."

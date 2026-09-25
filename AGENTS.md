@@ -23,9 +23,10 @@
   isolated launch before uploading an internal ZIP plus SHA-256 manifest; run
   `31606807111` passed on GitHub. Local `.github/workflows/ci.yml` and
   `.github/workflows/release.yml` workflows now define Linux verification and
-  tag-driven draft-release preparation, including Windows x64 package and
-  installer smoke jobs; Windows CI run `34980761042` passed the Windows test,
-  packaging, and isolated launch smoke path. GitHub CI and the tag-driven `v0.1.0`
+  tag-driven draft-release preparation, including Windows x64 and macOS arm64
+  release jobs plus a final all-three-platform asset gate; Windows CI run
+  `34980761042` passed the Windows test, packaging, and isolated launch smoke
+  path. GitHub CI and the tag-driven `v0.1.0`
   release run have passed; `v0.1.0` is published with the Linux AppImage,
   macOS arm64 ZIP, and combined SHA-256 manifest. `electron-updater` now
   implements explicit check, download, and install/restart behavior for
@@ -35,8 +36,8 @@
   the same path. `v0.1.4` uses a stable local AppImage filename and synchronizes
   existing user desktop launchers when the updater changes the AppImage path;
   RPM launcher integration remains package-manager-owned.
-  RPM, Windows clean-machine/support, macOS ZIP, clean-machine validation, and broader
-  distribution readiness remain unverified; publication does not establish those
+  RPM, Windows clean-machine/support, macOS clean-machine/production support,
+  and broader distribution readiness remain unverified; publication does not establish those
   claims.
 - The Codex parser is `codex-jsonl-v3`: it ingests only per-event
   `last_token_usage`, tracks bounded model metadata from
@@ -216,7 +217,8 @@ readiness.
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:win`
   and `scripts/validate-windows-package.ps1` on a Windows runner; the current
   Fedora host cannot execute that validation. Windows CI run `34980761042`
-  passed these Windows checks. Run `pnpm package:mac:arm64` only on macOS; it generates the ignored
+  passed these Windows checks. Run `pnpm package:mac:arm64` on macOS for manual
+  validation or use the Stable macOS release job; it generates the ignored
   `assets/icons/TokenStats.icns` from committed PNG sources with
   `scripts/create-macos-icon.sh`. Do not claim any command passed until
   actually run. The published `v0.1.4` AppImage has been checksum-verified and
