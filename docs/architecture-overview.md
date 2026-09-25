@@ -4,7 +4,7 @@ Audience: contributors, architecture reviewers, security reviewers, and maintain
 
 Source of truth: this document for the proposed system boundaries; unresolved alternatives are tracked in ../ideas/00-open-questions.md and the numbered idea notes
 
-Last reviewed: 2026-08-14
+Last reviewed: 2026-09-23
 
 # TokenStats architecture overview
 
@@ -181,7 +181,7 @@ ingestion-store contract. `TokenDatabase` owns SQL transactions, deduplication,
 cursors, inclusion/reconciliation state, scan history, and dashboard reads.
 Provider migrations are supplied by the registry with stable IDs and explicit
 versions, tracked in a non-content ledger, so a provider migration can be
-added after the global schema chain has already reached version 6. The current
+added after the global schema chain has already reached version 7. The current
 example is the Claude opaque-file-ID migration. Adding a provider is currently a code change:
 implement its module, register it, add anonymized fixtures and
 contract/integration tests, and add a reviewed pricing snapshot/source mapping
@@ -221,8 +221,12 @@ validation and diagnostics.
 The implemented Fedora slice scans current-user Codex `~/.codex/sessions`,
 Claude Code `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and experimental GitHub
 Copilot `${COPILOT_HOME:-~/.copilot}/session-state`. Claude accepts only
-assistant-message usage and persists opaque file IDs rather than content or
-project/file paths. Copilot imports active CLI `assistant.message` output-token
+assistant-message usage, supports both `session_id` and `sessionId` record
+fields, and persists opaque file IDs rather than content or project/file paths.
+It normalizes Anthropic's uncached input, cache-read, and cache-write counts
+to the inclusive input total, and stores the one-hour cache-write count as
+non-content metadata when the source provides a consistent TTL breakdown.
+Copilot imports active CLI `assistant.message` output-token
 snapshots, then uses the latest persisted `session.shutdown` cumulative
 snapshot for each session/model and replaces the previous snapshot. Active
 snapshots leave input/cache fields unknown until shutdown; missing roots are

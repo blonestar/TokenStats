@@ -47,14 +47,20 @@
   compatible storage transition; schema version 4 adds the non-content
   inclusion flag and schema version 5 stores non-content OTel file metadata
   used for safe fallback reconciliation. Schema version 6 adds the
-  provider-migration ledger; the registered `claude-file-identifiers@1`
-  migration then converts any legacy Claude file references to opaque IDs.
+  provider-migration ledger; schema version 7 adds the non-content Claude
+  one-hour cache-write token count. The registered
+  `claude-file-identifiers@1` migration converts any legacy Claude file
+  references to opaque IDs.
 - Current-user scanning covers Codex `~/.codex/sessions`, Claude Code
   `${CLAUDE_CONFIG_DIR:-~/.claude}/projects`, and GitHub Copilot
   `${COPILOT_HOME:-~/.copilot}/session-state`. Copilot also reads the opt-in
   OTel JSONL file at `${COPILOT_OTEL_FILE_EXPORTER_PATH:-<copilot-home>/otel/tokenstats.jsonl}`.
-  Claude accepts assistant-message usage only and uses opaque file IDs, not
-  content or paths. Copilot imports complete OTel `chat` spans when available,
+  Claude's `claude-jsonl-v4` parser accepts assistant-message usage with either
+  `session_id` or `sessionId`, normalizes its uncached input plus cache reads
+  and writes to an inclusive input count, and stores the one-hour cache-write
+  count separately. A parser-version change resets Claude cursors and updates
+  existing events. It uses opaque file IDs, not content or paths. Copilot imports
+  complete OTel `chat` spans when available,
   suppresses the matching session-state fallback by session/model only after
   aggregate token equality, and keeps active `assistant.message` output-only
   snapshots as a fallback until a full shutdown snapshot or OTel span is
@@ -106,11 +112,14 @@
   share the main-process scan path; hidden windows remain eligible until the
   explicit tray Exit action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
-  provider/model pricing catalog. The latest 2026-09-08 snapshots contain
-  reviewed Standard API list prices for Codex-relevant OpenAI models and a
-  reviewed GitHub Copilot provider-reference snapshot; older snapshots remain
-  immutable for historical provenance. The dashboard calculates and
-  labels query-time API-equivalent estimates for complete Codex/Copilot token
+  provider/model pricing catalog. The latest OpenAI Codex snapshot is dated
+  2026-09-23 and includes GPT-6 Astra/Sol/Luna; the same date adds 18 current
+  and legacy Claude API model prices for Claude Code, including Opus 5.5 and
+  separate five-minute/one-hour cache-write rates. The GitHub Copilot
+  provider-reference snapshot remains dated 2026-09-08 and was rechecked on
+  2026-09-23 with no rate changes. Older snapshots remain immutable for
+  historical provenance. The dashboard calculates and labels query-time
+  API-equivalent estimates for complete Codex, Claude Code, and Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription
   usage must remain unknown and must not be presented as an observed bill.
 - Treat `docs/` documents as the source of accepted project documentation only
@@ -203,7 +212,7 @@ readiness.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
-  `pnpm release:check-version --stable-only -- v0.1.5`,
+  `pnpm release:check-version --stable-only -- v0.1.6`,
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:win`
   and `scripts/validate-windows-package.ps1` on a Windows runner; the current
   Fedora host cannot execute that validation. Windows CI run `34980761042`

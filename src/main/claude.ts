@@ -8,7 +8,7 @@ import type { ProviderModule } from './providers/contracts'
 import { sourceRoot } from './providers/discovery'
 
 const SOURCE_ID = 'claude-current-user'
-const PARSER_VERSION = 'claude-jsonl-v2'
+const PARSER_VERSION = 'claude-jsonl-v4'
 const SOURCE_DEFINITION: SourceDefinition = { sourceId: SOURCE_ID, providerId: 'claude', label: 'Claude Code', kind: 'claude' }
 const MAX_WARNINGS = 20
 type Json = Record<string, unknown>
@@ -19,15 +19,32 @@ const keys = [['input_tokens', 'inputTokens'], ['output_tokens', 'outputTokens']
 
 export function extractClaudeEvent(line: string, relativeFile: string, byteOffset: number): UsageEvent | null {
   const record = JSON.parse(line) as Json; const message = record.message as Json | undefined; const usage = message?.usage as Json | undefined
-  const sessionId = text(record.session_id); const occurredAt = timestamp(record.timestamp); const model = text(message?.model, 100)
+  const sessionId = text(record.session_id) ?? text(record.sessionId); const occurredAt = timestamp(record.timestamp); const model = text(message?.model, 100)
   if (record.type !== 'assistant' || !sessionId || !occurredAt || message?.role !== 'assistant' || !model || !usage) return null
   const messageId = text(message.id) ?? text(record.uuid)
   if (!messageId) return null
   const values = { inputTokens: null, outputTokens: null, cachedInputTokens: null, cacheWriteInputTokens: null, reasoningOutputTokens: null, totalTokens: null } as Pick<UsageEvent, 'inputTokens' | 'outputTokens' | 'cachedInputTokens' | 'cacheWriteInputTokens' | 'reasoningOutputTokens' | 'totalTokens'>
   let total = 0; let found = false
   for (const [source, target] of keys) { const value = safeNumber(usage[source]); if (value !== null) { values[target] = value; total += value; found = true } else if (usage[source] !== undefined) throw new Error('invalid token number') }
+  let cacheWriteOneHourInputTokens: number | null = null
+  const cacheCreation = usage.cache_creation
+  if (typeof cacheCreation === 'object' && cacheCreation !== null && !Array.isArray(cacheCreation)) {
+    const details = cacheCreation as Json
+    const hasBreakdown = details.ephemeral_5m_input_tokens !== undefined || details.ephemeral_1h_input_tokens !== undefined
+    const fiveMinute = details.ephemeral_5m_input_tokens === undefined ? 0 : safeNumber(details.ephemeral_5m_input_tokens)
+    const oneHour = details.ephemeral_1h_input_tokens === undefined ? 0 : safeNumber(details.ephemeral_1h_input_tokens)
+    if (hasBreakdown) {
+      if (fiveMinute === null || oneHour === null) throw new Error('invalid Claude cache creation breakdown')
+      const detailedTotal = fiveMinute + oneHour
+      if (!Number.isSafeInteger(detailedTotal)) throw new Error('invalid Claude cache creation breakdown')
+      if (values.cacheWriteInputTokens === null) { values.cacheWriteInputTokens = detailedTotal; total += detailedTotal; found = true }
+      if (values.cacheWriteInputTokens !== detailedTotal) throw new Error('inconsistent Claude cache creation breakdown')
+      cacheWriteOneHourInputTokens = oneHour
+    }
+  }
   if (!found) return null
-  return { ...values, totalTokens: total, eventId: createHash('sha256').update(`claude\0${sessionId}\0${messageId}`).digest('hex'), sourceId: SOURCE_ID, sessionId, occurredAt, relativeFile, byteOffset, parserVersion: PARSER_VERSION, model }
+  if (values.inputTokens !== null) values.inputTokens += (values.cachedInputTokens ?? 0) + (values.cacheWriteInputTokens ?? 0)
+  return { ...values, cacheWriteOneHourInputTokens, totalTokens: total, eventId: createHash('sha256').update(`claude\0${sessionId}\0${messageId}`).digest('hex'), sourceId: SOURCE_ID, sessionId, occurredAt, relativeFile, byteOffset, parserVersion: PARSER_VERSION, model }
 }
 
 export function opaqueClaudeFileId(relativeFile: string): string {

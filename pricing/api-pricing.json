@@ -888,6 +888,823 @@
         }
       ],
       "notes": "GitHub Copilot per-token reference rates checked against the current table, all per 1 million tokens. One GitHub AI credit equals $0.01 USD. These are not a subscription bill; included allowances, annual-plan multipliers, model availability, promotional rates, and plan-specific billing can change the effective charge. Code completions and next-edit suggestions use a separate unlimited counting mechanism and are excluded."
+    },
+    {
+      "id": "openai-codex-2026-09-23",
+      "provider": "openai",
+      "product": "codex",
+      "sourceIds": [
+        "codex-current-user"
+      ],
+      "verifiedAt": "2026-09-23",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "openai-api-pricing",
+          "url": "https://developers.openai.com/api/docs/pricing",
+          "retrievedAt": "2026-09-23"
+        },
+        {
+          "id": "openai-gpt-6-astra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.6-sol",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.6-terra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.6-luna",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.5",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.5",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.4",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.4",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-5.3-codex",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.3-codex",
+          "retrievedAt": "2026-09-08"
+        },
+        {
+          "id": "openai-gpt-6-sol",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+          "retrievedAt": "2026-09-23"
+        },
+        {
+          "id": "openai-gpt-6-luna",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "retrievedAt": "2026-09-23"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-6-astra",
+          "matchIds": [
+            "gpt-6-astra"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 50
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 20,
+                "cachedInputTokens": 2,
+                "cacheWriteInputTokens": 25,
+                "outputTokens": 75
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-6-astra"
+          ]
+        },
+        {
+          "modelId": "gpt-5.6-sol",
+          "matchIds": [
+            "gpt-5.6-sol",
+            "gpt-5.6"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 4,
+                "cachedInputTokens": 0.4,
+                "cacheWriteInputTokens": 5,
+                "outputTokens": 20
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 8,
+                "cachedInputTokens": 0.8,
+                "cacheWriteInputTokens": 10,
+                "outputTokens": 30
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-5.6-sol"
+          ]
+        },
+        {
+          "modelId": "gpt-5.6-terra",
+          "matchIds": [
+            "gpt-5.6-terra"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 2,
+                "cachedInputTokens": 0.2,
+                "cacheWriteInputTokens": 2.5,
+                "outputTokens": 12
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 4,
+                "cachedInputTokens": 0.4,
+                "cacheWriteInputTokens": 5,
+                "outputTokens": 18
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-5.6-terra"
+          ]
+        },
+        {
+          "modelId": "gpt-5.6-luna",
+          "matchIds": [
+            "gpt-5.6-luna"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 0.2,
+                "cachedInputTokens": 0.02,
+                "cacheWriteInputTokens": 0.25,
+                "outputTokens": 1.2
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 0.4,
+                "cachedInputTokens": 0.04,
+                "cacheWriteInputTokens": 0.5,
+                "outputTokens": 1.8
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-5.6-luna"
+          ]
+        },
+        {
+          "modelId": "gpt-5.5",
+          "matchIds": [
+            "gpt-5.5",
+            "gpt-5.5-2026-04-23"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "outputTokens": 30
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "outputTokens": 45
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-gpt-5.5"
+          ]
+        },
+        {
+          "modelId": "gpt-5.4",
+          "matchIds": [
+            "gpt-5.4",
+            "gpt-5.4-2026-03-05"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 2.5,
+                "cachedInputTokens": 0.25,
+                "outputTokens": 15
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "outputTokens": 22.5
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-gpt-5.4"
+          ]
+        },
+        {
+          "modelId": "gpt-5.3-codex",
+          "matchIds": [
+            "gpt-5.3-codex"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 1.75,
+                "cachedInputTokens": 0.175,
+                "outputTokens": 14
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-5.3-codex"
+          ]
+        },
+        {
+          "modelId": "gpt-6-sol",
+          "matchIds": [
+            "gpt-6-sol"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 2,
+                "cachedInputTokens": 0.2,
+                "cacheWriteInputTokens": 2.5,
+                "outputTokens": 10
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 4,
+                "cachedInputTokens": 0.4,
+                "cacheWriteInputTokens": 5,
+                "outputTokens": 15
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-6-sol"
+          ]
+        },
+        {
+          "modelId": "gpt-6-luna",
+          "matchIds": [
+            "gpt-6-luna"
+          ],
+          "tiers": [
+            {
+              "id": "short-context",
+              "minimumInputTokens": 0,
+              "maximumInputTokens": 272000,
+              "rates": {
+                "inputTokens": 0.1,
+                "cachedInputTokens": 0.01,
+                "cacheWriteInputTokens": 0.125,
+                "outputTokens": 0.5
+              }
+            },
+            {
+              "id": "long-context",
+              "minimumInputTokens": 272001,
+              "rates": {
+                "inputTokens": 0.2,
+                "cachedInputTokens": 0.02,
+                "cacheWriteInputTokens": 0.25,
+                "outputTokens": 0.75
+              }
+            }
+          ],
+          "sourceIds": [
+            "openai-api-pricing",
+            "openai-gpt-6-luna"
+          ]
+        }
+      ],
+      "notes": "Direct OpenAI Standard API list prices for text tokens, checked 2026-09-23. GPT-5.6 Sol retains its promotional Standard price, which OpenAI says is available at least through 2026-11-21. Subscription charges, tool-call fees, regional processing uplifts, Batch/Flex/Fast pricing, and third-party hosting are excluded."
+    },
+    {
+      "id": "anthropic-claude-code-2026-09-23",
+      "provider": "anthropic",
+      "product": "claude-code",
+      "sourceIds": [
+        "claude-current-user"
+      ],
+      "verifiedAt": "2026-09-23",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "anthropic-claude-api-pricing",
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "retrievedAt": "2026-09-23"
+        },
+        {
+          "id": "anthropic-models-overview",
+          "url": "https://platform.claude.com/docs/en/models/overview",
+          "retrievedAt": "2026-09-23"
+        },
+        {
+          "id": "anthropic-model-deprecations",
+          "url": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+          "retrievedAt": "2026-09-23"
+        },
+        {
+          "id": "anthropic-opus-5-5",
+          "url": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+          "retrievedAt": "2026-09-23"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "claude-opus-5-5",
+          "matchIds": [
+            "claude-opus-5-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 4,
+                "cachedInputTokens": 0.2,
+                "cacheWriteInputTokens": 5,
+                "outputTokens": 20,
+                "cacheWriteOneHourInputTokens": 8
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations",
+            "anthropic-models-overview",
+            "anthropic-opus-5-5"
+          ]
+        },
+        {
+          "modelId": "claude-sonnet-5",
+          "matchIds": [
+            "claude-sonnet-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 2,
+                "cachedInputTokens": 0.2,
+                "cacheWriteInputTokens": 2.5,
+                "outputTokens": 10,
+                "cacheWriteOneHourInputTokens": 4
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations",
+            "anthropic-models-overview"
+          ]
+        },
+        {
+          "modelId": "claude-fable-5-1",
+          "matchIds": [
+            "claude-fable-5-1"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 0.25,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 50,
+                "cacheWriteOneHourInputTokens": 20
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations",
+            "anthropic-models-overview"
+          ]
+        },
+        {
+          "modelId": "claude-opus-5",
+          "matchIds": [
+            "claude-opus-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 25,
+                "cacheWriteOneHourInputTokens": 10
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-fable-5",
+          "matchIds": [
+            "claude-fable-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 50,
+                "cacheWriteOneHourInputTokens": 20
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-mythos-5-1",
+          "matchIds": [
+            "claude-mythos-5-1"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 0.25,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 50,
+                "cacheWriteOneHourInputTokens": 20
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-mythos-5",
+          "matchIds": [
+            "claude-mythos-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 10,
+                "cachedInputTokens": 1,
+                "cacheWriteInputTokens": 12.5,
+                "outputTokens": 50,
+                "cacheWriteOneHourInputTokens": 20
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-8",
+          "matchIds": [
+            "claude-opus-4-8"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 25,
+                "cacheWriteOneHourInputTokens": 10
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-7",
+          "matchIds": [
+            "claude-opus-4-7"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 25,
+                "cacheWriteOneHourInputTokens": 10
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-6",
+          "matchIds": [
+            "claude-opus-4-6"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 25,
+                "cacheWriteOneHourInputTokens": 10
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-5-20251101",
+          "matchIds": [
+            "claude-opus-4-5-20251101",
+            "claude-opus-4-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 5,
+                "cachedInputTokens": 0.5,
+                "cacheWriteInputTokens": 6.25,
+                "outputTokens": 25,
+                "cacheWriteOneHourInputTokens": 10
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-1-20250805",
+          "matchIds": [
+            "claude-opus-4-1-20250805"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 15,
+                "cachedInputTokens": 1.5,
+                "cacheWriteInputTokens": 18.75,
+                "outputTokens": 75,
+                "cacheWriteOneHourInputTokens": 30
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-opus-4-20250514",
+          "matchIds": [
+            "claude-opus-4-20250514"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 15,
+                "cachedInputTokens": 1.5,
+                "cacheWriteInputTokens": 18.75,
+                "outputTokens": 75,
+                "cacheWriteOneHourInputTokens": 30
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-sonnet-4-6",
+          "matchIds": [
+            "claude-sonnet-4-6"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 3,
+                "cachedInputTokens": 0.3,
+                "cacheWriteInputTokens": 3.75,
+                "outputTokens": 15,
+                "cacheWriteOneHourInputTokens": 6
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-sonnet-4-5-20250929",
+          "matchIds": [
+            "claude-sonnet-4-5-20250929",
+            "claude-sonnet-4-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 3,
+                "cachedInputTokens": 0.3,
+                "cacheWriteInputTokens": 3.75,
+                "outputTokens": 15,
+                "cacheWriteOneHourInputTokens": 6
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-sonnet-4-20250514",
+          "matchIds": [
+            "claude-sonnet-4-20250514"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 3,
+                "cachedInputTokens": 0.3,
+                "cacheWriteInputTokens": 3.75,
+                "outputTokens": 15,
+                "cacheWriteOneHourInputTokens": 6
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-haiku-4-5-20251001",
+          "matchIds": [
+            "claude-haiku-4-5-20251001",
+            "claude-haiku-4-5"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 1,
+                "cachedInputTokens": 0.1,
+                "cacheWriteInputTokens": 1.25,
+                "outputTokens": 5,
+                "cacheWriteOneHourInputTokens": 2
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        },
+        {
+          "modelId": "claude-3-5-haiku-20241022",
+          "matchIds": [
+            "claude-3-5-haiku-20241022"
+          ],
+          "tiers": [
+            {
+              "id": "all-contexts",
+              "minimumInputTokens": 0,
+              "rates": {
+                "inputTokens": 0.8,
+                "cachedInputTokens": 0.08,
+                "cacheWriteInputTokens": 1,
+                "outputTokens": 4,
+                "cacheWriteOneHourInputTokens": 1.6
+              }
+            }
+          ],
+          "sourceIds": [
+            "anthropic-claude-api-pricing",
+            "anthropic-model-deprecations"
+          ]
+        }
+      ],
+      "notes": "Direct Anthropic Standard API list prices for current and legacy Claude model IDs. Cache-write estimates use the default 5-minute write rate because Claude Code records aggregate cache-creation tokens without a duration; the official 1-hour rates differ. Mythos 5 and 5.1 have limited availability. Opus 4.1, Opus 4, Sonnet 4, and Haiku 3.5 are retired on Anthropic-operated API platforms; their prices are retained for historical API-equivalent estimates. Subscription charges, batch processing, Fast mode, and US-only inference uplifts are excluded."
     }
   ]
 }

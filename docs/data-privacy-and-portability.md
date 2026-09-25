@@ -4,7 +4,7 @@ Audience: users, privacy reviewers, contributors implementing storage, and maint
 
 Source of truth: this document for data collection, storage, privacy, export/import, and migration rules; unresolved choices are tracked in ../ideas/00-open-questions.md
 
-Last reviewed: 2026-08-13
+Last reviewed: 2026-09-23
 
 # TokenStats data, privacy, and portability
 
@@ -19,9 +19,14 @@ Schema version 2 stores bounded model identifiers alongside token metadata,
 schema version 3 completes the compatible storage transition, schema version 4
 adds a non-content inclusion flag, and schema version 5 stores non-content OTel
 file metadata. Schema version 6 adds only a non-content provider-migration
-ledger; the registered `claude-file-identifiers@1` migration converts any
-legacy Claude file references to opaque IDs. Claude imports
-assistant-message usage only and stores no content or project/file path. The
+ledger, and schema version 7 adds a non-content one-hour cache-write token
+count. The registered `claude-file-identifiers@1` migration converts any
+legacy Claude file references to opaque IDs. Claude imports assistant-message
+usage only, normalizes uncached input, cache-read, and cache-write counts to
+the inclusive input total, stores the one-hour cache-write count separately,
+and stores no content or project/file path. Its `claude-jsonl-v4` parser
+version resets Claude cursors and safely updates already imported events with
+the corrected input and cache breakdown. The
 `codex-jsonl-v3` migration path resets only Codex cursors, rescans read-only
 source records, and fills missing model metadata without changing event IDs or
 counting duplicate rows as new imports. Copilot reconciles each persisted
@@ -69,7 +74,7 @@ TokenStats must not scan other OS users' profiles by default:
 
 | Category | Proposed data | Default handling |
 | --- | --- | --- |
-| Usage facts | Input, output, cached input, cache write, reasoning, total tokens, observed timestamp, and source-provided cost when available. | Store as canonical event fields when the source exposes them. Keep absent values unknown. |
+| Usage facts | Input, output, cached input, cache write (including an optional one-hour subset), reasoning, total tokens, observed timestamp, and source-provided cost when available. | Store as canonical event fields when the source exposes them. Keep absent values unknown. |
 | Grouping | Harness, provider, model, optional model version, session identity, and a project label when available without content ingestion. | Store only the minimum needed for breakdowns; project-label privacy rules remain open. |
 | Source state | Adapter identity, display label, source status, parser version, last successful scan, warnings, and cursor metadata. | Store for diagnostics and incremental scanning. |
 | Provenance | Stable source identity, file identity, bounded offset/line, normalized-event hash, and import/parser versions. | Store so an event can be audited without retaining the raw record. |

@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3'
 import type { SourceStatus, TokenUsage, Warning } from '../../shared/contracts'
 
 export type UsageEvent = TokenUsage & {
+  cacheWriteOneHourInputTokens?: number | null
   eventId: string
   sourceId: string
   sessionId: string
