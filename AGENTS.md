@@ -115,7 +115,11 @@
   provider/model pricing catalog. The latest OpenAI Codex snapshot is dated
   2026-09-23 and includes GPT-6 Astra/Sol/Luna; the same date adds 18 current
   and legacy Claude API model prices for Claude Code, including Opus 5.5 and
-  separate five-minute/one-hour cache-write rates. The GitHub Copilot
+  separate five-minute/one-hour cache-write rates. A 2026-09-25 OpenAI snapshot
+  also prices the exact `gpt-5.6-luna` model ID reported by Claude Code. Runtime
+  estimates select the latest reviewed snapshot for the exact source/model
+  pair, so a routed model price does not replace other Claude prices. The
+  GitHub Copilot
   provider-reference snapshot remains dated 2026-09-08 and was rechecked on
   2026-09-23 with no rate changes. Older snapshots remain immutable for
   historical provenance. The dashboard calculates and labels query-time

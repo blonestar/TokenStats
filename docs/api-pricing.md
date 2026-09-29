@@ -4,19 +4,20 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-09-23
+Last reviewed: 2026-09-25
 
 # API pricing catalog
 
 TokenStats stores public provider prices as reviewed, versioned data instead of
 looking them up at runtime. The catalog contains OpenAI models relevant to
-Codex, Anthropic Claude API prices for current and legacy Claude Code models,
-and GitHub Copilot per-token reference rates. Later snapshots can add
-additional provider or plan-specific rates without changing the version 1
-structure.
+Codex and exact OpenAI model identifiers reported by Claude Code, Anthropic
+API prices for current and legacy Claude Code models, and GitHub Copilot
+per-token reference rates. Later snapshots can add additional provider or
+plan-specific rates without changing the version 1 structure.
 
 Historical snapshots remain in the catalog so previously reviewed rates are not
-rewritten; the latest snapshot for each source is selected for new estimates.
+rewritten; the latest snapshot matching each exact source and model is selected
+for new estimates.
 
 The Electron main process bundles and reads the catalog for Codex, Claude Code,
 and GitHub Copilot dashboard estimates. The current slice calculates a
@@ -36,9 +37,11 @@ data remain unpriced until a complete shutdown snapshot is persisted.
   identities such as `codex-current-user` or `copilot-current-user`. Runtime
   pricing matches this field exactly; a new provider remains `unknown` until a
   reviewed snapshot explicitly maps it.
-- When multiple snapshots map one source, query-time estimates select the
-  snapshot with the greatest `verifiedAt`, then greatest `effectiveFrom`, then
-  lexicographically greatest `id` as a deterministic tie-breaker. This is a
+- When multiple snapshots map one source, query-time estimates first require an
+  exact `matchIds` entry for the event's model, then select the snapshot with
+  the greatest `verifiedAt`, greatest `effectiveFrom`, and lexicographically
+  greatest `id` as deterministic tie-breakers. A newer snapshot for one model
+  therefore does not hide another model's reviewed price. This is a
   current-catalog rule, not a historical billing assertion.
 - Every snapshot identifies the `provider`, product, verification date,
   effective date when the provider publishes one, ISO currency, billing mode,
@@ -119,6 +122,16 @@ one-hour cache-write token count separately without storing raw usage content.
 Fast-mode and US-only inference price multipliers are not represented in the
 imported token fields, so estimates assume standard speed and default/global
 routing; they are API-equivalent estimates, not observed subscription charges.
+
+## OpenAI model identifier reported by Claude Code
+
+The `openai-claude-code-2026-09-25` snapshot maps the exact `gpt-5.6-luna`
+identifier found in Claude Code's source to OpenAI Standard API list prices.
+The rates are $0.20/MTok uncached input, $0.02/MTok cached input,
+$0.25/MTok cache writes, and $1.20/MTok output through 272,000 input tokens;
+the catalog records the official long-context tier separately. This is an
+API-equivalent estimate for the observed model ID. It does not establish which
+proxy, subscription, or account handled billing.
 
 ## Current GitHub Copilot snapshot
 

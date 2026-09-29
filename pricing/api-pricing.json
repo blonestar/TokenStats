@@ -1705,6 +1705,34 @@
         }
       ],
       "notes": "Direct Anthropic Standard API list prices for current and legacy Claude model IDs. Cache-write estimates use the default 5-minute write rate because Claude Code records aggregate cache-creation tokens without a duration; the official 1-hour rates differ. Mythos 5 and 5.1 have limited availability. Opus 4.1, Opus 4, Sonnet 4, and Haiku 3.5 are retired on Anthropic-operated API platforms; their prices are retained for historical API-equivalent estimates. Subscription charges, batch processing, Fast mode, and US-only inference uplifts are excluded."
+    },
+    {
+      "id": "openai-claude-code-2026-09-25",
+      "provider": "openai",
+      "product": "api",
+      "sourceIds": ["claude-current-user"],
+      "verifiedAt": "2026-09-25",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": { "metric": "tokens", "quantity": 1000000 },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        { "id": "openai-api-pricing", "url": "https://developers.openai.com/api/docs/pricing", "retrievedAt": "2026-09-25" },
+        { "id": "openai-gpt-5.6-luna", "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna", "retrievedAt": "2026-09-25" }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-5.6-luna",
+          "matchIds": ["gpt-5.6-luna"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": { "inputTokens": 0.2, "cachedInputTokens": 0.02, "cacheWriteInputTokens": 0.25, "outputTokens": 1.2 } },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": { "inputTokens": 0.4, "cachedInputTokens": 0.04, "cacheWriteInputTokens": 0.5, "outputTokens": 1.8 } }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-5.6-luna"]
+        }
+      ],
+      "notes": "Direct OpenAI Standard API list prices applied as an API-equivalent estimate to the exact GPT-5.6 Luna model identifier recorded by Claude Code. This does not identify the actual billing product or represent a subscription or proxy charge."
     }
   ]
 }
