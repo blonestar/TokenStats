@@ -30,15 +30,15 @@ type MutableCost = { amountUsd: number; pricedEvents: number; totalEvents: numbe
 
 const pricingCatalog = catalog as PricingCatalog
 
-type SnapshotSelection = Pick<PricingSnapshot, 'id' | 'sourceIds' | 'verifiedAt' | 'effectiveFrom'>
+type SnapshotSelection = Pick<PricingSnapshot, 'id' | 'sourceIds' | 'verifiedAt' | 'effectiveFrom'> & { models?: readonly Pick<PricingModel, 'matchIds'>[] }
 
-export function selectLatestSnapshotForSource<T extends SnapshotSelection>(snapshots: readonly T[], sourceId: string): T | undefined {
-  return snapshots.filter((snapshot) => snapshot.sourceIds.includes(sourceId)).sort((left, right) => right.verifiedAt.localeCompare(left.verifiedAt) || (right.effectiveFrom ?? '').localeCompare(left.effectiveFrom ?? '') || right.id.localeCompare(left.id))[0]
+export function selectLatestSnapshotForSource<T extends SnapshotSelection>(snapshots: readonly T[], sourceId: string, modelId?: string): T | undefined {
+  return snapshots.filter((snapshot) => snapshot.sourceIds.includes(sourceId) && (modelId === undefined || snapshot.models?.some((model) => model.matchIds.includes(modelId)) === true)).sort((left, right) => right.verifiedAt.localeCompare(left.verifiedAt) || (right.effectiveFrom ?? '').localeCompare(left.effectiveFrom ?? '') || right.id.localeCompare(left.id))[0]
 }
 
-function snapshotForSource(sourceId: string): PricingSnapshot | undefined {
+function snapshotForSource(sourceId: string, modelId: string): PricingSnapshot | undefined {
   if (pricingCatalog.format !== 'tokenstats-api-pricing' || pricingCatalog.formatVersion !== 1) return undefined
-  return selectLatestSnapshotForSource(pricingCatalog.snapshots, sourceId)
+  return selectLatestSnapshotForSource(pricingCatalog.snapshots, sourceId, modelId)
 }
 
 function snapshotInfo(snapshot: PricingSnapshot): PricingSnapshotInfo {
@@ -60,7 +60,7 @@ function modelFor(snapshot: PricingSnapshot, modelId: string): PricingModel | un
 }
 
 function snapshotForEvent(event: PricingEvent): PricingSnapshot | undefined {
-  const snapshot = snapshotForSource(event.sourceId)
+  const snapshot = snapshotForSource(event.sourceId, event.model)
   return snapshot && modelFor(snapshot, event.model) ? snapshot : undefined
 }
 
@@ -71,7 +71,7 @@ function tierFor(model: PricingModel, inputTokens: number): PricingTier | undefi
 export type EventCost = { amountUsd: number; snapshotId: string }
 
 export function estimateEventCost(event: PricingEvent): EventCost | null {
-  const snapshot = snapshotForSource(event.sourceId)
+  const snapshot = snapshotForEvent(event)
   if (!snapshot || snapshot.currency !== 'USD') return null
   const model = modelFor(snapshot, event.model)
   const inputTokens = validCount(event.inputTokens, true)
