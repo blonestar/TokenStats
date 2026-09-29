@@ -116,7 +116,9 @@
   2026-09-23 and includes GPT-6 Astra/Sol/Luna; the same date adds 18 current
   and legacy Claude API model prices for Claude Code, including Opus 5.5 and
   separate five-minute/one-hour cache-write rates. A 2026-09-25 OpenAI snapshot
-  also prices the exact `gpt-5.6-luna` model ID reported by Claude Code. Runtime
+  also prices the exact `gpt-5.6-luna` model ID reported by Claude Code, and a
+  2026-09-29 Anthropic snapshot adds Claude Sonnet 5.5 (`claude-sonnet-5-5`,
+  including five-minute/one-hour cache-write rates). Runtime
   estimates select the latest reviewed snapshot for the exact source/model
   pair, so a routed model price does not replace other Claude prices. The
   GitHub Copilot

@@ -65,6 +65,11 @@ describe('pricing estimates', () => {
     expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-opus-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 21, outputTokens: 50, reasoningOutputTokens: null }))).toBeNull()
   })
 
+  it('prices the new Claude Code Sonnet 5.5 model without hiding older Claude prices', () => {
+    expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-sonnet-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000722, snapshotId: 'anthropic-claude-code-2026-09-29' })
+    expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-opus-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null }))?.snapshotId).toBe('anthropic-claude-code-2026-09-23')
+  })
+
   it('prices the current Astra model and refreshed Sol rate', () => {
     expect(estimateEventCost(event({ model: 'gpt-6-astra', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.00191, snapshotId: 'openai-codex-2026-09-23' })
     expect(estimateEventCost(event({ model: 'gpt-6-luna', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.0000191, snapshotId: 'openai-codex-2026-09-23' })

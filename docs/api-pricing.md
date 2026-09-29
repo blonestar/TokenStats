@@ -4,7 +4,7 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-09-25
+Last reviewed: 2026-09-29
 
 # API pricing catalog
 
@@ -122,6 +122,20 @@ one-hour cache-write token count separately without storing raw usage content.
 Fast-mode and US-only inference price multipliers are not represented in the
 imported token fields, so estimates assume standard speed and default/global
 routing; they are API-equivalent estimates, not observed subscription charges.
+
+## Claude Sonnet 5.5 snapshot
+
+The `anthropic-claude-code-2026-09-29` snapshot adds the exact
+`claude-sonnet-5-5` model ID, released by Anthropic on 2026-09-28, to Claude
+Code's `claude-current-user` source. Its Standard API list prices are $2/MTok
+input, $0.20/MTok cached input, $2.50/MTok five-minute cache writes, $4/MTok
+one-hour cache writes, and $10/MTok output across the full 1M context window.
+The rates were checked on 2026-09-29 against the
+[official Anthropic pricing page](https://platform.claude.com/docs/en/about-claude/pricing)
+and the [Sonnet 5.5 model overview](https://platform.claude.com/docs/en/models/sonnet-5-5/overview).
+Because runtime selection requires an exact model match, the earlier
+`anthropic-claude-code-2026-09-23` snapshot continues to price the other
+Claude models.
 
 ## OpenAI model identifier reported by Claude Code
 
