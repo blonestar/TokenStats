@@ -118,12 +118,15 @@
   separate five-minute/one-hour cache-write rates. A 2026-09-25 OpenAI snapshot
   also prices the exact `gpt-5.6-luna` model ID reported by Claude Code, and a
   2026-09-29 Anthropic snapshot adds Claude Sonnet 5.5 (`claude-sonnet-5-5`,
-  including five-minute/one-hour cache-write rates). Runtime
+  including five-minute/one-hour cache-write rates). A 2026-09-30 OpenAI
+  snapshot adds `gpt-6.1-sol` for Codex, and a 2026-09-30 Copilot snapshot adds
+  GPT-6.1 Sol, GPT-6 Sol/Luna, Claude Sonnet 5.5/Opus 5.5, and Grok 4.7
+  reference rates. Runtime
   estimates select the latest reviewed snapshot for the exact source/model
   pair, so a routed model price does not replace other Claude prices. The
   GitHub Copilot
-  provider-reference snapshot remains dated 2026-09-08 and was rechecked on
-  2026-09-23 with no rate changes. Older snapshots remain immutable for
+  base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-09-23
+  with no rate changes) and is extended only by the 2026-09-30 additions. Older snapshots remain immutable for
   historical provenance. The dashboard calculates and labels query-time
   API-equivalent estimates for complete Codex, Claude Code, and Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription
