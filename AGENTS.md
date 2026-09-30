@@ -112,8 +112,8 @@
   share the main-process scan path; hidden windows remain eligible until the
   explicit tray Exit action.
 - `pricing/api-pricing.json` and its JSON Schema define the accepted version 1
-  provider/model pricing catalog. The latest OpenAI Codex snapshot is dated
-  2026-09-23 and includes GPT-6 Astra/Sol/Luna; the same date adds 18 current
+  provider/model pricing catalog. The 2026-09-23 OpenAI Codex snapshot
+  includes GPT-6 Astra/Sol/Luna; the same date adds 18 current
   and legacy Claude API model prices for Claude Code, including Opus 5.5 and
   separate five-minute/one-hour cache-write rates. A 2026-09-25 OpenAI snapshot
   also prices the exact `gpt-5.6-luna` model ID reported by Claude Code, and a
@@ -126,8 +126,8 @@
   pair, so a routed model price does not replace other Claude prices. The
   GitHub Copilot
   base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-09-23
-  with no rate changes) and is extended only by the 2026-09-30 additions. Older snapshots remain immutable for
-  historical provenance. The dashboard calculates and labels query-time
+  with no rate changes) and is extended only by the 2026-09-30 additions.
+  Older snapshots remain immutable for historical provenance. The dashboard calculates and labels query-time
   API-equivalent estimates for complete Codex, Claude Code, and Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription
   usage must remain unknown and must not be presented as an observed bill.
