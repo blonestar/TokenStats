@@ -1760,6 +1760,104 @@
         }
       ],
       "notes": "Direct Anthropic Standard API list prices for Claude Sonnet 5.5, released 2026-09-28. The full 1M context window uses standard pricing. Subscription charges, batch processing, and US-only inference uplifts are excluded."
+    },
+    {
+      "id": "openai-codex-2026-09-30",
+      "provider": "openai",
+      "product": "codex",
+      "sourceIds": ["codex-current-user"],
+      "verifiedAt": "2026-09-30",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": { "metric": "tokens", "quantity": 1000000 },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        { "id": "openai-api-pricing", "url": "https://developers.openai.com/api/docs/pricing", "retrievedAt": "2026-09-30" },
+        { "id": "openai-gpt-6.1-sol", "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol", "retrievedAt": "2026-09-30" }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-6.1-sol",
+          "matchIds": ["gpt-6.1-sol"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "outputTokens": 10} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 4, "cachedInputTokens": 0.2, "outputTokens": 15} }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-6.1-sol"]
+        }
+      ],
+      "notes": "Direct OpenAI Standard API list prices for GPT-6.1 Sol, checked 2026-09-30. OpenAI lists no cache-write rate, so none is recorded. Requests above 272,000 input tokens use 2x input and 1.5x output. Subscription charges, tool-call fees, regional processing uplifts, Batch/Flex/Fast pricing, and third-party hosting are excluded."
+    },
+    {
+      "id": "github-copilot-2026-09-30",
+      "provider": "github",
+      "product": "copilot",
+      "sourceIds": ["copilot-current-user"],
+      "verifiedAt": "2026-09-30",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": { "metric": "tokens", "quantity": 1000000 },
+      "pricingBasis": "provider_reference_price",
+      "billingMode": "standard",
+      "sources": [
+        { "id": "github-copilot-models-and-pricing", "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing", "retrievedAt": "2026-09-30" }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-6-sol",
+          "matchIds": ["gpt-6-sol"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 2, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 2.5, "outputTokens": 10} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 4, "cachedInputTokens": 0.4, "cacheWriteInputTokens": 5, "outputTokens": 15} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-6-luna",
+          "matchIds": ["gpt-6-luna"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 0.1, "cachedInputTokens": 0.01, "cacheWriteInputTokens": 0.125, "outputTokens": 0.5} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 0.2, "cachedInputTokens": 0.02, "cacheWriteInputTokens": 0.25, "outputTokens": 0.75} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gpt-6.1-sol",
+          "matchIds": ["gpt-6.1-sol"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 10} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 4, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 5, "outputTokens": 15} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-5.5",
+          "matchIds": ["claude-sonnet-5.5"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 2, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 2.5, "outputTokens": 10} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-opus-5.5",
+          "matchIds": ["claude-opus-5.5"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 4, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 5, "outputTokens": 20} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "grok-4.7",
+          "matchIds": ["grok-4.7"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 200000, "rates": {"inputTokens": 2, "cachedInputTokens": 0.5, "outputTokens": 6} },
+            { "id": "long-context", "minimumInputTokens": 200001, "rates": {"inputTokens": 4, "cachedInputTokens": 1, "outputTokens": 12} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        }
+      ],
+      "notes": "GitHub Copilot per-token reference rates for models added since the 2026-09-08 snapshot, checked 2026-09-30, all per 1 million tokens. One GitHub AI credit equals $0.01 USD. These are not a subscription bill; included allowances, annual-plan multipliers, model availability, promotional rates, and plan-specific billing can change the effective charge. Code completions and next-edit suggestions are excluded."
     }
   ]
 }

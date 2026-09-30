@@ -77,6 +77,17 @@ describe('pricing estimates', () => {
     expect(estimateEventCost(event({ inputTokens: 100, cachedInputTokens: 5, outputTokens: 25, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000882, snapshotId: 'openai-codex-2026-09-23' })
   })
 
+  it('prices GPT-6.1 Sol for Codex and newly added Copilot models from the 2026-09-30 snapshots', () => {
+    expect(estimateEventCost(event({ model: 'gpt-6.1-sol', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000381, snapshotId: 'openai-codex-2026-09-30' })
+    expect(estimateEventCost(event({ model: 'gpt-6-sol', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))?.snapshotId).toBe('openai-codex-2026-09-23')
+    const copilot = (model: string, output: number) => estimateEventCost(event({ sourceId: 'copilot-current-user', model, inputTokens: 100, cachedInputTokens: 10, outputTokens: output, reasoningOutputTokens: null }))
+    expect(copilot('gpt-6.1-sol', 20)).toEqual({ amountUsd: 0.000381, snapshotId: 'github-copilot-2026-09-30' })
+    expect(copilot('gpt-6-sol', 20)).toEqual({ amountUsd: 0.000382, snapshotId: 'github-copilot-2026-09-30' })
+    expect(copilot('claude-sonnet-5.5', 25)).toEqual({ amountUsd: 0.000432, snapshotId: 'github-copilot-2026-09-30' })
+    expect(copilot('claude-opus-5.5', 50)).toEqual({ amountUsd: 0.001362, snapshotId: 'github-copilot-2026-09-30' })
+    expect(copilot('claude-sonnet-5', 25)?.snapshotId).toBe('github-copilot-2026-09-08')
+  })
+
   it('prices the current Copilot Gemini promotional rate', () => {
     expect(estimateEventCost(event({ sourceId: 'copilot-current-user', model: 'gemini-3.6-flash', inputTokens: 100, cachedInputTokens: 0, outputTokens: 10, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.0001125, snapshotId: 'github-copilot-2026-09-08' })
   })

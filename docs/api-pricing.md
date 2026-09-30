@@ -4,7 +4,7 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-09-29
+Last reviewed: 2026-09-30
 
 # API pricing catalog
 
@@ -136,6 +136,26 @@ and the [Sonnet 5.5 model overview](https://platform.claude.com/docs/en/models/s
 Because runtime selection requires an exact model match, the earlier
 `anthropic-claude-code-2026-09-23` snapshot continues to price the other
 Claude models.
+
+## GPT-6.1 Sol and Copilot additions (2026-09-30)
+
+The `openai-codex-2026-09-30` snapshot adds the exact `gpt-6.1-sol` model ID to
+Codex from the [official OpenAI pricing page](https://developers.openai.com/api/docs/pricing)
+and [model page](https://developers.openai.com/api/docs/models/gpt-6.1-sol):
+$2/MTok input, $0.10/MTok cached input, and $10/MTok output through 272,000
+input tokens; above that, $4, $0.20, and $15. OpenAI lists no cache-write rate,
+so none is recorded.
+
+The `github-copilot-2026-09-30` snapshot adds reference rates from the
+[official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
+for `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, `claude-sonnet-5.5`,
+`claude-opus-5.5`, and `grok-4.7`. Sonnet 5.5 is $2/$0.20/$2.50/$10 and Opus 5.5
+is $4/$0.20/$5/$20 (input/cached/cache write/output per MTok). Grok 4.7 is
+$2/$0.50/$6 through 200,000 input tokens and $4/$1/$12 above it, with no cache
+write rate listed. The existing Anthropic prices were rechecked against the
+[official Anthropic pricing page](https://platform.claude.com/docs/en/about-claude/pricing)
+on 2026-09-30 and did not change, so no Anthropic snapshot was added. Earlier
+snapshots continue to price all other models through exact matching.
 
 ## OpenAI model identifier reported by Claude Code
 
