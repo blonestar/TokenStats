@@ -221,7 +221,7 @@ readiness.
 ## Verification and handoff
 
 - The current executable checks are `pnpm test`, `pnpm typecheck`, `pnpm build`,
-  `pnpm release:check-version --stable-only -- v0.1.7`,
+  `pnpm release:check-version --stable-only -- v0.1.8`,
   `pnpm package:linux`, and `pnpm package:linux:rpm`. Run `pnpm package:win`
   and `scripts/validate-windows-package.ps1` on a Windows runner; the current
   Fedora host cannot execute that validation. Windows CI run `34980761042`
