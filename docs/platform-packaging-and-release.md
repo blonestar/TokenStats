@@ -1,4 +1,4 @@
-Status: Implemented Linux AppImage update slice and verified Windows release-pipeline smoke path; Windows clean-machine and distribution validation remain pending
+Status: Implemented Linux AppImage update slice, verified Windows release-pipeline smoke path, and configured the required three-platform release gate; macOS clean-machine and distribution validation remain pending
 
 Audience: maintainers, release engineers, platform testers, security reviewers, and contributors working on packaging
 
@@ -11,8 +11,8 @@ Last reviewed: 2026-09-15
 This remains a release-engineering proposal with an implemented Fedora slice,
 a Linux AppImage updater slice, and a configured Windows x64 NSIS release path.
 The repository has a package manifest, version gate, Linux and Windows CI jobs,
-a tag-driven Linux draft-release workflow followed by a Windows release job, and
-a manual macOS arm64 validation workflow. Linux and native macOS arm64 runs
+a tag-driven three-platform draft-release workflow, and a manual macOS arm64
+validation workflow. Linux and native macOS arm64 runs
 have passed; the published internal `v0.1.0` release contains both platform
 artifacts plus a combined checksum manifest, while published `v0.1.4` contains
 the Linux AppImage, updater manifest, and checksum manifest. The Windows
@@ -47,9 +47,10 @@ is:
 Ubuntu timing and exact OS versions remain open; they are not first-slice
 support claims.
 
-Windows x64 is now a release-pipeline preview target. The workflow produces a
-versioned NSIS installer and runs a disposable packaged-launch smoke test on a
-Windows runner. This does not make Windows a supported platform promise: clean
+Windows x64 and macOS arm64 are now required release-pipeline preview targets.
+The workflow produces a versioned NSIS installer and macOS ZIP, and runs
+disposable packaged-launch validation on Windows and native Apple Silicon
+runners. This does not make either platform a full support promise: clean
 machine discovery, SQLite migration, tray behavior, signing, update recovery,
 and exact supported OS versions remain unverified and stay subject to
 [Q-026](../ideas/00-open-questions.md).
@@ -81,6 +82,7 @@ The proposed artifact set is:
 | Fedora x64 | `.AppImage` | Primary Linux download and self-update candidate; published `v0.1.4` AppImage and checksum were verified by GitHub Actions. The installed local filename is stable: `TokenStats-linux-x86_64.AppImage`. |
 | Fedora x64 | `.rpm` | System-installable target with desktop-menu registration; clean-machine install and package-manager update evidence remain pending. |
 | macOS arm64 validation | ad-hoc-signed, unnotarized `.zip` | Published in internal `v0.1.0` after native workflow run `31606807111`; not production-ready distribution. |
+| macOS arm64 Stable preview | versioned `.zip` installer artifact | Required in every new Stable release; the release job reuses native validation and uploads a checksum manifest. Developer ID signing, notarization, and clean-machine evidence remain pending. |
 | macOS arm64 | `.dmg` | Requires signed/notarized production-ready distribution. |
 | macOS x64 later | `.dmg` | Consider only after arm64 evidence or changed priority. |
 | Windows x64 preview | versioned NSIS `.exe` installer | Windows CI run `34980761042` built, installed, and launch-smoke-tested it; clean-machine support, signing, and Windows updater behavior remain unverified. |
@@ -242,17 +244,20 @@ The current tag-driven flow, verified by the published `v0.1.4` run
    validates the tag again, runs `package:win:release`, verifies `latest.yml`,
    installs and launches the packaged NSIS app, and uploads the versioned
    Windows installer and a Windows checksum manifest to the same draft release.
-5. The Linux workflow creates and verifies a SHA-256 manifest and uploads it to the
+5. The macOS release job runs on native `macos-15` arm64, packages and validates
+   the macOS ZIP, and uploads it with `SHA256SUMS-mac-arm64.txt` to the same draft release.
+6. The Linux workflow creates and verifies a SHA-256 manifest and uploads it to the
    same draft release.
-6. A maintainer reviews the artifacts, notes, channel, and evidence.
-7. The release is published manually; only then should the Stable feed expose
+7. The final `release-ready` job fails unless Linux, Windows, and macOS arm64
+   artifacts plus their metadata/checksum files are all present.
+8. A maintainer reviews the artifacts, notes, channel, and evidence.
+9. The release is published manually; only then should the Stable feed expose
    it to the updater.
 
-Ubuntu-specific packaging, Windows clean-machine support, SBOM/provenance,
-production signing, and Windows updater validation remain separate follow-up
-work. The
-manual macOS arm64 validation workflow remains separate from the automated
-Linux tag-release job.
+Ubuntu-specific packaging, Windows/macOS clean-machine support, SBOM/provenance,
+production signing, and Windows/macOS updater validation remain separate
+follow-up work. The manual macOS arm64 validation workflow remains available in
+addition to the automated three-platform tag-release job.
 
 Release jobs should start with read-only permissions and grant write access only
 to the narrow job that creates or publishes the release. Third-party Actions

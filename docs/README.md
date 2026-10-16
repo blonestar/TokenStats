@@ -1,4 +1,4 @@
-Status: Implemented Fedora slice and Windows release-pipeline configuration; broader platform direction remains proposed
+Status: Implemented Fedora slice and three-platform release-pipeline configuration; broader platform direction remains proposed
 
 Audience: contributors, product reviewers, architecture reviewers, and users evaluating project direction
 
@@ -44,6 +44,13 @@ tag-driven release pipeline. Windows CI run `34980761042` installed the
 generated installer and launched the packaged app with isolated user data on a
 `windows-2022` runner. This is packaged pipeline evidence, not yet a full
 Windows support or production-distribution claim.
+
+The Stable release pipeline now treats Linux AppImage, Windows x64 NSIS, and
+macOS arm64 ZIP as one required artifact set. A final release gate checks that
+all three platform artifacts and their checksum/metadata files are present
+before the draft can be published. The current `v0.1.5` release predates this
+macOS release-job requirement; its macOS arm64 artifact remains in internal
+`v0.1.0`.
 
 The AppImage release uses the stable local filename
 `TokenStats-linux-x86_64.AppImage`. The main process synchronizes an existing

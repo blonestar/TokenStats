@@ -11,9 +11,9 @@ credentials, and raw logs are not stored.
 > **Status:** An internal Fedora/Electron slice, tested on the current
 > Fedora/KDE host. GitHub CI, the tag-driven `v0.1.4` release, and native
 > macOS arm64 validation have passed; Windows CI run `34980761042` passed the
-> Windows x64 NSIS build and isolated packaged-launch smoke test. `v0.1.4`
-> publishes the Linux AppImage, updater metadata, and checksum manifest, while
-> the internal `v0.1.0` release contains the macOS arm64 artifact.
+> Windows x64 NSIS build and isolated packaged-launch smoke test. The published
+> `v0.1.5` release contains Linux and Windows artifacts; every subsequent Stable
+> release requires Linux, Windows, and macOS arm64 artifacts together.
 > Clean-machine and production distribution readiness remain open.
 
 ## Current features
@@ -36,6 +36,8 @@ credentials, and raw logs are not stored.
 - A Windows x64 NSIS installer build in CI and the tag-driven release pipeline;
   the installer smoke path is verified, while full Windows support and
   clean-machine evidence remain pending.
+- A macOS arm64 ZIP release job is part of the required three-platform Stable
+  release gate; signing, notarization, and clean-machine evidence remain pending.
 - Packaged Linux AppImage update checks with Settings controls for enablement,
   startup checks, and a 1/6/12/24-hour interval; download, then install and
   restart remain explicit actions. RPM and the current macOS ZIP remain manual
