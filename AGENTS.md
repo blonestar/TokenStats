@@ -122,12 +122,19 @@
   including five-minute/one-hour cache-write rates). A 2026-09-30 OpenAI
   snapshot adds `gpt-6.1-sol` for Codex, and a 2026-09-30 Copilot snapshot adds
   GPT-6.1 Sol, GPT-6 Sol/Luna, Claude Sonnet 5.5/Opus 5.5, and Grok 4.7
-  reference rates. Runtime
+  reference rates. The 2026-11-12 snapshots add Claude Fable 5.2, Mythos 5.2,
+  and the tiered (100,000-token threshold) Haiku 5.5 for Claude Code;
+  `gpt-6.1-terra` plus the GPT-6.1 Sol cache-write rate for Codex; and
+  GPT-6.1 Terra, Haiku 5.5, Fable 5.2, and promotional Gemini 4 Argon/Carbon
+  rates for Copilot. They also correct the Sonnet 5.5 cache-hit rate to
+  $0.10/MTok for Claude Code and Copilot. Runtime
   estimates select the latest reviewed snapshot for the exact source/model
   pair, so a routed model price does not replace other Claude prices. The
   GitHub Copilot
-  base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-09-23
-  with no rate changes) and is extended only by the 2026-09-30 additions.
+  base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-11-12
+  with no rate changes) and is extended only by the 2026-09-30 and 2026-11-12
+  additions. The Gemini 4 promotional Copilot rates end on 2026-12-01 and need
+  a follow-up snapshot.
   Older snapshots remain immutable for historical provenance. The dashboard calculates and labels query-time
   API-equivalent estimates for complete Codex, Claude Code, and Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription

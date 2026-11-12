@@ -4,7 +4,7 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-09-30
+Last reviewed: 2026-11-12
 
 # API pricing catalog
 
@@ -135,7 +135,8 @@ The rates were checked on 2026-09-29 against the
 and the [Sonnet 5.5 model overview](https://platform.claude.com/docs/en/models/sonnet-5-5/overview).
 Because runtime selection requires an exact model match, the earlier
 `anthropic-claude-code-2026-09-23` snapshot continues to price the other
-Claude models.
+Claude models. The recorded $0.20/MTok cached-input rate was incorrect; the
+2026-11-12 snapshot below supersedes it with $0.10/MTok.
 
 ## GPT-6.1 Sol and Copilot additions (2026-09-30)
 
@@ -157,6 +158,45 @@ write rate listed. The existing Anthropic prices were rechecked against the
 on 2026-09-30 and did not change, so no Anthropic snapshot was added. Earlier
 snapshots continue to price all other models through exact matching.
 
+## Fable 5.2, Haiku 5.5, GPT-6.1 Terra, and corrections (2026-11-12)
+
+All three providers were rechecked on 2026-11-12. Every previously recorded
+rate still matched its official page except the two corrections below, so the
+earlier snapshots stay unchanged and the new snapshots add only new or
+corrected exact model IDs.
+
+The `anthropic-claude-code-2026-11-12` snapshot uses the
+[official Anthropic pricing page](https://platform.claude.com/docs/en/about-claude/pricing)
+(input/cached input/five-minute write/one-hour write/output per MTok):
+
+- `claude-fable-5-2` and `claude-mythos-5-2`: $8/$0.20/$10/$16/$40.
+- `claude-haiku-5-5`: $0.10/$0.01/$0.125/$0.20/$0.50 for prompts up to
+  100,000 input tokens, and $0.50/$0.05/$0.625/$1/$2.50 above that. The
+  threshold counts all input tokens, including cache reads and writes, and the
+  whole request uses the higher rates. The inclusive Claude input count
+  selects the tier.
+- `claude-sonnet-5-5`, corrected: cache hits cost $0.10/MTok (0.05x base
+  input), not the $0.20/MTok recorded on 2026-09-29. The other rates are
+  unchanged.
+
+The `openai-codex-2026-11-12` snapshot adds `gpt-6.1-terra` from the
+[official OpenAI pricing page](https://developers.openai.com/api/docs/pricing)
+and [model page](https://developers.openai.com/api/docs/models/gpt-6.1-terra):
+$1/$0.05/$1.25/$5 (input/cached/30-minute cache write/output) through 272,000
+input tokens and $2/$0.10/$2.50/$7.50 above that. It also restates
+`gpt-6.1-sol` with the $2.50 (short) and $5 (long) 30-minute cache-write rates
+that OpenAI now lists. The other rates are unchanged.
+
+The `github-copilot-2026-11-12` snapshot adds `gpt-6.1-terra`,
+`claude-haiku-5.5`, and `claude-fable-5.2` at the same rates as the direct
+providers, without one-hour cache-write rates. It also adds `gemini-4-argon`
+and `gemini-4-carbon` at $2/$0.10/$10 (input/cached/output) and corrects
+`claude-sonnet-5.5` cached input to $0.10/MTok. The Gemini 4 rates are
+promotional until 2026-12-01. GitHub lists Gemini 4 Carbon at
+$4/$0.20/$20 from that date and gives no post-promotion rate for Gemini 4
+Argon, so a later snapshot is required once that date passes. Models that
+GitHub no longer lists stay in the older snapshots for historical estimates.
+
 ## OpenAI model identifier reported by Claude Code
 
 The `openai-claude-code-2026-09-25` snapshot maps the exact `gpt-5.6-luna`
@@ -169,9 +209,10 @@ proxy, subscription, or account handled billing.
 
 ## Current GitHub Copilot snapshot
 
-The `github-copilot-2026-09-08` snapshot was checked again on 2026-09-23 against the
+The `github-copilot-2026-09-08` snapshot was checked again on 2026-09-23 and
+2026-11-12 against the
 [official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
-The page's prices still match this snapshot, which stores the OpenAI,
+The prices of every model the page still lists match this snapshot, which stores the OpenAI,
 Anthropic, Google, Microsoft, xAI, and Moonshot tables shown there, including
 GPT-6 Astra, Gemini 3.7/3.8 Flash, MAI-Code-1.1-Flash, Grok 4.6, and Claude
 Fable 5.1 entries. GitHub's Gemini 3.6/3.7/3.8 Flash promotional rate is

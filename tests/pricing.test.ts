@@ -66,7 +66,7 @@ describe('pricing estimates', () => {
   })
 
   it('prices the new Claude Code Sonnet 5.5 model without hiding older Claude prices', () => {
-    expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-sonnet-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000722, snapshotId: 'anthropic-claude-code-2026-09-29' })
+    expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-sonnet-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000721, snapshotId: 'anthropic-claude-code-2026-11-12' })
     expect(estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model: 'claude-opus-5-5', inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null }))?.snapshotId).toBe('anthropic-claude-code-2026-09-23')
   })
 
@@ -77,15 +77,34 @@ describe('pricing estimates', () => {
     expect(estimateEventCost(event({ inputTokens: 100, cachedInputTokens: 5, outputTokens: 25, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000882, snapshotId: 'openai-codex-2026-09-23' })
   })
 
-  it('prices GPT-6.1 Sol for Codex and newly added Copilot models from the 2026-09-30 snapshots', () => {
-    expect(estimateEventCost(event({ model: 'gpt-6.1-sol', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000381, snapshotId: 'openai-codex-2026-09-30' })
+  it('prices GPT-6.1 Sol for Codex and Copilot models added in the 2026-09-30 snapshots', () => {
+    expect(estimateEventCost(event({ model: 'gpt-6.1-sol', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.000381, snapshotId: 'openai-codex-2026-11-12' })
     expect(estimateEventCost(event({ model: 'gpt-6-sol', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))?.snapshotId).toBe('openai-codex-2026-09-23')
     const copilot = (model: string, output: number) => estimateEventCost(event({ sourceId: 'copilot-current-user', model, inputTokens: 100, cachedInputTokens: 10, outputTokens: output, reasoningOutputTokens: null }))
     expect(copilot('gpt-6.1-sol', 20)).toEqual({ amountUsd: 0.000381, snapshotId: 'github-copilot-2026-09-30' })
     expect(copilot('gpt-6-sol', 20)).toEqual({ amountUsd: 0.000382, snapshotId: 'github-copilot-2026-09-30' })
-    expect(copilot('claude-sonnet-5.5', 25)).toEqual({ amountUsd: 0.000432, snapshotId: 'github-copilot-2026-09-30' })
+    expect(copilot('claude-sonnet-5.5', 25)).toEqual({ amountUsd: 0.000431, snapshotId: 'github-copilot-2026-11-12' })
     expect(copilot('claude-opus-5.5', 50)).toEqual({ amountUsd: 0.001362, snapshotId: 'github-copilot-2026-09-30' })
     expect(copilot('claude-sonnet-5', 25)?.snapshotId).toBe('github-copilot-2026-09-08')
+  })
+
+  it('prices models added in the 2026-11-12 snapshots and the corrected Sonnet 5.5 cache-hit rate', () => {
+    const claude = (model: string, overrides: Partial<Parameters<typeof estimateEventCost>[0]> = {}) => estimateEventCost(event({ sourceId: CLAUDE_SOURCE_ID, model, inputTokens: 100, cachedInputTokens: 10, cacheWriteInputTokens: 20, cacheWriteOneHourInputTokens: 20, outputTokens: 50, reasoningOutputTokens: null, ...overrides }))
+    expect(claude('claude-fable-5-2')).toEqual({ amountUsd: 0.002882, snapshotId: 'anthropic-claude-code-2026-11-12' })
+    expect(claude('claude-mythos-5-2')).toEqual({ amountUsd: 0.002882, snapshotId: 'anthropic-claude-code-2026-11-12' })
+    expect(claude('claude-fable-5-1')?.snapshotId).toBe('anthropic-claude-code-2026-09-23')
+    const haiku = (inputTokens: number) => claude('claude-haiku-5-5', { inputTokens, cachedInputTokens: 0, cacheWriteInputTokens: 0, cacheWriteOneHourInputTokens: 0, outputTokens: 0 })?.amountUsd
+    expect(haiku(100000)).toBeCloseTo(0.01, 12)
+    expect(haiku(100001)).toBeCloseTo(0.0500005, 12)
+    const terra = estimateEventCost(event({ model: 'gpt-6.1-terra', inputTokens: 100, cachedInputTokens: 10, outputTokens: 20, reasoningOutputTokens: null }))
+    expect(terra?.snapshotId).toBe('openai-codex-2026-11-12')
+    expect(terra?.amountUsd).toBeCloseTo(0.0001905, 12)
+    const copilot = (model: string, output: number) => estimateEventCost(event({ sourceId: 'copilot-current-user', model, inputTokens: 100, cachedInputTokens: 10, outputTokens: output, reasoningOutputTokens: null }))
+    expect(copilot('claude-fable-5.2', 25)).toEqual({ amountUsd: 0.001722, snapshotId: 'github-copilot-2026-11-12' })
+    expect(copilot('gpt-6.1-terra', 20)?.amountUsd).toBeCloseTo(0.0001905, 12)
+    expect(copilot('claude-haiku-5.5', 0)?.snapshotId).toBe('github-copilot-2026-11-12')
+    expect(copilot('gemini-4-carbon', 10)?.amountUsd).toBeCloseTo(0.000281, 12)
+    expect(copilot('claude-opus-5.5', 50)?.snapshotId).toBe('github-copilot-2026-09-30')
   })
 
   it('prices the current Copilot Gemini promotional rate', () => {
