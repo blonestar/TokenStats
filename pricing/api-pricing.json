@@ -1858,6 +1858,187 @@
         }
       ],
       "notes": "GitHub Copilot per-token reference rates for models added since the 2026-09-08 snapshot, checked 2026-09-30, all per 1 million tokens. One GitHub AI credit equals $0.01 USD. These are not a subscription bill; included allowances, annual-plan multipliers, model availability, promotional rates, and plan-specific billing can change the effective charge. Code completions and next-edit suggestions are excluded."
+    },
+    {
+      "id": "anthropic-claude-code-2026-11-12",
+      "provider": "anthropic",
+      "product": "claude-code",
+      "sourceIds": ["claude-current-user"],
+      "verifiedAt": "2026-11-12",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "anthropic-claude-api-pricing",
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "retrievedAt": "2026-11-12"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "claude-fable-5-2",
+          "matchIds": ["claude-fable-5-2"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 8, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 10, "outputTokens": 40, "cacheWriteOneHourInputTokens": 16} }
+          ],
+          "sourceIds": ["anthropic-claude-api-pricing"]
+        },
+        {
+          "modelId": "claude-mythos-5-2",
+          "matchIds": ["claude-mythos-5-2"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 8, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 10, "outputTokens": 40, "cacheWriteOneHourInputTokens": 16} }
+          ],
+          "sourceIds": ["anthropic-claude-api-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-5-5",
+          "matchIds": ["claude-sonnet-5-5"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 10, "cacheWriteOneHourInputTokens": 4} }
+          ],
+          "sourceIds": ["anthropic-claude-api-pricing"]
+        },
+        {
+          "modelId": "claude-haiku-5-5",
+          "matchIds": ["claude-haiku-5-5"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 100000, "rates": {"inputTokens": 0.1, "cachedInputTokens": 0.01, "cacheWriteInputTokens": 0.125, "outputTokens": 0.5, "cacheWriteOneHourInputTokens": 0.2} },
+            { "id": "long-context", "minimumInputTokens": 100001, "rates": {"inputTokens": 0.5, "cachedInputTokens": 0.05, "cacheWriteInputTokens": 0.625, "outputTokens": 2.5, "cacheWriteOneHourInputTokens": 1} }
+          ],
+          "sourceIds": ["anthropic-claude-api-pricing"]
+        }
+      ],
+      "notes": "Direct Anthropic Standard API list prices. Adds Claude Fable 5.2, Claude Mythos 5.2, and Claude Haiku 5.5, and corrects the Claude Sonnet 5.5 cache-hit rate to $0.10/MTok (0.05x base input) that the 2026-09-29 snapshot recorded as $0.20. Claude Haiku 5.5 prompts over 100,000 input tokens (including cache reads and writes) use the long-context rates for the whole request. Subscription charges, batch processing, fast mode, and US-only inference uplifts are excluded."
+    },
+    {
+      "id": "openai-codex-2026-11-12",
+      "provider": "openai",
+      "product": "codex",
+      "sourceIds": ["codex-current-user"],
+      "verifiedAt": "2026-11-12",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "api_list_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "openai-api-pricing",
+          "url": "https://developers.openai.com/api/docs/pricing",
+          "retrievedAt": "2026-11-12"
+        },
+        {
+          "id": "openai-gpt-6.1-terra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+          "retrievedAt": "2026-11-12"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-6.1-terra",
+          "matchIds": ["gpt-6.1-terra"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 1, "cachedInputTokens": 0.05, "cacheWriteInputTokens": 1.25, "outputTokens": 5} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 7.5} }
+          ],
+          "sourceIds": ["openai-api-pricing", "openai-gpt-6.1-terra"]
+        },
+        {
+          "modelId": "gpt-6.1-sol",
+          "matchIds": ["gpt-6.1-sol"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 10} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 4, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 5, "outputTokens": 15} }
+          ],
+          "sourceIds": ["openai-api-pricing"]
+        }
+      ],
+      "notes": "OpenAI Standard API list prices. Adds GPT-6.1 Terra and restates GPT-6.1 Sol with the 30-minute cache-write rate that OpenAI now lists (the 2026-09-30 snapshot recorded none). Cache-write rates use 30-minute retention; 12-hour retention, Batch, Flex, Fast, Ultrafast, regional, and FedRAMP uplifts are excluded."
+    },
+    {
+      "id": "github-copilot-2026-11-12",
+      "provider": "github",
+      "product": "copilot",
+      "sourceIds": ["copilot-current-user"],
+      "verifiedAt": "2026-11-12",
+      "effectiveFrom": null,
+      "currency": "USD",
+      "unit": {
+        "metric": "tokens",
+        "quantity": 1000000
+      },
+      "pricingBasis": "provider_reference_price",
+      "billingMode": "standard",
+      "sources": [
+        {
+          "id": "github-copilot-models-and-pricing",
+          "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+          "retrievedAt": "2026-11-12"
+        }
+      ],
+      "models": [
+        {
+          "modelId": "gpt-6.1-terra",
+          "matchIds": ["gpt-6.1-terra"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 272000, "rates": {"inputTokens": 1, "cachedInputTokens": 0.05, "cacheWriteInputTokens": 1.25, "outputTokens": 5} },
+            { "id": "long-context", "minimumInputTokens": 272001, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 7.5} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-haiku-5.5",
+          "matchIds": ["claude-haiku-5.5"],
+          "tiers": [
+            { "id": "short-context", "minimumInputTokens": 0, "maximumInputTokens": 100000, "rates": {"inputTokens": 0.1, "cachedInputTokens": 0.01, "cacheWriteInputTokens": 0.125, "outputTokens": 0.5} },
+            { "id": "long-context", "minimumInputTokens": 100001, "rates": {"inputTokens": 0.5, "cachedInputTokens": 0.05, "cacheWriteInputTokens": 0.625, "outputTokens": 2.5} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-sonnet-5.5",
+          "matchIds": ["claude-sonnet-5.5"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "cacheWriteInputTokens": 2.5, "outputTokens": 10} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "claude-fable-5.2",
+          "matchIds": ["claude-fable-5.2"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 8, "cachedInputTokens": 0.2, "cacheWriteInputTokens": 10, "outputTokens": 40} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gemini-4-argon",
+          "matchIds": ["gemini-4-argon"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "outputTokens": 10} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        },
+        {
+          "modelId": "gemini-4-carbon",
+          "matchIds": ["gemini-4-carbon"],
+          "tiers": [
+            { "id": "all-contexts", "minimumInputTokens": 0, "rates": {"inputTokens": 2, "cachedInputTokens": 0.1, "outputTokens": 10} }
+          ],
+          "sourceIds": ["github-copilot-models-and-pricing"]
+        }
+      ],
+      "notes": "GitHub Copilot provider reference rates (1 AI credit = $0.01). Adds GPT-6.1 Terra, Claude Haiku 5.5, Claude Fable 5.2, Gemini 4 Argon, and Gemini 4 Carbon, and corrects the Claude Sonnet 5.5 cached-input rate to $0.10/MTok. Gemini 4 Argon and Carbon use promotional rates valid until 2026-12-01; GitHub lists Carbon at $4.00/$0.20/$20.00 from that date and gives no post-promotion Argon rate, so a later snapshot is required. Other base rates were rechecked with no changes."
     }
   ]
 }
