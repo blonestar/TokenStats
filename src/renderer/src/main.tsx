@@ -83,12 +83,7 @@ function refreshIntervalLabel(minutes: RefreshSettings['intervalMinutes']): stri
   return minutes === 1 ? 'Every 1 minute' : `Every ${minutes} minutes`
 }
 
-function scanOverlayCopy(reason: ScanState['reason']): { title: string; detail: string } {
-  if (reason === 'startup') return { title: 'Preparing your local dashboard', detail: 'Collecting token metadata from supported local sources…' }
-  if (reason === 'automatic') return { title: 'Refreshing local data', detail: 'Checking supported local sources for new usage…' }
-  if (reason === 'reset') return { title: 'Rebuilding your local dashboard', detail: 'Re-importing token metadata from the local source logs…' }
-  return { title: 'Refreshing local data', detail: 'Collecting the latest token metadata…' }
-}
+const REFRESHED_BUBBLE_MS = 3000
 
 function UpdateIcon({ status }: { status: UpdateState['status'] }): React.JSX.Element {
   if (status === 'downloaded' || status === 'installing') return <svg className="update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-14.8-4.3L3 9" /><path d="M3 4v5h5" /><path d="M4 13a8.1 8.1 0 0 0 14.8 4.3L21 15" /><path d="M21 20v-5h-5" /></svg>
@@ -162,6 +157,8 @@ function App(): React.JSX.Element {
   const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', version: null, progress: null, message: null, canInstall: false, settings: DEFAULT_UPDATE_SETTINGS, lastCheckedAt: null, nextCheckAt: null })
   const requestSequence = useRef(0)
   const [notice, setNotice] = useState<string | null>(null)
+  const [refreshedAt, setRefreshedAt] = useState<number | null>(null)
+  const scanReason = useRef<ScanState['reason']>('startup')
   const scanning = scanState.status === 'scanning'
 
   useEffect(() => { saveDashboardPreferences({ period, chartType, customRange }) }, [period, chartType, customRange])
@@ -192,7 +189,14 @@ function App(): React.JSX.Element {
 
   useEffect(() => { void load(queryFor()) }, [period, customRange.startDate, customRange.endDate])
   useEffect(() => {
+    if (refreshedAt === null) return
+    const timer = setTimeout(() => setRefreshedAt(null), REFRESHED_BUBBLE_MS)
+    return () => clearTimeout(timer)
+  }, [refreshedAt])
+  useEffect(() => {
     const unsubscribe = window.tokenStats.onScanComplete((result) => {
+      const reason = scanReason.current
+      if (result.ok && reason !== 'reset' && (reason !== 'automatic' || result.eventsImported > 0)) setRefreshedAt(Date.now())
       void load(queryFor()).then(() => {
         if (!result.ok) setError(result.error ?? 'Scan failed.')
       })
@@ -200,10 +204,13 @@ function App(): React.JSX.Element {
     return unsubscribe
   }, [period, customRange.startDate, customRange.endDate])
   useEffect(() => {
-    const unsubscribe = window.tokenStats.onScanState(setScanState)
-    void window.tokenStats.getScanState().then((nextState) => {
+    const unsubscribe = window.tokenStats.onScanState((nextState) => {
+      if (nextState.reason) scanReason.current = nextState.reason
       setScanState(nextState)
-      if (nextState.status === 'idle') void load(queryFor())
+    })
+    void window.tokenStats.getScanState().then((nextState) => {
+      if (nextState.reason) scanReason.current = nextState.reason
+      setScanState(nextState)
     }).catch(() => undefined)
     void window.tokenStats.notifyRendererReady().catch(() => undefined)
     return unsubscribe
@@ -234,6 +241,7 @@ function App(): React.JSX.Element {
   }
 
   const scan = async (): Promise<void> => {
+    scanReason.current = 'manual'
     setScanState({ status: 'scanning', reason: 'manual' })
     setError(null)
     setNotice(null)
@@ -307,7 +315,7 @@ function App(): React.JSX.Element {
     }
   }
 
-  if (!data && loading) return <InitialLoadingScreen reason={scanState.reason} />
+  if (!data && loading) return <main className="initial-loading" aria-busy="true" />
   if (!data) return <main className="loading" role="alert">Dashboard data is unavailable.</main>
 
   const busy = scanning || resetting
@@ -346,12 +354,21 @@ function App(): React.JSX.Element {
     {data.eventCount === 0 ? <EmptyState data={data} scanning={busy} onScan={scan} /> : <DashboardView data={data} chartType={chartType} setChartType={setChartType} />}
     </>}
     <SourceFooter data={data} />
-    {busy && <ScanOverlay reason={scanning ? scanState.reason : 'reset'} />}
+    {resetting && <ScanOverlay />}
+    <RefreshBubble refreshing={scanning && !resetting && scanState.reason !== 'automatic'} refreshed={refreshedAt !== null} />
   </main>
 }
 
-function ScanOverlay({ reason }: { reason: ScanState['reason'] }): React.JSX.Element {
-  const copy = scanOverlayCopy(reason)
+function RefreshBubble({ refreshing, refreshed }: { refreshing: boolean; refreshed: boolean }): React.JSX.Element | null {
+  if (!refreshing && !refreshed) return null
+  return <div className={`refresh-bubble${refreshing ? ' is-refreshing' : ''}`} role="status" aria-live="polite">
+    {refreshing ? <span className="refresh-bubble-spinner" aria-hidden="true" /> : <span className="refresh-bubble-check" aria-hidden="true">✓</span>}
+    {refreshing ? 'Refreshing local data…' : 'Data refreshed'}
+  </div>
+}
+
+function ScanOverlay(): React.JSX.Element {
+  const copy = { title: 'Rebuilding your local dashboard', detail: 'Re-importing token metadata from the local source logs…' }
   return <div className="scan-overlay" role="status" aria-live="polite">
     <div className="scan-overlay-card">
       <div className="scan-loader" aria-hidden="true"><img src={tokenStatsIcon} alt="" width="46" height="46" /><span /></div>
@@ -361,10 +378,6 @@ function ScanOverlay({ reason }: { reason: ScanState['reason'] }): React.JSX.Ele
       <div className="scan-progress" aria-hidden="true"><span /></div>
     </div>
   </div>
-}
-
-function InitialLoadingScreen({ reason }: { reason: ScanState['reason'] }): React.JSX.Element {
-  return <main className="initial-loading" aria-busy="true"><ScanOverlay reason={reason} /></main>
 }
 
 function EmptyState({ data, scanning, onScan }: { data: Dashboard; scanning: boolean; onScan: () => Promise<void> }): React.JSX.Element {

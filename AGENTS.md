@@ -104,9 +104,16 @@
   completes. The tray menu exposes Show/Hide window and an explicit Exit
   action that fully quits the app. The Fedora RPM target supplies the
   standard desktop launcher and Utilities menu registration; automatic login
-  startup is not enabled. Every app start runs a source scan, and the renderer
-  shows a full-screen blurred progress overlay while startup, manual,
-  automatic, or reset work is active. Settings persist automatic local-data
+  startup is not enabled. Every app start runs a source scan. Scans run in a
+  `worker_threads` worker (`src/main/scan-worker.ts`, started by
+  `src/main/scan-runner.ts`) with its own SQLite connection; the database uses
+  WAL so the main process keeps answering dashboard IPC during a scan. The
+  renderer shows retained data immediately, a small bottom-right bubble while
+  a startup or manual scan runs, and a "Data refreshed" bubble for three
+  seconds afterwards (automatic refreshes show it only when new events were
+  imported). Only the reset/re-import path keeps the full-screen blurred
+  progress overlay. Main-process tests replace the worker runner with the
+  in-process `tests/support/in-process-scan.ts`. Settings persist automatic local-data
   refresh (enabled by default at 1 minute; supported intervals are 1, 5, 10,
   15, 30, and 60 minutes), expose `Refresh local sources`, and retain the
   guarded local-database reset/re-import action. Manual and scheduled refresh

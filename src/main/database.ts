@@ -100,7 +100,8 @@ export class TokenDatabase implements IngestionStore {
   readonly db: Database.Database
   private readonly sourceDefinitions: readonly SourceDefinition[]
   private readonly providerMigrations: readonly ProviderMigration[]
-  constructor(file: string, sourceDefinitions: readonly SourceDefinition[] = registeredSourceDefinitions, providerMigrations: readonly ProviderMigration[] = registeredProviderMigrations) { mkdirSync(dirname(file), { recursive: true }); this.db = new Database(file); this.sourceDefinitions = sourceDefinitions; this.providerMigrations = providerMigrations; this.migrate() }
+  // WAL lets the scan worker's connection write while this connection keeps serving dashboard reads.
+  constructor(file: string, sourceDefinitions: readonly SourceDefinition[] = registeredSourceDefinitions, providerMigrations: readonly ProviderMigration[] = registeredProviderMigrations) { mkdirSync(dirname(file), { recursive: true }); this.db = new Database(file); this.db.pragma('journal_mode = WAL'); this.db.pragma('busy_timeout = 10000'); this.sourceDefinitions = sourceDefinitions; this.providerMigrations = providerMigrations; this.migrate() }
   private migrate(): void {
     this.db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sources (id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL, parser_version TEXT NOT NULL, last_successful_scan TEXT);

@@ -105,6 +105,7 @@ const mocks = vi.hoisted(() => {
   return { app, beforeQuit: () => beforeQuit?.(), BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, dialog, ipcMain, autoUpdater, handlers }
 })
 
+vi.mock('../src/main/scan-runner', () => import('./support/in-process-scan'))
 vi.mock('electron', () => ({
   app: mocks.app,
   BrowserWindow: mocks.BrowserWindow,
@@ -226,11 +227,11 @@ describe('window and tray lifecycle', () => {
     insert.run('tray-stats-priced', 'copilot-current-user', 'tray-stats-priced-session', now, 1000000, 500000, 0, 0, 0, 1500000, 'tray-stats.jsonl', 0, 'copilot-events-v1', now, 'gpt-5-mini')
     insert.run('tray-stats-unpriced', 'copilot-current-user', 'tray-stats-unpriced-session', now, 1000000, 500000, 0, 0, 0, 1500000, 'tray-stats.jsonl', 0, 'copilot-events-v1', now, 'unknown-model-x')
     db.close()
-    ;(TokenDatabase.prototype.close as unknown as { mockClear: () => void }).mockClear()
 
     const scanAll = mocks.handlers.get('tokenstats:scanAll')
     expect(scanAll).toBeTypeOf('function')
     await (scanAll as () => Promise<unknown>)()
+    ;(TokenDatabase.prototype.close as unknown as { mockClear: () => void }).mockClear()
 
     expect(tray.setToolTip).toHaveBeenLastCalledWith('TokenStats\nToday: 3,000,000 tokens · est. $1.25\nThis month: 3,000,000 tokens · est. $1.25')
   })
