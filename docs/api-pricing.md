@@ -4,7 +4,7 @@ Audience: maintainers, adapter authors, and contributors implementing cost estim
 
 Source of truth: `../pricing/api-pricing.json` for reviewed price snapshots and `../pricing/api-pricing.schema.json` for format version 1
 
-Last reviewed: 2026-11-12
+Last reviewed: 2026-11-25
 
 # API pricing catalog
 
@@ -94,7 +94,9 @@ and the linked official model pages recorded in the catalog. It includes GPT-6
 Astra, Sol, and Luna, the GPT-5.6 Sol/Terra/Luna family, GPT-5.5, GPT-5.4, and
 GPT-5.3-Codex. GPT-6 Sol and Luna use separate rates above 272,000 input
 tokens. GPT-5.6 Sol is recorded at the current promotional Standard API rate,
-noted by OpenAI as available at least through 2026-11-21.
+noted by OpenAI as available at least through 2026-11-21. On 2026-11-25
+OpenAI listed the promotion as ending on 2026-11-30 without a published
+post-promotion rate, so a later snapshot is required once that date passes.
 
 ## Current Anthropic/Claude Code snapshot
 
@@ -197,6 +199,40 @@ $4/$0.20/$20 from that date and gives no post-promotion rate for Gemini 4
 Argon, so a later snapshot is required once that date passes. Models that
 GitHub no longer lists stay in the older snapshots for historical estimates.
 
+## 2026-11-25 additions
+
+The 2026-11-25 review rechecked the Anthropic, OpenAI, and GitHub Copilot
+pages. Every Claude rate matches the catalog, so no Anthropic snapshot was
+added. The new snapshots only add models; earlier rates are unchanged.
+
+The `openai-codex-2026-11-25` snapshot adds, from the
+[official OpenAI pricing page](https://developers.openai.com/api/docs/pricing)
+and the [GPT-6.2 Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra)
+and [GPT-6.2 Sol](https://developers.openai.com/api/docs/models/gpt-6.2-sol)
+model pages (input/cached/30-minute cache write/output per MTok):
+
+- `gpt-6.2-astra`: $8/$0.40/$10/$40 through 272,000 input tokens and
+  $16/$0.80/$20/$60 above that.
+- `gpt-6.2-sol`: $2/$0.10/$2.50/$10 through 272,000 input tokens and
+  $4/$0.20/$5/$15 above that.
+
+The `github-copilot-2026-11-25` snapshot adds `gpt-6.2-astra` and
+`gpt-6.2-sol` at the same rates, plus (input/cached/output per MTok):
+
+- `gemini-4-hydrogen`: $1.50/$0.075/$7.50.
+- `gemini-4-neon`: $3/$0.15/$15.
+- `mai-code-2`: $0.50/$0.025/$2.50, promotional until 2027-05-17; GitHub lists
+  $1/$0.05/$5 from that date.
+- `mai-code-2-flash`: $0.05/$0.005/$0.25, promotional until 2027-05-17; GitHub
+  lists $0.10/$0.01/$0.50 from that date.
+
+GitHub publishes display names only. The Copilot `matchIds` follow the
+lowercase, hyphenated form of the existing Copilot entries and must be
+confirmed against observed Copilot logs. The Gemini 4 Argon/Carbon promotion
+still ends on 2026-12-01. Runtime selection does not compare `effectiveFrom`
+with event dates, so the post-promotion Carbon rate is not recorded before that
+date; adding it now would reprice earlier usage.
+
 ## OpenAI model identifier reported by Claude Code
 
 The `openai-claude-code-2026-09-25` snapshot maps the exact `gpt-5.6-luna`
@@ -209,8 +245,8 @@ proxy, subscription, or account handled billing.
 
 ## Current GitHub Copilot snapshot
 
-The `github-copilot-2026-09-08` snapshot was checked again on 2026-09-23 and
-2026-11-12 against the
+The `github-copilot-2026-09-08` snapshot was checked again on 2026-09-23,
+2026-11-12, and 2026-11-25 against the
 [official GitHub Copilot models and pricing page](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
 The prices of every model the page still lists match this snapshot, which stores the OpenAI,
 Anthropic, Google, Microsoft, xAI, and Moonshot tables shown there, including

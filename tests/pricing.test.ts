@@ -107,6 +107,22 @@ describe('pricing estimates', () => {
     expect(copilot('claude-opus-5.5', 50)?.snapshotId).toBe('github-copilot-2026-09-30')
   })
 
+  it('prices models added in the 2026-11-25 snapshots without hiding older prices', () => {
+    const codex = (model: string, inputTokens = 100, cachedInputTokens = 10, outputTokens = 20) => estimateEventCost(event({ model, inputTokens, cachedInputTokens, outputTokens, reasoningOutputTokens: null }))
+    expect(codex('gpt-6.2-astra')).toEqual({ amountUsd: 0.001524, snapshotId: 'openai-codex-2026-11-25' })
+    expect(codex('gpt-6.2-astra', 272001, 0, 0)?.amountUsd).toBeCloseTo(4.352016, 9)
+    expect(codex('gpt-6.2-sol')).toEqual({ amountUsd: 0.000381, snapshotId: 'openai-codex-2026-11-25' })
+    expect(codex('gpt-6.1-sol')?.snapshotId).toBe('openai-codex-2026-11-12')
+    const copilot = (model: string, output: number) => estimateEventCost(event({ sourceId: 'copilot-current-user', model, inputTokens: 100, cachedInputTokens: 10, outputTokens: output, reasoningOutputTokens: null }))
+    expect(copilot('gpt-6.2-astra', 20)).toEqual({ amountUsd: 0.001524, snapshotId: 'github-copilot-2026-11-25' })
+    expect(copilot('gpt-6.2-sol', 20)?.snapshotId).toBe('github-copilot-2026-11-25')
+    expect(copilot('gemini-4-hydrogen', 10)?.amountUsd).toBeCloseTo(0.00021075, 12)
+    expect(copilot('gemini-4-neon', 10)?.amountUsd).toBeCloseTo(0.0004215, 12)
+    expect(copilot('mai-code-2', 20)?.amountUsd).toBeCloseTo(0.00009525, 12)
+    expect(copilot('mai-code-2-flash', 20)?.amountUsd).toBeCloseTo(0.00000955, 12)
+    expect(copilot('gemini-4-carbon', 10)?.snapshotId).toBe('github-copilot-2026-11-12')
+  })
+
   it('prices the current Copilot Gemini promotional rate', () => {
     expect(estimateEventCost(event({ sourceId: 'copilot-current-user', model: 'gemini-3.6-flash', inputTokens: 100, cachedInputTokens: 0, outputTokens: 10, reasoningOutputTokens: null }))).toEqual({ amountUsd: 0.0001125, snapshotId: 'github-copilot-2026-09-08' })
   })
