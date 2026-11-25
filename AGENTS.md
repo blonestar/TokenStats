@@ -127,14 +127,18 @@
   `gpt-6.1-terra` plus the GPT-6.1 Sol cache-write rate for Codex; and
   GPT-6.1 Terra, Haiku 5.5, Fable 5.2, and promotional Gemini 4 Argon/Carbon
   rates for Copilot. They also correct the Sonnet 5.5 cache-hit rate to
-  $0.10/MTok for Claude Code and Copilot. Runtime
+  $0.10/MTok for Claude Code and Copilot. The 2026-11-25 snapshots add
+  `gpt-6.2-astra` and `gpt-6.2-sol` for Codex, and GPT-6.2 Astra/Sol, Gemini 4
+  Hydrogen/Neon, and promotional MAI Code 2/MAI Code 2 Flash (until
+  2027-05-17) for Copilot; Claude prices were rechecked with no changes. Runtime
   estimates select the latest reviewed snapshot for the exact source/model
   pair, so a routed model price does not replace other Claude prices. The
   GitHub Copilot
-  base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-11-12
-  with no rate changes) and is extended only by the 2026-09-30 and 2026-11-12
-  additions. The Gemini 4 promotional Copilot rates end on 2026-12-01 and need
-  a follow-up snapshot.
+  base provider-reference snapshot is dated 2026-09-08 (rechecked 2026-11-25
+  with no rate changes) and is extended only by the 2026-09-30, 2026-11-12,
+  and 2026-11-25 additions. The Gemini 4 promotional Copilot rates end on
+  2026-12-01 and the Codex GPT-5.6 Sol promotion on 2026-11-30; both need a
+  follow-up snapshot after those dates.
   Older snapshots remain immutable for historical provenance. The dashboard calculates and labels query-time
   API-equivalent estimates for complete Codex, Claude Code, and Copilot token
   snapshots with snapshot/date and coverage metadata; incomplete subscription
