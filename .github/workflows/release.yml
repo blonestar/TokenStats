@@ -212,12 +212,14 @@ jobs:
     needs: [draft-release, windows-release, macos-release]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    # Draft releases are listed only to tokens with push access.
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Verify all three platform release assets
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           assets="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')"
