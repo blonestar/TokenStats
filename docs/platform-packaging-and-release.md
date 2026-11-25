@@ -249,7 +249,10 @@ The current tag-driven flow, verified by the published `v0.1.4` run
 6. The Linux workflow creates and verifies a SHA-256 manifest and uploads it to the
    same draft release.
 7. The final `release-ready` job fails unless Linux, Windows, and macOS arm64
-   artifacts plus their metadata/checksum files are all present.
+   artifacts plus their metadata/checksum files are all present. It runs
+   without a checkout, so it sets `GH_REPO`, and it needs `contents: write`
+   because GitHub lists draft releases only to tokens with push access. It
+   reads the release and does not modify it.
 8. A maintainer reviews the artifacts, notes, channel, and evidence.
 9. The release is published manually; only then should the Stable feed expose
    it to the updater.
