@@ -1,18 +1,20 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
-import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type CostEstimate, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanSourceResult, type ScanState, type UpdateState } from '../shared/contracts'
+import { DEFAULT_REFRESH_SETTINGS, DEFAULT_UPDATE_SETTINGS, IDLE_SCAN_STATE, type CostEstimate, type RefreshSettings, type ResetDatabaseResult, type ScanReason, type ScanResult, type ScanState, type UpdateState } from '../shared/contracts'
 import { TokenDatabase, type TraySummary } from './database'
 import { backupAndClearDatabase } from './database-reset'
 import { syncAppImageDesktopEntry } from './appimage-launcher'
-import type { ProviderSource } from './ingestion/contracts'
-import { providerMigrations, currentSources as discoverCurrentSources, sourceDefinitions } from './providers/registry'
+import { providerMigrations, sourceDefinitions } from './providers/registry'
+import { scanInWorker } from './scan-runner'
 import { loadRefreshSettings, parseRefreshSettings, saveRefreshSettings } from './refresh-settings'
 import { RefreshScheduler } from './refresh-scheduler'
 import { loadUpdateSettings, parseUpdateSettings, saveUpdateSettings } from './update-settings'
 import { createUpdateController, initialUpdateState, isLinuxAppImageUpdateSupported, type UpdateController } from './updater'
 export { sourceRoot } from './providers/discovery'
+export { currentSources, scanAllSources } from './scan'
 
 let database: TokenDatabase | undefined
+let databaseFile: string | undefined
 let scanRunning = false
 let resetRunning = false
 let mainWindow: BrowserWindow | undefined
@@ -27,7 +29,6 @@ let isQuitting = false
 const MIN_ZOOM_FACTOR = 0.8
 const MAX_ZOOM_FACTOR = 1.5
 const ZOOM_STEP = 0.1
-type Source = ProviderSource
 type ZoomShortcutInput = { type: string; key: string; code: string; control: boolean; meta: boolean; alt: boolean }
 type ZoomAction = 'in' | 'out' | 'reset'
 
@@ -43,14 +44,6 @@ export function nextZoomFactor(action: ZoomAction, current: number): number {
   if (action === 'reset') return 1
   const change = action === 'in' ? ZOOM_STEP : -ZOOM_STEP
   return Math.min(MAX_ZOOM_FACTOR, Math.max(MIN_ZOOM_FACTOR, Math.round((current + change) * 100) / 100))
-}
-
-export function currentSources(home?: string, env?: NodeJS.ProcessEnv): Source[] { return discoverCurrentSources(home, env) }
-
-export function scanAllSources(db: TokenDatabase, sources = currentSources()): ScanResult {
-  const results: ScanSourceResult[] = []; let filesScanned = 0; let eventsImported = 0; let warnings = 0
-  for (const source of sources) { const runId = db.beginScan(source.sourceId, source.kind, source.parserVersion); try { const result = source.scan(db, source.root); const status: ScanSourceResult['status'] = result.status ?? (result.files > 0 ? 'success' : 'not found'); const sourceOk = status !== 'error'; db.finishScan(runId, source.sourceId, { ...result, ok: sourceOk, status: sourceOk ? (status === 'success' ? 'healthy' : status) : 'error' }); filesScanned += result.files; eventsImported += result.events; warnings += result.warnings.length; results.push({ sourceId: source.sourceId, providerId: source.providerId, label: source.label, kind: source.kind, status, filesScanned: result.files, eventsImported: result.events, warnings: result.warnings.length, ...(sourceOk ? {} : { error: 'Scan failed. Check source availability and try again.' }) }) } catch { const sourceWarnings = [{ message: `${source.label} scan failed without storing source content.`, count: 1 }]; db.finishScan(runId, source.sourceId, { files: 0, events: 0, warnings: sourceWarnings, ok: false }); warnings += 1; results.push({ sourceId: source.sourceId, providerId: source.providerId, label: source.label, kind: source.kind, status: 'error', filesScanned: 0, eventsImported: 0, warnings: 1, error: 'Scan failed. Check source availability and try again.' }) } }
-  return { ok: results.every((result) => result.status !== 'error'), filesScanned, eventsImported, warnings, sources: results }
 }
 
 function showWindow(): void {
@@ -215,8 +208,8 @@ function createWindow(): void {
   }
 }
 
-function runAllScan(reason: ScanReason = 'manual'): ScanResult {
-  if (!database) {
+async function runAllScan(reason: ScanReason = 'manual'): Promise<ScanResult> {
+  if (!database || !databaseFile) {
     return {
       ok: false,
       filesScanned: 0,
@@ -250,7 +243,7 @@ function runAllScan(reason: ScanReason = 'manual'): ScanResult {
   publishScanState({ status: 'scanning', reason })
   updateController?.syncInstallability()
   try {
-    const result = scanAllSources(database)
+    const result = await scanInWorker(databaseFile)
     publishScanComplete(result)
     return result
   } finally {
@@ -260,27 +253,28 @@ function runAllScan(reason: ScanReason = 'manual'): ScanResult {
   }
 }
 
+async function runBackgroundScan(reason: 'startup' | 'automatic'): Promise<void> {
+  try {
+    await runAllScan(reason)
+  } catch {
+    publishScanComplete({ ok: false, filesScanned: 0, eventsImported: 0, warnings: 1, sources: [], error: 'Background refresh failed. Existing dashboard data was kept.' })
+  }
+}
+
 function runScheduledScan(): void {
   if (isQuitting || scanRunning || resetRunning) return
-  try {
-    runAllScan('automatic')
-  } catch {
-    publishScanComplete({ ok: false, filesScanned: 0, eventsImported: 0, warnings: 1, sources: [], error: 'Automatic refresh failed. Existing dashboard data was kept.' })
-  }
+  void runBackgroundScan('automatic')
 }
 
 function startStartupScan(): void {
   if (startupScanStarted || isQuitting || !database) return
   startupScanStarted = true
-  try {
-    runAllScan('startup')
-  } finally {
-    refreshScheduler?.start(refreshSettings)
-  }
+  void runBackgroundScan('startup').finally(() => { refreshScheduler?.start(refreshSettings) })
 }
 
 async function resetDatabase(): Promise<ResetDatabaseResult> {
-  if (!database) return { ok: false, error: 'Local database is not ready.' }
+  if (!database || !databaseFile) return { ok: false, error: 'Local database is not ready.' }
+  const file = databaseFile
   if (scanRunning) return { ok: false, error: 'A scan is already running. Try again when it finishes.' }
   if (resetRunning) return { ok: false, error: 'The database is already being reset.' }
 
@@ -302,7 +296,7 @@ async function resetDatabase(): Promise<ResetDatabaseResult> {
     const reset = await backupAndClearDatabase(database, { userData: app.getPath('userData'), appVersion: app.getVersion() })
     if (!reset.ok) return reset
     try {
-      const reimport = scanAllSources(database)
+      const reimport = await scanInWorker(file)
       publishScanComplete(reimport)
       return { ...reset, ok: reimport.ok, reimport, ...(reimport.ok ? {} : { error: 'Database reset succeeded, but re-import reported an error.' }) }
     } catch {
@@ -324,8 +318,9 @@ app.whenReady().then(() => {
   updateSettings = loadUpdateSettings(userDataPath)
   refreshSettings = loadRefreshSettings(userDataPath)
   scanState = { status: 'scanning', reason: 'startup' }
+  databaseFile = join(userDataPath, 'tokenstats.sqlite')
   database = new TokenDatabase(
-    join(userDataPath, 'tokenstats.sqlite'),
+    databaseFile,
     sourceDefinitions,
     providerMigrations
   )

@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => {
   return { app, beforeQuit: () => beforeQuit?.(), dialog: { showMessageBox: vi.fn() }, handlers, ipcMain: { handle: vi.fn((channel: string, handler: (...args: never[]) => unknown) => handlers.set(channel, handler)) }, BrowserWindow: FakeBrowserWindow, Tray: FakeTray, Menu, nativeImage, autoUpdater }
 })
 
+vi.mock('../src/main/scan-runner', () => import('./support/in-process-scan'))
 vi.mock('electron', () => ({ app: mocks.app, BrowserWindow: mocks.BrowserWindow, Tray: mocks.Tray, Menu: mocks.Menu, nativeImage: mocks.nativeImage, dialog: mocks.dialog, ipcMain: mocks.ipcMain }))
 vi.mock('electron-updater', () => ({ autoUpdater: mocks.autoUpdater }))
 
@@ -102,6 +103,22 @@ describe('main-process reset IPC', () => {
     expect(await reset()).toMatchObject({ ok: false, error: 'The database is already being reset.' })
     release!({ response: 0 })
     await expect(pendingReset).resolves.toEqual({ ok: false, cancelled: true })
+  })
+
+  it('keeps answering dashboard IPC while a scan is still running', async () => {
+    const { scanInWorker } = await import('./support/in-process-scan')
+    let finish: ((result: { ok: boolean; filesScanned: number; eventsImported: number; warnings: number; sources: [] }) => void) | undefined
+    scanInWorker.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    const pendingScan = scan()
+    await new Promise<void>((resolve) => setImmediate(resolve))
+
+    expect(getScanState()).toEqual({ status: 'scanning', reason: 'manual' })
+    expect(mocks.handlers.get('tokenstats:getDashboard')?.(undefined as never, 'thisMonth' as never)).toMatchObject({ period: 'thisMonth' })
+    expect(await scan()).toMatchObject({ ok: false, error: 'A scan is already running.' })
+
+    finish!({ ok: true, filesScanned: 0, eventsImported: 0, warnings: 0, sources: [] })
+    await expect(pendingScan).resolves.toMatchObject({ ok: true })
+    expect(getScanState()).toEqual({ status: 'idle', reason: null })
   })
 
   it('creates the backup through the confirmed IPC path', async () => {

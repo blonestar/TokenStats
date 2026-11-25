@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+vi.mock('../src/main/scan-runner', () => import('./support/in-process-scan'))
 vi.mock('electron', () => ({ app: { whenReady: () => new Promise<void>(() => {}), on: () => undefined, quit: () => undefined }, BrowserWindow: class {}, Tray: class {}, Menu: { buildFromTemplate: () => ({}) }, nativeImage: { createFromPath: () => ({}) }, ipcMain: { handle: () => undefined } }))
 
 import { currentSources, nextZoomFactor, scanAllSources, sourceRoot, zoomShortcutAction } from '../src/main/index'
